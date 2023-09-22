@@ -1,14 +1,14 @@
 API
 ===
 
-.. automodule:: python3_pip_skeleton
+.. automodule:: eiger_fastcs
 
-    ``python3_pip_skeleton``
+    ``eiger_fastcs``
     -----------------------------------
 
-This is the internal API reference for python3_pip_skeleton
+This is the internal API reference for eiger_fastcs
 
-.. data:: python3_pip_skeleton.__version__
+.. data:: eiger_fastcs.__version__
     :type: str
 
     Version number as calculated by https://github.com/pypa/setuptools_scm
