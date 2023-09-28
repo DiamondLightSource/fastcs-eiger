@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Eiger-Fastcs",
+            "type": "python",
+            "request": "launch",
+            "module": "eiger_fastcs",
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "args": []
+        },
+        {
             "name": "Debug Unit Test",
             "type": "python",
             "request": "launch",
