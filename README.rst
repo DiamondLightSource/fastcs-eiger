@@ -3,14 +3,13 @@ eiger-fastcs
 
 |code_ci| |docs_ci| |coverage| |pypi_version| |license|
 
-.. note::
 
-    This project contains template code only. For documentation on how to
-    adopt this skeleton project see
-    https://DiamondLightSource.github.io/python3-pip-skeleton-cli
-
-This is where you should write a short paragraph that describes what your module does,
-how it does it, and why people should use it.
+The existing Odin EPICS integration and underlying code is clunky and difficult to maintain. Odin deployments are dynamic by design, 
+supporting multiple detectors and a scalable number of processes. EPICS database is static and inflexible. With pythonSoftIOC it is 
+possible to create records dynamically at runtime, so it is possible to use introspection to check what parameters it needs to create, 
+rather than defining them build time. FastCS will provide an abstraction layer to introspect hardware and other processes to create a 
+set of parameters that they expose. These parameters can then be used to implement coordination logic and serve PVs by loading a 
+generic EPICS backend into the application. [Placeholder].
 
 ============== ==============================================================
 PyPI           ``pip install eiger-fastcs``
@@ -19,18 +18,13 @@ Documentation  https://DiamondLightSource.github.io/eiger-fastcs
 Releases       https://github.com/DiamondLightSource/eiger-fastcs/releases
 ============== ==============================================================
 
-This is where you should put some images or code snippets that illustrate
-some relevant examples. If it is a library then you might put some
-introductory code here:
+Explanation of how to run Eiger-fastcs works once project is complete
 
 .. code-block:: python
 
-    from eiger_fastcs import __version__
+    print("Placeholder Print Code - To add functionality afterwards")
 
-    print(f"Hello eiger_fastcs {__version__}")
-
-Or if it is a commandline tool then you might put some example commands here::
-
+Command Line Placeholder 
     $ python -m eiger_fastcs --version
 
 .. |code_ci| image:: https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/code.yml/badge.svg?branch=main
