@@ -4,6 +4,10 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/main/"
   },
   {
+    "version": "dev",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
+  },
+  {
     "version": "test",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/test/"
   }
