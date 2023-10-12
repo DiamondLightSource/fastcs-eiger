@@ -1,6 +1,7 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Mapping
+from attr import Attribute
 
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.connections import HTTPConnection, IPConnectionSettings
@@ -30,7 +31,7 @@ class EigerHandler:
             response = await controller.connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
-            print(e)
+            print(f"update loop failed:{e}")
 
 
 class EigerController(Controller):
@@ -50,53 +51,71 @@ class EigerController(Controller):
         connection = HTTPConnection(
             self._ip_settings, headers={"Content-Type": "application/json"}
         )
-        detector_status = await connection.get("detector/api/1.8.0/status/keys")
-        requests = [
-            connection.get(f"detector/api/1.8.0/status/{item}")
-            for item in detector_status["value"]
-        ]
-        values = await asyncio.gather(*requests)
+        subsystems = ["detector", "stream", "monitor"]
+        modes = ["status", "config"]
+        pv_clashes = {}
+        attributes: Mapping[str, Attribute] = {}
 
-        for i in range(len(detector_status["value"])):
-            # FastCS Types
-            match values[i]["value_type"]:
-                case "float":
-                    datatype = Float()
-                case "int":
-                    datatype = Int()
-                case "bool":
-                    datatype = Bool()
-                case "str" | "datetime" | "State":
-                    datatype = String()
+        for index, subsystem in enumerate(subsystems):
+            for mode in modes:
+                response = await connection.get(f"{subsystem}/api/1.8.0/{mode}/keys")
+                subsystem_parameters = response["value"]
+                requests = [
+                    connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
+                    for item in subsystem_parameters
+                ]
+                values = await asyncio.gather(*requests)
 
-            # append the names of criteria to the values list
-            values[i] = {**{"name": detector_status["value"][i]}, **values[i]}
+                for parameter_name, parameter in zip(subsystem_parameters, values):
+                    # FastCS Types
+                    match parameter["value_type"]:
+                        case "float":
+                            datatype = Float()
+                        case "int":
+                            datatype = Int()
+                        case "bool":
+                            datatype = Bool()
+                        case "string" | "datetime" | "State" | "string[]":
+                            datatype = String()
+                        case _:
+                            print(f"Could not process {parameter_name}")
 
-            # Set Attributes
-            match values[i]["access_mode"]:
-                case "rw":
-                    setattr(
-                        self,
-                        values[i]["name"],
-                        AttrRW(
-                            datatype,
-                            handler=EigerHandler(
-                                f'detector/api/1.8.0/status/{values[i]["name"]}'
-                            ),
-                        ),
-                    )
+                    # finding appropriate naming to ensure repeats are not ovewritten
+                    if parameter_name in list(attributes.keys()):
+                        # Adding original instance of the duplicate into dictionary to rename original instance in attributes later
+                        if parameter_name not in list(pv_clashes.keys()):
+                            pv_clashes[
+                                parameter_name
+                            ] = f"{subsystems[index-1]}_{parameter_name}"
+                        name = f"{subsystem}_{parameter_name}"
+                    else:
+                        name = parameter_name
 
-                case "r":
-                    setattr(
-                        self,
-                        values[i]["name"],
-                        AttrR(
-                            datatype,
-                            handler=EigerHandler(
-                                f'detector/api/1.8.0/status/{values[i]["name"]}'
-                            ),
-                        ),
-                    )
+                    # mapping attributes using access mode metadata
+                    match parameter["access_mode"]:
+                        case "r":
+                            attributes[name] = AttrR(
+                                datatype,
+                                handler=EigerHandler(
+                                    f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
+                                ),
+                            )
+                        case "rw":
+                            attributes[name] = AttrRW(
+                                datatype,
+                                handler=EigerHandler(
+                                    f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
+                                ),
+                            )
+
+        # Renaming original instance of duplicate in Attribute
+        for clash_name, unique_name in pv_clashes.items():
+            attributes[unique_name] = attributes.pop(clash_name)
+            print(f"Replacing the repeat,{clash_name}, with {unique_name}")
+
+        for name, attribute in attributes.items():
+            setattr(self, name, attribute)
+
         await connection.close()
 
     async def close(self) -> None:
