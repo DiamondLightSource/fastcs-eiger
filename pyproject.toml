@@ -7,21 +7,17 @@ name = "eiger-fastcs"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
 description = "Develop a FastCS application to introspect an Eiger detector and odin-data processes"
 dependencies = [
-    "typing-extensions;python_version<'3.8'",
-    "fastcs",
+    "fastcs @ git+https://github.com/DiamondLightSource/FastCS.git@HTTP"
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [
