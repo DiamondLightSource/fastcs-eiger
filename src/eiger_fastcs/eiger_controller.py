@@ -7,6 +7,7 @@ from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.connections import HTTPConnection, IPConnectionSettings
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
+from fastcs.wrappers import command
 
 
 @dataclass
@@ -35,6 +36,11 @@ class EigerHandler:
 
 
 class EigerController(Controller):
+    detector_state = AttrR(
+        String(),
+        handler=EigerHandler("detector/api/1.8.0/status/state"),
+    )
+
     def __init__(self, settings: IPConnectionSettings) -> None:
         super().__init__()
         self._ip_settings = settings
@@ -81,7 +87,11 @@ class EigerController(Controller):
                             print(f"Could not process {parameter_name}")
 
                     # finding appropriate naming to ensure repeats are not ovewritten
-                    if parameter_name in list(attributes.keys()):
+                    # and ensuring that PV has not been created already
+                    if (
+                        parameter_name in list(attributes.keys())
+                        and parameter_name not in self.__dict__.keys()
+                    ):
                         # Adding original instance of the duplicate into dictionary to
                         # rename original instance in attributes later
                         if parameter_name not in list(pv_clashes.keys()):
@@ -110,14 +120,53 @@ class EigerController(Controller):
                             )
 
         # Renaming original instance of duplicate in Attribute
+        # Removing unique names already created
         for clash_name, unique_name in pv_clashes.items():
-            attributes[unique_name] = attributes.pop(clash_name)
-            print(f"Replacing the repeat,{clash_name}, with {unique_name}")
+            if unique_name in self.__dict__.keys():
+                del attributes[clash_name]
+                print(
+                    f"{unique_name} was already created before, "
+                    f"{clash_name} is being deleted"
+                )
+
+            else:
+                attributes[unique_name] = attributes.pop(clash_name)
+                print(f"Replacing the repeat,{clash_name}, with {unique_name}")
 
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
+
+        # Check current state of detector_state to see if initializing is required.
+        state_val = await connection.get(self.detector_state.updater.name)
+        if state_val["value"] == "na":
+            print("Initializing Detector")
+            await connection.put("detector/api/1.8.0/command/initialize", "")
 
         await connection.close()
 
     async def close(self) -> None:
         await self.connection.close()
+
+    @command
+    async def initialize(self):
+        await self.connection.put("detector/api/1.8.0/command/initialize", "")
+
+    @command
+    async def disarm(self):
+        await self.connection.put("detector/api/1.8.0/command/disarm", "")
+
+    @command
+    async def abort(self):
+        await self.connection.put("detector/api/1.8.0/command/abort", "")
+
+    @command
+    async def arm(self):
+        await self.connection.put("detector/api/1.8.0/command/arm", "")
+
+    @command
+    async def cancel(self):
+        await self.connection.put("detector/api/1.8.0/command/cancel", "")
+
+    @command
+    async def trigger(self):
+        await self.connection.put("detector/api/1.8.0/command/trigger", "")
