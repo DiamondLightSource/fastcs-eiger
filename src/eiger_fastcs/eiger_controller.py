@@ -7,6 +7,7 @@ from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.connections import HTTPConnection, IPConnectionSettings
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
+from fastcs.wrappers import command
 
 
 @dataclass
@@ -121,3 +122,27 @@ class EigerController(Controller):
 
     async def close(self) -> None:
         await self.connection.close()
+
+    @command
+    async def initialize(self):
+        await self.connection.put("detector/api/1.8.0/command/initialize", "")
+
+    @command
+    async def disarm(self):
+        await self.connection.put("detector/api/1.8.0/command/disarm", "")
+
+    @command
+    async def abort(self):
+        await self.connection.put("detector/api/1.8.0/command/abort", "")
+
+    @command
+    async def arm(self):
+        await self.connection.put("detector/api/1.8.0/command/arm", "")
+
+    @command
+    async def cancel(self):
+        await self.connection.put("detector/api/1.8.0/command/cancel", "")
+
+    @command
+    async def trigger(self):
+        await self.connection.put("detector/api/1.8.0/command/trigger", "")
