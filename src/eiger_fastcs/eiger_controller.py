@@ -1,13 +1,16 @@
 import asyncio
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any, Coroutine, Type
 
+import numpy as np
 from attr import Attribute
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.connections import HTTPConnection, IPConnectionSettings
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
+from PIL import Image
 
 IGNORED_PARAMETERS = [
     "countrate_correction_table",
@@ -315,3 +318,18 @@ class EigerController(Controller):
                     print(f"Failed to handle update for {parameter}")
 
         await asyncio.gather(*parameter_updates)
+
+    @scan(1)
+    async def handle_monitor(self):
+        """Poll monitor images to display."""
+        response, image_bytes = await self.connection.get_bytes(
+            "monitor/api/1.8.0/images/next"
+        )
+        if response.status != 200:
+            print("No Image")
+            return
+        else:
+            image = Image.open(BytesIO(image_bytes))
+
+            # TODO: Populate waveform PV to display as image, once supported in PVI
+            print(np.array(image))

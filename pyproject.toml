@@ -12,7 +12,9 @@ classifiers = [
 ]
 description = "Develop a FastCS application to introspect an Eiger detector and odin-data processes"
 dependencies = [
-    "fastcs @ git+https://github.com/DiamondLightSource/FastCS.git@HTTP"
+    "fastcs @ git+https://github.com/DiamondLightSource/FastCS.git@HTTP",
+    "numpy",
+    "pillow",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
