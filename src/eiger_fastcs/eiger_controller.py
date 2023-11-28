@@ -28,11 +28,10 @@ class EigerHandler:
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
         try:
-            # TODO: Async sleep?
             response = await controller.connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
-            print(f"update loop failed:{e}")
+            print(f"{self.name} update loop failed:\n{e}")
 
 
 class EigerConfigHandler(EigerHandler):
@@ -59,8 +58,6 @@ class LogicHandler:
     Used for dynamically created attributes that are added for additional logic
     """
 
-    name: str
-
     async def put(self, _: "EigerController", attr: AttrW, value: Any) -> None:
         await attr.set(value)
 
@@ -79,10 +76,11 @@ class EigerController(Controller):
     Sets up all connections with the Simplon API to send and receive information
     """
 
-    manual_trigger = AttrRW(
-        Bool(),
-        handler=LogicHandler("manual trigger"),
-    )
+    # Detector Parameters
+    ntrigger = AttrRW(Int())  # TODO: Include URI and validate type from API
+
+    # Logic Parameters
+    manual_trigger = AttrRW(Bool(), handler=LogicHandler())
     stale_parameters = AttrR(Bool())
 
     def __init__(self, settings: IPConnectionSettings) -> None:
@@ -259,9 +257,8 @@ class EigerController(Controller):
         await self.arm()
         # Current functionality is for ints triggering and multiple ntriggers for
         # automatic triggering
-        if not self.manual_trigger._value:
-            for i in range(self.ntrigger._value):
-                print(f"Acquisition number: {i+1}")
+        if not self.manual_trigger.get():
+            for _ in range(self.ntrigger.get()):
                 await self.trigger()
 
     async def queue_update(self, parameters: list[str]):
