@@ -13,30 +13,24 @@ __all__ = ["main"]
 
 def get_controller() -> EigerController:
     ip_settings = IPConnectionSettings("127.0.0.1", 8080)
-    tcont = EigerController(ip_settings)
-    return tcont
+    return EigerController(ip_settings)
 
 
-# TODO: Maybe combine this with test_ioc
-def create_gui() -> None:
-    tcont = get_controller()
-    m = Mapping(tcont)
+def create_gui(controller) -> None:
+    m = Mapping(controller)
     backend = EpicsBackend(m)
     backend.create_gui()
 
 
-def test_ioc() -> None:
-    tcont = get_controller()
-    m = Mapping(tcont)
+def test_ioc(controller) -> None:
+    m = Mapping(controller)
     backend = EpicsBackend(m)
     ioc = backend.get_ioc()
-
     ioc.run()
 
 
-def test_asyncio_backend() -> None:
-    tcont = get_controller()
-    m = Mapping(tcont)
+def test_asyncio_backend(controller) -> None:
+    m = Mapping(controller)
     backend = AsyncioBackend(m)
     backend.run_interactive_session()
 
@@ -46,8 +40,9 @@ def main(args=None):
     parser.add_argument("-v", "--version", action="version", version=__version__)
     args = parser.parse_args(args)
 
-    create_gui()
-    test_ioc()
+    controller = get_controller()
+    create_gui(controller)
+    test_ioc(controller)
 
 
 # test with: python -m eiger_fastcs
