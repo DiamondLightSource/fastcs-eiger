@@ -9,6 +9,18 @@ from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 
+IGNORED_PARAMETERS = [
+    "countrate_correction_table",
+    "pixel_mask",
+    "threshold/1/pixel_mask",
+    "threshold/2/pixel_mask",
+    "flatfield",
+    "threshold/1/flatfield",
+    "threshold/2/flatfield",
+    "board_000/th0_humidity",
+    "board_000/th0_temp",
+]
+
 
 @dataclass
 class EigerHandler:
@@ -131,7 +143,9 @@ class EigerController(Controller):
         for index, subsystem in enumerate(subsystems):
             for mode in modes:
                 response = await connection.get(f"{subsystem}/api/1.8.0/{mode}/keys")
-                subsystem_parameters = response["value"]
+                subsystem_parameters = [
+                    p for p in response["value"] if p not in IGNORED_PARAMETERS
+                ]
                 requests = [
                     connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
                     for item in subsystem_parameters
