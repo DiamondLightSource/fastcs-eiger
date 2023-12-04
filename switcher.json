@@ -12,6 +12,10 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
   {
+    "version": "dev-1",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev-1/"
+  },
+  {
     "version": "test",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/test/"
   }
