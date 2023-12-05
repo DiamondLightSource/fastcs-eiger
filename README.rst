@@ -1,15 +1,9 @@
-eiger-fastcs
-===========================
+Eiger FastCS
+============
 
 |code_ci| |docs_ci| |coverage| |pypi_version| |license|
 
-
-The existing Odin EPICS integration and underlying code is clunky and difficult to maintain. Odin deployments are dynamic by design, 
-supporting multiple detectors and a scalable number of processes. EPICS database is static and inflexible. With pythonSoftIOC it is 
-possible to create records dynamically at runtime, so it is possible to use introspection to check what parameters it needs to create, 
-rather than defining them build time. FastCS will provide an abstraction layer to introspect hardware and other processes to create a 
-set of parameters that they expose. These parameters can then be used to implement coordination logic and serve PVs by loading a 
-generic EPICS backend into the application. [Placeholder].
+A FastCS backend developed for the Dectris Eiger Detector.
 
 ============== ==============================================================
 PyPI           ``pip install eiger-fastcs``
@@ -17,15 +11,6 @@ Source code    https://github.com/DiamondLightSource/eiger-fastcs
 Documentation  https://DiamondLightSource.github.io/eiger-fastcs
 Releases       https://github.com/DiamondLightSource/eiger-fastcs/releases
 ============== ==============================================================
-
-Explanation of how to run Eiger-fastcs works once project is complete
-
-.. code-block:: python
-
-    print("Placeholder Print Code - To add functionality afterwards")
-
-Command Line Placeholder 
-    $ python -m eiger_fastcs --version
 
 .. |code_ci| image:: https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/code.yml/badge.svg?branch=main
     :target: https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/code.yml
