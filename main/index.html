@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>eiger-fastcs &#8212; eiger-fastcs 0.1.dev85+ga5b2021 documentation</title>
+    <title>Eiger FastCS &#8212; eiger-fastcs 0.1.dev87+gc5ca643 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
   <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
 
-    <script src="_static/documentation_options.js?v=08eecbb8"></script>
+    <script src="_static/documentation_options.js?v=5d7a24ab"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -430,14 +430,9 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="eiger-fastcs">
-<h1>eiger-fastcs<a class="headerlink" href="#eiger-fastcs" title="Link to this heading">#</a></h1>
+<h1>Eiger FastCS<a class="headerlink" href="#eiger-fastcs" title="Link to this heading">#</a></h1>
 <p><a class="reference external" href="https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/code.yml"><img alt="Code CI" src="https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/code.yml/badge.svg?branch=main" /></a> <a class="reference external" href="https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/docs.yml"><img alt="Docs CI" src="https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/docs.yml/badge.svg?branch=main" /></a> <a class="reference external" href="https://codecov.io/gh/DiamondLightSource/eiger-fastcs"><img alt="Test Coverage" src="https://codecov.io/gh/DiamondLightSource/eiger-fastcs/branch/main/graph/badge.svg" /></a> <a class="reference external" href="https://pypi.org/project/eiger-fastcs"><img alt="Latest PyPI version" src="https://img.shields.io/pypi/v/eiger-fastcs.svg" /></a> <a class="reference external" href="https://opensource.org/licenses/Apache-2.0"><img alt="Apache License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" /></a></p>
-<p>The existing Odin EPICS integration and underlying code is clunky and difficult to maintain. Odin deployments are dynamic by design,
-supporting multiple detectors and a scalable number of processes. EPICS database is static and inflexible. With pythonSoftIOC it is
-possible to create records dynamically at runtime, so it is possible to use introspection to check what parameters it needs to create,
-rather than defining them build time. FastCS will provide an abstraction layer to introspect hardware and other processes to create a
-set of parameters that they expose. These parameters can then be used to implement coordination logic and serve PVs by loading a
-generic EPICS backend into the application. [Placeholder].</p>
+<p>A FastCS backend developed for the Dectris Eiger Detector.</p>
 <table class="table">
 <tbody>
 <tr class="row-odd"><td><p>PyPI</p></td>
@@ -454,14 +449,6 @@ generic EPICS backend into the application. [Placeholder].</p>
 </tr>
 </tbody>
 </table>
-<p>Explanation of how to run Eiger-fastcs works once project is complete</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Placeholder Print Code - To add functionality afterwards&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="simple">
-<dt>Command Line Placeholder</dt><dd><p>$ python -m eiger_fastcs –version</p>
-</dd>
-</dl>
 <section id="how-the-documentation-is-structured">
 <h2>How the documentation is structured<a class="headerlink" href="#how-the-documentation-is-structured" title="Link to this heading">#</a></h2>
 <p>The documentation is split into 2 sections:</p>
