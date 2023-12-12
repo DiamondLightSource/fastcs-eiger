@@ -6,5 +6,9 @@
   {
     "version": "dev",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
+  },
+  {
+    "version": "monitor",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
   }
 ]
