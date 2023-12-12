@@ -1,13 +1,25 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Coroutine, Type
 
 from attr import Attribute
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.connections import HTTPConnection, IPConnectionSettings
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
-from fastcs.wrappers import command
+from fastcs.wrappers import command, scan
+
+IGNORED_PARAMETERS = [
+    "countrate_correction_table",
+    "pixel_mask",
+    "threshold/1/pixel_mask",
+    "threshold/2/pixel_mask",
+    "flatfield",
+    "threshold/1/flatfield",
+    "threshold/2/flatfield",
+    "board_000/th0_humidity",
+    "board_000/th0_temp",
+]
 
 
 @dataclass
@@ -22,25 +34,31 @@ class EigerHandler:
     name: str
     update_period: float = 0.2
 
-    async def put(
-        self,
-        controller: "EigerController",
-        attr: AttrW,
-        value: Any,
-    ) -> None:
-        await controller.connection.put(self.name, value)
+    async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
+        parameters_to_update = await controller.connection.put(self.name, value)
+        await controller.queue_update(parameters_to_update)
 
-    async def update(
-        self,
-        controller: "EigerController",
-        attr: AttrR,
-    ) -> None:
+    async def update(self, controller: "EigerController", attr: AttrR) -> None:
         try:
-            # TODO: Async sleep?
             response = await controller.connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
-            print(f"update loop failed:{e}")
+            print(f"{self.name} update loop failed:\n{e}")
+
+
+class EigerConfigHandler(EigerHandler):
+    """Handler for config parameters that are polled once on startup."""
+
+    first_poll_complete: bool = False
+
+    async def update(self, controller: "EigerController", attr: AttrR) -> None:
+        # Only poll once on startup
+        if not self.first_poll_complete:
+            await super().update(controller, attr)
+            self.first_poll_complete = True
+
+    async def config_update(self, controller: "EigerController", attr: AttrR) -> None:
+        await super().update(controller, attr)
 
 
 @dataclass
@@ -52,15 +70,14 @@ class LogicHandler:
     Used for dynamically created attributes that are added for additional logic
     """
 
-    name: str
-
-    async def put(
-        self,
-        controller: "EigerController",
-        attr: AttrW,
-        value: Any,
-    ) -> None:
+    async def put(self, _: "EigerController", attr: AttrW, value: Any) -> None:
         await attr.set(value)
+
+
+EIGER_HANDLERS: dict[str, Type[EigerHandler]] = {
+    "status": EigerHandler,
+    "config": EigerConfigHandler,
+}
 
 
 class EigerController(Controller):
@@ -71,14 +88,20 @@ class EigerController(Controller):
     Sets up all connections with the Simplon API to send and receive information
     """
 
-    manual_trigger = AttrRW(
-        Bool(),
-        handler=LogicHandler("manual trigger"),
-    )
+    # Detector Parameters
+    ntrigger = AttrRW(Int())  # TODO: Include URI and validate type from API
+
+    # Logic Parameters
+    manual_trigger = AttrRW(Bool(), handler=LogicHandler())
+    stale_parameters = AttrR(Bool())
 
     def __init__(self, settings: IPConnectionSettings) -> None:
         super().__init__()
         self._ip_settings = settings
+
+        # Parameter update logic
+        self._parameter_updates: set[str] = set()
+        self._parameter_update_lock = asyncio.Lock()
 
         asyncio.run(self.initialise())
 
@@ -120,7 +143,9 @@ class EigerController(Controller):
         for index, subsystem in enumerate(subsystems):
             for mode in modes:
                 response = await connection.get(f"{subsystem}/api/1.8.0/{mode}/keys")
-                subsystem_parameters = response["value"]
+                subsystem_parameters = [
+                    p for p in response["value"] if p not in IGNORED_PARAMETERS
+                ]
                 requests = [
                     connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
                     for item in subsystem_parameters
@@ -162,14 +187,14 @@ class EigerController(Controller):
                         case "r":
                             attributes[name] = AttrR(
                                 datatype,
-                                handler=EigerHandler(
+                                handler=EIGER_HANDLERS[mode](
                                     f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
                                 ),
                             )
                         case "rw":
                             attributes[name] = AttrRW(
                                 datatype,
-                                handler=EigerHandler(
+                                handler=EIGER_HANDLERS[mode](
                                     f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
                                 ),
                             )
@@ -246,7 +271,47 @@ class EigerController(Controller):
         await self.arm()
         # Current functionality is for ints triggering and multiple ntriggers for
         # automatic triggering
-        if not self.manual_trigger._value:
-            for i in range(self.ntrigger._value):
-                print(f"Acquisition number: {i+1}")
+        if not self.manual_trigger.get():
+            for _ in range(self.ntrigger.get()):
                 await self.trigger()
+
+    async def queue_update(self, parameters: list[str]):
+        """Add the given parameters to the list of parameters to update.
+
+        Args:
+            parameters: Parameters to be updated
+
+        """
+        async with self._parameter_update_lock:
+            for parameter in parameters:
+                self._parameter_updates.add(parameter)
+
+            await self.stale_parameters.set(True)
+
+    @scan(0.1)
+    async def update(self):
+        """Periodically check for parameters that need updating from the detector."""
+        if not self._parameter_updates:
+            if self.stale_parameters.get():
+                await self.stale_parameters.set(False)
+
+            return
+
+        # Take a copy of the current parameters and clear. Parameters may be repopulated
+        # during this call and need to be updated again immediately.
+        async with self._parameter_update_lock:
+            parameters = self._parameter_updates.copy()
+            self._parameter_updates.clear()
+
+        # Release lock while fetching parameters - this may be slow
+        parameter_updates: list[Coroutine] = []
+        for parameter in parameters:
+            match getattr(self, parameter):
+                # TODO: mypy doesn't understand AttrR as a type for some reason:
+                # `error: Expected type in class pattern; found "Any"  [misc]`
+                case AttrR(updater=EigerConfigHandler() as updater) as attr:  # type: ignore [misc]
+                    parameter_updates.append(updater.config_update(self, attr))
+                case _:
+                    print(f"Failed to handle update for {parameter}")
+
+        await asyncio.gather(*parameter_updates)
