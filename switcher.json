@@ -8,6 +8,10 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
   {
+    "version": "http-connection",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/http-connection/"
+  },
+  {
     "version": "monitor",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
   }
