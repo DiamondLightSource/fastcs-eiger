@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 
 from fastcs.backends.asyncio_backend import AsyncioBackend
 from fastcs.backends.epics.backend import EpicsBackend
-from fastcs.connections import IPConnectionSettings
 from fastcs.mapping import Mapping
 
 from eiger_fastcs import __version__
@@ -12,8 +11,8 @@ __all__ = ["main"]
 
 
 def get_controller() -> EigerController:
-    ip_settings = IPConnectionSettings("127.0.0.1", 8080)
-    return EigerController(ip_settings)
+    # return EigerController("127.0.0.1", 8080)
+    return EigerController("i03-eiger01", 80)
 
 
 def create_gui(controller) -> None:
