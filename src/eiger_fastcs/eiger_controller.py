@@ -39,12 +39,12 @@ class EigerHandler:
     update_period: float = 0.2
 
     async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
-        parameters_to_update = await controller.connection.put(self.name, value)
+        parameters_to_update = await controller._connection.put(self.name, value)
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
         try:
-            response = await controller.connection.get(self.name)
+            response = await controller._connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
             print(f"{self.name} update loop failed:\n{e}")
@@ -103,16 +103,19 @@ class EigerController(Controller):
         super().__init__()
         self._ip = ip
         self._port = port
+        self._connection = HTTPConnection(self._ip, self._port)
 
         # Parameter update logic
         self._parameter_updates: set[str] = set()
         self._parameter_update_lock = asyncio.Lock()
 
+        # Initialize parameters from hardware - run on ephemeral asyncio loop
+        # TODO: Make the backend asyncio loop available earlier
         asyncio.run(self.initialise())
 
     async def connect(self) -> None:
-        """Connection settigns with Eiger Detector using HTTP"""
-        self.connection = HTTPConnection(self._ip, self._port)
+        """Reopen connection on backend asyncio loop"""
+        self._connection.open()
 
     async def initialise(self) -> None:
         """
@@ -134,10 +137,8 @@ class EigerController(Controller):
 
         Initialises detector on startup.
         """
-        # Adding extra loop prior to backend loop creating the Attributes to be PVs
-        connection = HTTPConnection(
-            self._ip_settings, headers={"Content-Type": "application/json"}
-        )
+        self._connection.open()
+
         subsystems = ["detector", "stream", "monitor"]
         modes = ["status", "config"]
         pv_clashes: dict[str, str] = {}
@@ -145,12 +146,14 @@ class EigerController(Controller):
 
         for index, subsystem in enumerate(subsystems):
             for mode in modes:
-                response = await connection.get(f"{subsystem}/api/1.8.0/{mode}/keys")
+                response = await self._connection.get(
+                    f"{subsystem}/api/1.8.0/{mode}/keys"
+                )
                 subsystem_parameters = [
                     p for p in response["value"] if p not in IGNORED_PARAMETERS
                 ]
                 requests = [
-                    connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
+                    self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
                     for item in subsystem_parameters
                 ]
                 values = await asyncio.gather(*requests)
@@ -220,40 +223,40 @@ class EigerController(Controller):
             setattr(self, name, attribute)
 
         # Check current state of detector_state to see if initializing is required.
-        state_val = await connection.get(self.detector_state.updater.name)
+        state_val = await self._connection.get(self.detector_state.updater.name)
         if state_val["value"] == "na":
             print("Initializing Detector")
-            await connection.put("detector/api/1.8.0/command/initialize", "")
+            await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
-        await connection.close()
+        await self._connection.close()
 
     async def close(self) -> None:
         """Closing HTTP connection with device"""
-        await self.connection.close()
+        await self._connection.close()
 
     async def arm(self):
         """Arming Detector called by the start acquisition button"""
-        await self.connection.put("detector/api/1.8.0/command/arm", "")
+        await self._connection.put("detector/api/1.8.0/command/arm", "")
 
     @command
     async def initialize(self):
         """Command to initialize Detector - will create a PVI button"""
-        await self.connection.put("detector/api/1.8.0/command/initialize", "")
+        await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
     @command
     async def disarm(self):
         """Command to disarm Detector - will create a PVI button"""
-        await self.connection.put("detector/api/1.8.0/command/disarm", "")
+        await self._connection.put("detector/api/1.8.0/command/disarm", "")
 
     @command
     async def abort(self):
         """Command to abort any tasks Detector - will create a PVI button"""
-        await self.connection.put("detector/api/1.8.0/command/abort", "")
+        await self._connection.put("detector/api/1.8.0/command/abort", "")
 
     @command
     async def cancel(self):
         """Command to cancel readings from Detector - will create a PVI button"""
-        await self.connection.put("detector/api/1.8.0/command/cancel", "")
+        await self._connection.put("detector/api/1.8.0/command/cancel", "")
 
     @command
     async def trigger(self):
@@ -261,7 +264,7 @@ class EigerController(Controller):
         Command to trigger Detector when manual triggering is switched on.
         will create a PVI button
         """
-        await self.connection.put("detector/api/1.8.0/command/trigger", "")
+        await self._connection.put("detector/api/1.8.0/command/trigger", "")
 
     @command
     async def start_acquisition(self):
@@ -322,7 +325,7 @@ class EigerController(Controller):
     @scan(1)
     async def handle_monitor(self):
         """Poll monitor images to display."""
-        response, image_bytes = await self.connection.get_bytes(
+        response, image_bytes = await self._connection.get_bytes(
             "monitor/api/1.8.0/images/next"
         )
         if response.status != 200:
