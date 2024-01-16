@@ -6,11 +6,12 @@ from typing import Any, Coroutine, Type
 import numpy as np
 from attr import Attribute
 from fastcs.attributes import AttrR, AttrRW, AttrW
-from fastcs.connections import HTTPConnection, IPConnectionSettings
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 from PIL import Image
+
+from eiger_fastcs.http_connection import HTTPConnection
 
 IGNORED_PARAMETERS = [
     "countrate_correction_table",
@@ -98,9 +99,10 @@ class EigerController(Controller):
     manual_trigger = AttrRW(Bool(), handler=LogicHandler())
     stale_parameters = AttrR(Bool())
 
-    def __init__(self, settings: IPConnectionSettings) -> None:
+    def __init__(self, ip: str, port: int) -> None:
         super().__init__()
-        self._ip_settings = settings
+        self._ip = ip
+        self._port = port
 
         # Parameter update logic
         self._parameter_updates: set[str] = set()
@@ -110,9 +112,7 @@ class EigerController(Controller):
 
     async def connect(self) -> None:
         """Connection settigns with Eiger Detector using HTTP"""
-        self.connection = HTTPConnection(
-            self._ip_settings, headers={"Content-Type": "application/json"}
-        )
+        self.connection = HTTPConnection(self._ip, self._port)
 
     async def initialise(self) -> None:
         """
