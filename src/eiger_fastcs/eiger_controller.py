@@ -26,6 +26,10 @@ IGNORED_PARAMETERS = [
 ]
 
 
+def detector_command(fn) -> Any:
+    return command(group="DetectorCommand")(fn)
+
+
 @dataclass
 class EigerHandler:
     """
@@ -158,6 +162,7 @@ class EigerController(Controller):
                 ]
                 values = await asyncio.gather(*requests)
 
+                group = f"{subsystem.capitalize()}{mode.capitalize()}"
                 for parameter_name, parameter in zip(subsystem_parameters, values):
                     # FastCS Types
                     match parameter["value_type"]:
@@ -181,12 +186,14 @@ class EigerController(Controller):
                         # Adding original instance of the duplicate into dictionary to
                         # rename original instance in attributes later
                         if parameter_name not in list(pv_clashes.keys()):
-                            pv_clashes[
-                                parameter_name
-                            ] = f"{subsystems[index-1]}_{parameter_name}"
+                            pv_clashes[parameter_name] = (
+                                f"{subsystems[index-1]}_{parameter_name}"
+                            )
                         name = f"{subsystem}_{parameter_name}"
                     else:
                         name = parameter_name
+
+                    name = name.replace("/", "_")
 
                     # mapping attributes using access mode metadata
                     match parameter["access_mode"]:
@@ -196,6 +203,7 @@ class EigerController(Controller):
                                 handler=EIGER_HANDLERS[mode](
                                     f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
                                 ),
+                                group=group,
                             )
                         case "rw":
                             attributes[name] = AttrRW(
@@ -203,6 +211,7 @@ class EigerController(Controller):
                                 handler=EIGER_HANDLERS[mode](
                                     f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
                                 ),
+                                group=group,
                             )
 
         # Renaming original instance of duplicate in Attribute
@@ -238,27 +247,27 @@ class EigerController(Controller):
         """Arming Detector called by the start acquisition button"""
         await self._connection.put("detector/api/1.8.0/command/arm", "")
 
-    @command
+    @detector_command
     async def initialize(self):
         """Command to initialize Detector - will create a PVI button"""
         await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
-    @command
+    @detector_command
     async def disarm(self):
         """Command to disarm Detector - will create a PVI button"""
         await self._connection.put("detector/api/1.8.0/command/disarm", "")
 
-    @command
+    @detector_command
     async def abort(self):
         """Command to abort any tasks Detector - will create a PVI button"""
         await self._connection.put("detector/api/1.8.0/command/abort", "")
 
-    @command
+    @detector_command
     async def cancel(self):
         """Command to cancel readings from Detector - will create a PVI button"""
         await self._connection.put("detector/api/1.8.0/command/cancel", "")
 
-    @command
+    @detector_command
     async def trigger(self):
         """
         Command to trigger Detector when manual triggering is switched on.
@@ -266,7 +275,7 @@ class EigerController(Controller):
         """
         await self._connection.put("detector/api/1.8.0/command/trigger", "")
 
-    @command
+    @detector_command
     async def start_acquisition(self):
         """
         Command to start acquiring detector image.
