@@ -150,11 +150,12 @@ class EigerController(Controller):
 
         for index, subsystem in enumerate(subsystems):
             for mode in modes:
-                response = await self._connection.get(
-                    f"{subsystem}/api/1.8.0/{mode}/keys"
-                )
                 subsystem_parameters = [
-                    p for p in response["value"] if p not in IGNORED_PARAMETERS
+                    parameter
+                    for parameter in await self._connection.get(
+                        f"{subsystem}/api/1.8.0/{mode}/keys"
+                    )
+                    if parameter not in IGNORED_PARAMETERS
                 ]
                 requests = [
                     self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
