@@ -23,6 +23,10 @@ IGNORED_PARAMETERS = [
     "threshold/2/flatfield",
     "board_000/th0_humidity",
     "board_000/th0_temp",
+    "buffer_fill_level",  # TODO: Value is [value, max], rather than using max metadata
+    "detector_orientation",  # TODO: Handle array values
+    "detector_translation",
+    "total_flux",  # TODO: Undocumented and value is `None`
 ]
 
 
