@@ -169,14 +169,17 @@ class EigerController(Controller):
                     match parameter["value_type"]:
                         case "float":
                             datatype = Float()
-                        case "int":
+                        case "int" | "uint":
                             datatype = Int()
                         case "bool":
                             datatype = Bool()
                         case "string" | "datetime" | "State" | "string[]":
                             datatype = String()
                         case _:
-                            print(f"Could not process {parameter_name}")
+                            print(
+                                f"Failed to handle {subsystem}/{mode}/{parameter_name}:"
+                                " {parameter}"
+                            )
 
                     # finding appropriate naming to ensure repeats are not ovewritten
                     # and ensuring that PV has not been created already
