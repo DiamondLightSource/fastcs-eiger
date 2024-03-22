@@ -48,6 +48,10 @@ class EigerHandler:
 
     async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
         parameters_to_update = await controller._connection.put(self.name, value)
+        if not parameters_to_update:
+            parameters_to_update = [self.name.split("/")[-1]]
+            print(f"Manually fetching parameter {parameters_to_update}")
+
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
@@ -55,7 +59,7 @@ class EigerHandler:
             response = await controller._connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
-            print(f"{self.name} update loop failed:\n{e}")
+            print(f"Failed to get {self.name}:\n{e.__class__.__name__} {e}")
 
 
 class EigerConfigHandler(EigerHandler):
