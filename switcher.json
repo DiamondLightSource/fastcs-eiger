@@ -4,10 +4,6 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/main/"
   },
   {
-    "version": "detector-fixes",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/detector-fixes/"
-  },
-  {
     "version": "dev",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
