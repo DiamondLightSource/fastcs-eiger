@@ -4,6 +4,10 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/main/"
   },
   {
+    "version": "api-fixes",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/api-fixes/"
+  },
+  {
     "version": "dev",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
