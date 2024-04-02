@@ -4,10 +4,6 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/main/"
   },
   {
-    "version": "api-fixes",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/api-fixes/"
-  },
-  {
     "version": "dev",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
@@ -22,5 +18,9 @@
   {
     "version": "monitor",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
+  },
+  {
+    "version": "refactor-initialize",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/refactor-initialize/"
   }
 ]
