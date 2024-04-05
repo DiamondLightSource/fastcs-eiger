@@ -11,8 +11,8 @@ __all__ = ["main"]
 
 
 def get_controller() -> EigerController:
-    # return EigerController("127.0.0.1", 8080)
-    return EigerController("i03-eiger01", 80)
+    return EigerController("127.0.0.1", 8081)
+    # return EigerController("i03-eiger01", 80)
 
 
 def create_gui(controller) -> None:
