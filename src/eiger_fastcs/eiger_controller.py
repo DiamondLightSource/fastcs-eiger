@@ -52,6 +52,10 @@ class EigerHandler:
         if not parameters_to_update:
             parameters_to_update = [self.name.split("/")[-1]]
             print(f"Manually fetching parameter {parameters_to_update}")
+        else:
+            print(
+                f"Fetching parameters after setting {self.name}: {parameters_to_update}"
+            )
 
         await controller.queue_update(parameters_to_update)
 
