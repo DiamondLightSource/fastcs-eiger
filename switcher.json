@@ -8,6 +8,10 @@
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/api-fixes/"
   },
   {
+    "version": "api-fixes-2",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/api-fixes-2/"
+  },
+  {
     "version": "dev",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
   },
