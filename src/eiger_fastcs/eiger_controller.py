@@ -350,7 +350,6 @@ class EigerController(Controller):
             "monitor/api/1.8.0/images/next"
         )
         if response.status != 200:
-            print("No Image")
             return
         else:
             image = Image.open(BytesIO(image_bytes))
