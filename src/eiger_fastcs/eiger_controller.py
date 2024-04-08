@@ -14,7 +14,9 @@ from PIL import Image
 
 from eiger_fastcs.http_connection import HTTPConnection, HTTPRequestError
 
-IGNORED_PARAMETERS = [
+# Keys to be ignored when introspecting the detector to create parameters
+IGNORED_KEYS = [
+    # Big arrays
     "countrate_correction_table",
     "pixel_mask",
     "threshold/1/pixel_mask",
@@ -22,13 +24,25 @@ IGNORED_PARAMETERS = [
     "flatfield",
     "threshold/1/flatfield",
     "threshold/2/flatfield",
+    # Deprecated
     "board_000/th0_humidity",
     "board_000/th0_temp",
-    "buffer_fill_level",  # TODO: Value is [value, max], rather than using max metadata
-    "detector_orientation",  # TODO: Handle array values
+    # TODO: Value is [value, max], rather than using max metadata
+    "buffer_fill_level",
+    # TODO: Handle array values
+    "detector_orientation",
     "detector_translation",
-    "total_flux",  # TODO: Undocumented and value is `None`
+    # TODO: Is it a bad idea to include these?
+    "test_image_mode",
+    "test_image_value",
 ]
+
+# Parameters that are in the API but missing from keys
+MISSING_KEYS: dict[str, dict[str, list[str]]] = {
+    "detector": {"status": ["error"], "config": ["wavelength"]},
+    "monitor": {"status": [], "config": []},
+    "stream": {"status": ["error"], "config": []},
+}
 
 
 def detector_command(fn) -> Any:
@@ -203,8 +217,8 @@ class EigerController(Controller):
                 for parameter in await self._connection.get(
                     f"{subsystem}/api/1.8.0/{mode}/keys"
                 )
-                if parameter not in IGNORED_PARAMETERS
-            ]
+                if parameter not in IGNORED_KEYS
+            ] + MISSING_KEYS[subsystem][mode]
             requests = [
                 self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{key}")
                 for key in subsystem_keys
