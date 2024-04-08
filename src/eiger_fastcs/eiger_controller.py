@@ -76,6 +76,10 @@ class EigerConfigHandler(EigerHandler):
         # Only poll once on startup
         if not self.first_poll_complete:
             await super().update(controller, attr)
+            if isinstance(attr, AttrRW):
+                # Sync readback value to demand
+                await attr._write_display_callback(attr.get())
+
             self.first_poll_complete = True
 
     async def config_update(self, controller: "EigerController", attr: AttrR) -> None:
