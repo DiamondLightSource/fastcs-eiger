@@ -12,7 +12,7 @@ from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 from PIL import Image
 
-from eiger_fastcs.http_connection import HTTPConnection
+from eiger_fastcs.http_connection import HTTPConnection, HTTPRequestError
 
 IGNORED_PARAMETERS = [
     "countrate_correction_table",
@@ -174,7 +174,11 @@ class EigerController(Controller):
         """
         self._connection.open()
 
-        parameters = await self._introspect_detector()
+        try:
+            parameters = await self._introspect_detector()
+        except HTTPRequestError:
+            print("\nAn HTTP request failed while introspecting detector:\n")
+            raise
 
         attributes = self._create_attributes(parameters)
 
