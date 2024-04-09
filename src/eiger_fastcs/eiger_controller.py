@@ -188,6 +188,12 @@ class EigerController(Controller):
         """
         self._connection.open()
 
+        # Check current state of detector_state to see if initializing is required.
+        state_val = await self._connection.get("detector/api/1.8.0/status/state")
+        if state_val["value"] == "na":
+            print("Initializing Detector")
+            await self._connection.put("detector/api/1.8.0/command/initialize", "")
+
         try:
             parameters = await self._introspect_detector()
         except HTTPRequestError:
@@ -198,12 +204,6 @@ class EigerController(Controller):
 
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
-
-        # Check current state of detector_state to see if initializing is required.
-        state_val = await self._connection.get(self.detector_state.updater.name)
-        if state_val["value"] == "na":
-            print("Initializing Detector")
-            await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
         await self._connection.close()
 
