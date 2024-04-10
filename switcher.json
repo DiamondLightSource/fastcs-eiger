@@ -18,9 +18,5 @@
   {
     "version": "monitor",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
-  },
-  {
-    "version": "refactor-initialize",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/refactor-initialize/"
   }
 ]
