@@ -1,7 +1,8 @@
 import asyncio
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Coroutine, Type
+from itertools import product
+from typing import Any, Coroutine, Literal, Type
 
 import numpy as np
 from attr import Attribute
@@ -96,6 +97,34 @@ EIGER_HANDLERS: dict[str, Type[EigerHandler]] = {
 }
 
 
+@dataclass
+class EigerParameter:
+    key: str
+    """Last section of URI within a subsystem/mode."""
+    subsystem: Literal["detector", "stream", "monitor"]
+    """Subsystem within detector API."""
+    mode: Literal["status", "config"]
+    """Mode of parameter within subsystem."""
+    response: dict[str, Any]
+    """JSON response from GET of parameter."""
+    has_unique_key: bool = True
+    """Whether this parameter has a unique key across all subsystems."""
+
+    @property
+    def name(self) -> str:
+        """Unique name of parameter across all subsystems."""
+        return self.key if self.has_unique_key else f"{self.subsystem}_{self.key}"
+
+    @property
+    def uri(self) -> str:
+        """Full URI for HTTP requests."""
+        return f"{self.subsystem}/api/1.8.0/{self.mode}/{self.key}"
+
+
+EIGER_PARAMETER_SUBSYSTEMS = EigerParameter.__annotations__["subsystem"].__args__
+EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
+
+
 class EigerController(Controller):
     """
     Controller Class for Eiger Detector
@@ -130,115 +159,16 @@ class EigerController(Controller):
         self._connection.open()
 
     async def initialise(self) -> None:
-        """
-        Method to create all PVs from the tickit-devices simulator/device at startup
-        Initialises the detector at the end of PV creation
+        """Create attributes by introspecting detector.
 
-        Where to find PVs created in tickit-devices.
-            detector-status: eiger_status.py
-            detector-config: eiger_settings.py
-            stream-status: stream_status.py
-            stream-config: stream_config.py
-            monitor-status: monitor_status.py
-            monitor-config: monitor_config.py
+        The detector will be initialized if it is not already.
 
-        Populates all PVs set in simulator/device in attributes dictionary
-        (Name of PV, FastCS Attribute) after checking for any clashes with
-        other subsystems and if the PV has already been created in the self
-        dictionary keys.
-
-        Initialises detector on startup.
         """
         self._connection.open()
 
-        subsystems = ["detector", "stream", "monitor"]
-        modes = ["status", "config"]
-        pv_clashes: dict[str, str] = {}
-        attributes: dict[str, Attribute] = {}
+        parameters = await self._introspect_detector()
 
-        for index, subsystem in enumerate(subsystems):
-            for mode in modes:
-                subsystem_parameters = [
-                    parameter
-                    for parameter in await self._connection.get(
-                        f"{subsystem}/api/1.8.0/{mode}/keys"
-                    )
-                    if parameter not in IGNORED_PARAMETERS
-                ]
-                requests = [
-                    self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
-                    for item in subsystem_parameters
-                ]
-                values = await asyncio.gather(*requests)
-
-                group = f"{subsystem.capitalize()}{mode.capitalize()}"
-                for parameter_name, parameter in zip(subsystem_parameters, values):
-                    # FastCS Types
-                    match parameter["value_type"]:
-                        case "float":
-                            datatype = Float()
-                        case "int" | "uint":
-                            datatype = Int()
-                        case "bool":
-                            datatype = Bool()
-                        case "string" | "datetime" | "State" | "string[]":
-                            datatype = String()
-                        case _:
-                            print(
-                                f"Failed to handle {subsystem}/{mode}/{parameter_name}:"
-                                " {parameter}"
-                            )
-
-                    # finding appropriate naming to ensure repeats are not ovewritten
-                    # and ensuring that PV has not been created already
-                    if (
-                        parameter_name in list(attributes.keys())
-                        and parameter_name not in self.__dict__.keys()
-                    ):
-                        # Adding original instance of the duplicate into dictionary to
-                        # rename original instance in attributes later
-                        if parameter_name not in list(pv_clashes.keys()):
-                            pv_clashes[parameter_name] = (
-                                f"{subsystems[index-1]}_{parameter_name}"
-                            )
-                        name = f"{subsystem}_{parameter_name}"
-                    else:
-                        name = parameter_name
-
-                    name = name.replace("/", "_")
-
-                    # mapping attributes using access mode metadata
-                    match parameter["access_mode"]:
-                        case "r":
-                            attributes[name] = AttrR(
-                                datatype,
-                                handler=EIGER_HANDLERS[mode](
-                                    f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
-                                ),
-                                group=group,
-                            )
-                        case "rw":
-                            attributes[name] = AttrRW(
-                                datatype,
-                                handler=EIGER_HANDLERS[mode](
-                                    f"{subsystem}/api/1.8.0/{mode}/{parameter_name}"
-                                ),
-                                group=group,
-                            )
-
-        # Renaming original instance of duplicate in Attribute
-        # Removing unique names already created
-        for clash_name, unique_name in pv_clashes.items():
-            if unique_name in self.__dict__.keys():
-                del attributes[clash_name]
-                print(
-                    f"{unique_name} was already created before, "
-                    f"{clash_name} is being deleted"
-                )
-
-            else:
-                attributes[unique_name] = attributes.pop(clash_name)
-                print(f"Replacing the repeat,{clash_name}, with {unique_name}")
+        attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
@@ -250,6 +180,95 @@ class EigerController(Controller):
             await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
         await self._connection.close()
+
+    async def _introspect_detector(self) -> list[EigerParameter]:
+        parameters = []
+        for subsystem, mode in product(
+            EIGER_PARAMETER_SUBSYSTEMS, EIGER_PARAMETER_MODES
+        ):
+            subsystem_keys = [
+                parameter
+                for parameter in await self._connection.get(
+                    f"{subsystem}/api/1.8.0/{mode}/keys"
+                )
+                if parameter not in IGNORED_PARAMETERS
+            ]
+            requests = [
+                self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{key}")
+                for key in subsystem_keys
+            ]
+            responses = await asyncio.gather(*requests)
+
+            parameters.extend(
+                [
+                    EigerParameter(
+                        key=key, subsystem=subsystem, mode=mode, response=response
+                    )
+                    for key, response in zip(subsystem_keys, responses)
+                ]
+            )
+
+        return parameters
+
+    def _create_attributes(self, parameters: list[EigerParameter]):
+        """Create ``Attribute``s from ``EigerParameter``s.
+
+        Args:
+            parameters: ``EigerParameter``s to create ``Attributes`` from
+
+        """
+        self._tag_key_clashes(parameters)
+
+        attributes: dict[str, Attribute] = {}
+        for parameter in parameters:
+            group = f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
+            match parameter.response["value_type"]:
+                case "float":
+                    datatype = Float()
+                case "int" | "uint":
+                    datatype = Int()
+                case "bool":
+                    datatype = Bool()
+                case "string" | "datetime" | "State" | "string[]":
+                    datatype = String()
+                case _:
+                    print(f"Failed to handle {parameter}")
+
+            # Flatten nested uri keys - e.g. threshold/1/mode -> threshold_1_mode
+            attribute_name = parameter.name.replace("/", "_")
+
+            match parameter.response["access_mode"]:
+                case "r":
+                    attributes[attribute_name] = AttrR(
+                        datatype,
+                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
+                        group=group,
+                    )
+                case "rw":
+                    attributes[attribute_name] = AttrRW(
+                        datatype,
+                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
+                        group=group,
+                    )
+
+        return attributes
+
+    @staticmethod
+    def _tag_key_clashes(parameters: list[EigerParameter]):
+        """Find key clashes between subsystems and tag parameters to use extended name.
+
+        Modifies list of parameters in place.
+
+        Args:
+            parameters: Parameters to search
+
+        """
+        for idx, parameter in enumerate(parameters):
+            for other in parameters[idx + 1 :]:
+                if parameter.key == other.key:
+                    parameter.has_unique_key = False
+                    other.has_unique_key = False
+                    break
 
     async def close(self) -> None:
         """Closing HTTP connection with device"""
