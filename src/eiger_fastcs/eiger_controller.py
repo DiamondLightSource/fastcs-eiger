@@ -23,6 +23,10 @@ IGNORED_PARAMETERS = [
     "threshold/2/flatfield",
     "board_000/th0_humidity",
     "board_000/th0_temp",
+    "buffer_fill_level",  # TODO: Value is [value, max], rather than using max metadata
+    "detector_orientation",  # TODO: Handle array values
+    "detector_translation",
+    "total_flux",  # TODO: Undocumented and value is `None`
 ]
 
 
@@ -44,6 +48,10 @@ class EigerHandler:
 
     async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
         parameters_to_update = await controller._connection.put(self.name, value)
+        if not parameters_to_update:
+            parameters_to_update = [self.name.split("/")[-1]]
+            print(f"Manually fetching parameter {parameters_to_update}")
+
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
@@ -51,7 +59,7 @@ class EigerHandler:
             response = await controller._connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
-            print(f"{self.name} update loop failed:\n{e}")
+            print(f"Failed to get {self.name}:\n{e.__class__.__name__} {e}")
 
 
 class EigerConfigHandler(EigerHandler):
@@ -150,11 +158,12 @@ class EigerController(Controller):
 
         for index, subsystem in enumerate(subsystems):
             for mode in modes:
-                response = await self._connection.get(
-                    f"{subsystem}/api/1.8.0/{mode}/keys"
-                )
                 subsystem_parameters = [
-                    p for p in response["value"] if p not in IGNORED_PARAMETERS
+                    parameter
+                    for parameter in await self._connection.get(
+                        f"{subsystem}/api/1.8.0/{mode}/keys"
+                    )
+                    if parameter not in IGNORED_PARAMETERS
                 ]
                 requests = [
                     self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{item}")
@@ -168,14 +177,17 @@ class EigerController(Controller):
                     match parameter["value_type"]:
                         case "float":
                             datatype = Float()
-                        case "int":
+                        case "int" | "uint":
                             datatype = Int()
                         case "bool":
                             datatype = Bool()
                         case "string" | "datetime" | "State" | "string[]":
                             datatype = String()
                         case _:
-                            print(f"Could not process {parameter_name}")
+                            print(
+                                f"Failed to handle {subsystem}/{mode}/{parameter_name}:"
+                                " {parameter}"
+                            )
 
                     # finding appropriate naming to ensure repeats are not ovewritten
                     # and ensuring that PV has not been created already
@@ -338,7 +350,6 @@ class EigerController(Controller):
             "monitor/api/1.8.0/images/next"
         )
         if response.status != 200:
-            print("No Image")
             return
         else:
             image = Image.open(BytesIO(image_bytes))

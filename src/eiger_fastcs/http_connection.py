@@ -3,6 +3,14 @@ from typing import Dict, Optional, Tuple
 from aiohttp import ClientResponse, ClientSession
 
 
+class HTTPRequestError(ConnectionError):
+    def __init__(self, message: str, response: ClientResponse):
+        super().__init__(
+            f"{message} - "
+            f"Response({response.status}): '{response.content.read_nowait().decode()}'"
+        )
+
+
 class HTTPConnection:
     def __init__(self, ip: str, port: int):
         self._session: Optional[ClientSession] = None
@@ -50,8 +58,11 @@ class HTTPConnection:
 
         """
         session = self.get_session()
-        async with session.get(self.full_url(uri)) as response:
-            return await response.json()
+        async with session.get(self.full_url(uri), timeout=3) as response:
+            if response.status != 200:
+                raise HTTPRequestError(f"Failed to get {uri}", response)
+            else:
+                return await response.json()
 
     async def get_bytes(self, uri) -> Tuple[ClientResponse, bytes]:
         """Perform HTTP GET request and return response content as bytes.
@@ -84,7 +95,15 @@ class HTTPConnection:
             json={"value": value},
             headers={"Content-Type": "application/json"},
         ) as response:
-            return await response.json()
+            if response.status != 200:
+                raise HTTPRequestError(
+                    f"Failed to set {uri}" + (f" to {value}" if str(value) else ""),
+                    response,
+                )
+            elif response.content_type == "application/json":
+                return await response.json()
+            else:
+                return []
 
     async def close(self):
         """Close the underlying aiohttp ClientSession."""
