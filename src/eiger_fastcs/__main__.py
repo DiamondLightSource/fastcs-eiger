@@ -1,5 +1,6 @@
-from argparse import ArgumentParser
+from typing import Optional
 
+import typer
 from fastcs.backends.asyncio_backend import AsyncioBackend
 from fastcs.backends.epics.backend import EpicsBackend
 from fastcs.mapping import Mapping
@@ -10,40 +11,52 @@ from eiger_fastcs.eiger_controller import EigerController
 __all__ = ["main"]
 
 
-def get_controller() -> EigerController:
-    return EigerController("127.0.0.1", 8081)
-    # return EigerController("i03-eiger01", 80)
+app = typer.Typer()
 
 
-def create_gui(controller) -> None:
-    m = Mapping(controller)
-    backend = EpicsBackend(m)
+def version_callback(value: bool):
+    if value:
+        typer.echo(__version__)
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Optional[bool] = typer.Option(
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Print the version and exit",
+    ),
+):
+    pass
+
+
+@app.command()
+def ioc(pv_prefix: str = typer.Argument()):
+    mapping = get_controller_mapping()
+
+    backend = EpicsBackend(mapping, pv_prefix)
     backend.create_gui()
+    backend.get_ioc().run()
 
 
-def test_ioc(controller) -> None:
-    m = Mapping(controller)
-    backend = EpicsBackend(m)
-    ioc = backend.get_ioc()
-    ioc.run()
+@app.command()
+def asyncio():
+    mapping = get_controller_mapping()
 
-
-def test_asyncio_backend(controller) -> None:
-    m = Mapping(controller)
-    backend = AsyncioBackend(m)
+    backend = AsyncioBackend(mapping)
     backend.run_interactive_session()
 
 
-def main(args=None):
-    parser = ArgumentParser()
-    parser.add_argument("-v", "--version", action="version", version=__version__)
-    args = parser.parse_args(args)
+def get_controller_mapping() -> Mapping:
+    controller = EigerController("127.0.0.1", 8081)
+    # controller = EigerController("i03-eiger01", 80)
 
-    controller = get_controller()
-    create_gui(controller)
-    test_ioc(controller)
+    return Mapping(controller)
 
 
 # test with: python -m eiger_fastcs
 if __name__ == "__main__":
-    main()
+    app()

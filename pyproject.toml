@@ -16,6 +16,7 @@ dependencies = [
     "fastcs",
     "numpy",
     "pillow",
+    "typer",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
@@ -49,7 +50,6 @@ GitHub = "https://github.com/DiamondLightSource/eiger-fastcs"
 [[project.authors]] # Further authors may be added by duplicating this section
 email = "thomas.thomas@diamond.ac.uk"
 name = "TBThomas56"
-
 
 [tool.setuptools_scm]
 write_to = "src/eiger_fastcs/_version.py"

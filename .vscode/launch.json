@@ -5,17 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Eiger-Fastcs",
-            "type": "python",
+            "name": "Eiger IOC",
+            "type": "debugpy",
             "request": "launch",
             "module": "eiger_fastcs",
             "justMyCode": false,
             "console": "integratedTerminal",
-            "args": []
+            "args": ["ioc", "EIGER"]
+        },
+        {
+            "name": "Eiger Asyncio",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "eiger_fastcs",
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "args": ["asyncio"]
         },
         {
             "name": "Debug Unit Test",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "justMyCode": false,
             "program": "${file}",
