@@ -31,6 +31,7 @@ dev = [
     "pre-commit",
     "pydata-sphinx-theme>=0.12",
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
     "ruff",
     "sphinx-autobuild",
