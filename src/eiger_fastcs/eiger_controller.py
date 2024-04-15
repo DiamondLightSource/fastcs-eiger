@@ -12,9 +12,11 @@ from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 from PIL import Image
 
-from eiger_fastcs.http_connection import HTTPConnection
+from eiger_fastcs.http_connection import HTTPConnection, HTTPRequestError
 
-IGNORED_PARAMETERS = [
+# Keys to be ignored when introspecting the detector to create parameters
+IGNORED_KEYS = [
+    # Big arrays
     "countrate_correction_table",
     "pixel_mask",
     "threshold/1/pixel_mask",
@@ -22,13 +24,25 @@ IGNORED_PARAMETERS = [
     "flatfield",
     "threshold/1/flatfield",
     "threshold/2/flatfield",
+    # Deprecated
     "board_000/th0_humidity",
     "board_000/th0_temp",
-    "buffer_fill_level",  # TODO: Value is [value, max], rather than using max metadata
-    "detector_orientation",  # TODO: Handle array values
+    # TODO: Value is [value, max], rather than using max metadata
+    "buffer_fill_level",
+    # TODO: Handle array values
+    "detector_orientation",
     "detector_translation",
-    "total_flux",  # TODO: Undocumented and value is `None`
+    # TODO: Is it a bad idea to include these?
+    "test_image_mode",
+    "test_image_value",
 ]
+
+# Parameters that are in the API but missing from keys
+MISSING_KEYS: dict[str, dict[str, list[str]]] = {
+    "detector": {"status": ["error"], "config": ["wavelength"]},
+    "monitor": {"status": [], "config": []},
+    "stream": {"status": ["error"], "config": []},
+}
 
 
 def detector_command(fn) -> Any:
@@ -52,6 +66,10 @@ class EigerHandler:
         if not parameters_to_update:
             parameters_to_update = [self.name.split("/")[-1]]
             print(f"Manually fetching parameter {parameters_to_update}")
+        else:
+            print(
+                f"Fetching parameters after setting {self.name}: {parameters_to_update}"
+            )
 
         await controller.queue_update(parameters_to_update)
 
@@ -72,6 +90,10 @@ class EigerConfigHandler(EigerHandler):
         # Only poll once on startup
         if not self.first_poll_complete:
             await super().update(controller, attr)
+            if isinstance(attr, AttrRW):
+                # Sync readback value to demand
+                await attr._write_display_callback(attr.get())
+
             self.first_poll_complete = True
 
     async def config_update(self, controller: "EigerController", attr: AttrR) -> None:
@@ -166,18 +188,22 @@ class EigerController(Controller):
         """
         self._connection.open()
 
-        parameters = await self._introspect_detector()
+        # Check current state of detector_state to see if initializing is required.
+        state_val = await self._connection.get("detector/api/1.8.0/status/state")
+        if state_val["value"] == "na":
+            print("Initializing Detector")
+            await self._connection.put("detector/api/1.8.0/command/initialize", "")
+
+        try:
+            parameters = await self._introspect_detector()
+        except HTTPRequestError:
+            print("\nAn HTTP request failed while introspecting detector:\n")
+            raise
 
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
-
-        # Check current state of detector_state to see if initializing is required.
-        state_val = await self._connection.get(self.detector_state.updater.name)
-        if state_val["value"] == "na":
-            print("Initializing Detector")
-            await self._connection.put("detector/api/1.8.0/command/initialize", "")
 
         await self._connection.close()
 
@@ -191,8 +217,8 @@ class EigerController(Controller):
                 for parameter in await self._connection.get(
                     f"{subsystem}/api/1.8.0/{mode}/keys"
                 )
-                if parameter not in IGNORED_PARAMETERS
-            ]
+                if parameter not in IGNORED_KEYS
+            ] + MISSING_KEYS[subsystem][mode]
             requests = [
                 self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{key}")
                 for key in subsystem_keys
