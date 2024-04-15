@@ -18,5 +18,9 @@
   {
     "version": "monitor",
     "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
+  },
+  {
+    "version": "pytest-asyncio",
+    "url": "https://DiamondLightSource.github.io/eiger-fastcs/pytest-asyncio/"
   }
 ]
