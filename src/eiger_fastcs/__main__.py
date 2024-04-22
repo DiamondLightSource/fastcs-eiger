@@ -22,7 +22,9 @@ def version_callback(value: bool):
 
 @app.callback()
 def main(
-    version: Optional[bool] = typer.Option(
+    # TODO: typer does not support `bool | None` yet
+    # https://github.com/tiangolo/typer/issues/533
+    version: Optional[bool] = typer.Option(  # noqa
         None,
         "--version",
         callback=version_callback,

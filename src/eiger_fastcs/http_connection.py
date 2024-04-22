@@ -1,5 +1,3 @@
-from typing import Dict, Optional, Tuple
-
 from aiohttp import ClientResponse, ClientSession
 
 
@@ -13,7 +11,7 @@ class HTTPRequestError(ConnectionError):
 
 class HTTPConnection:
     def __init__(self, ip: str, port: int):
-        self._session: Optional[ClientSession] = None
+        self._session: ClientSession | None = None
         self._ip = ip
         self._port = port
 
@@ -48,7 +46,7 @@ class HTTPConnection:
 
         raise ConnectionRefusedError("Session is not open")
 
-    async def get(self, uri) -> Dict[str, str]:
+    async def get(self, uri) -> dict[str, str]:
         """Perform HTTP GET request and return response content as JSON.
 
         Args:
@@ -64,7 +62,7 @@ class HTTPConnection:
             else:
                 return await response.json()
 
-    async def get_bytes(self, uri) -> Tuple[ClientResponse, bytes]:
+    async def get_bytes(self, uri) -> tuple[ClientResponse, bytes]:
         """Perform HTTP GET request and return response content as bytes.
 
         Args:
