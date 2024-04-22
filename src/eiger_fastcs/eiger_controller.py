@@ -1,8 +1,9 @@
 import asyncio
+from collections.abc import Coroutine
 from dataclasses import dataclass
 from io import BytesIO
 from itertools import product
-from typing import Any, Coroutine, Literal, Type
+from typing import Any, Literal
 
 import numpy as np
 from attr import Attribute
@@ -113,7 +114,7 @@ class LogicHandler:
         await attr.set(value)
 
 
-EIGER_HANDLERS: dict[str, Type[EigerHandler]] = {
+EIGER_HANDLERS: dict[str, type[EigerHandler]] = {
     "status": EigerHandler,
     "config": EigerConfigHandler,
 }
@@ -230,7 +231,7 @@ class EigerController(Controller):
                     EigerParameter(
                         key=key, subsystem=subsystem, mode=mode, response=response
                     )
-                    for key, response in zip(subsystem_keys, responses)
+                    for key, response in zip(subsystem_keys, responses, strict=False)
                 ]
             )
 
