@@ -37,9 +37,17 @@ def main(
     pass
 
 
+EigerIp = typer.Option("127.0.0.1", help="IP address of Eiger detector")
+EigerPort = typer.Option(8081, help="Port of Eiger HTTP server")
+
+
 @app.command()
-def ioc(pv_prefix: str = typer.Argument()):
-    mapping = get_controller_mapping()
+def ioc(
+    pv_prefix: str = typer.Argument(),
+    ip: str = EigerIp,
+    port: int = EigerPort,
+):
+    mapping = get_controller_mapping(ip, port)
 
     backend = EpicsBackend(mapping, pv_prefix)
     backend.create_gui(
@@ -51,16 +59,15 @@ def ioc(pv_prefix: str = typer.Argument()):
 
 
 @app.command()
-def asyncio():
-    mapping = get_controller_mapping()
+def asyncio(ip: str = EigerIp, port: int = EigerPort):
+    mapping = get_controller_mapping(ip, port)
 
     backend = AsyncioBackend(mapping)
     backend.run_interactive_session()
 
 
-def get_controller_mapping() -> Mapping:
-    controller = EigerController("127.0.0.1", 8081)
-    # controller = EigerController("i03-eiger01", 80)
+def get_controller_mapping(ip: str, port: int) -> Mapping:
+    controller = EigerController(ip, port)
 
     return Mapping(controller)
 
