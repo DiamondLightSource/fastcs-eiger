@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Optional
 
 import typer
 from fastcs.backends.asyncio_backend import AsyncioBackend
 from fastcs.backends.epics.backend import EpicsBackend
+from fastcs.backends.epics.gui import EpicsGUIOptions
 from fastcs.mapping import Mapping
 
 from eiger_fastcs import __version__
@@ -35,26 +37,39 @@ def main(
     pass
 
 
+EigerIp = typer.Option("127.0.0.1", help="IP address of Eiger detector")
+EigerPort = typer.Option(8081, help="Port of Eiger HTTP server")
+
+OPI_PATH = Path("/epics/opi")
+
+
 @app.command()
-def ioc(pv_prefix: str = typer.Argument()):
-    mapping = get_controller_mapping()
+def ioc(
+    pv_prefix: str = typer.Argument(),
+    ip: str = EigerIp,
+    port: int = EigerPort,
+):
+    ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
+
+    mapping = get_controller_mapping(ip, port)
 
     backend = EpicsBackend(mapping, pv_prefix)
-    backend.create_gui()
+    backend.create_gui(
+        EpicsGUIOptions(output_path=ui_path / "eiger.bob", title=f"Eiger - {pv_prefix}")
+    )
     backend.get_ioc().run()
 
 
 @app.command()
-def asyncio():
-    mapping = get_controller_mapping()
+def asyncio(ip: str = EigerIp, port: int = EigerPort):
+    mapping = get_controller_mapping(ip, port)
 
     backend = AsyncioBackend(mapping)
     backend.run_interactive_session()
 
 
-def get_controller_mapping() -> Mapping:
-    controller = EigerController("127.0.0.1", 8081)
-    # controller = EigerController("i03-eiger01", 80)
+def get_controller_mapping(ip: str, port: int) -> Mapping:
+    controller = EigerController(ip, port)
 
     return Mapping(controller)
 

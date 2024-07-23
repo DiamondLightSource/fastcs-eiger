@@ -1,7 +1,7 @@
 # The devcontainer should use the developer target and run as root with podman
 # or docker with user namespaces.
 ARG PYTHON_VERSION=3.11
-FROM python:${PYTHON_VERSION} as developer
+FROM python:${PYTHON_VERSION} AS developer
 
 # Add any system dependencies for the developer/build environment here
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -13,16 +13,21 @@ RUN python -m venv /venv
 ENV PATH=/venv/bin:$PATH
 
 # The build stage installs the context into the venv
-FROM developer as build
+FROM developer AS build
 COPY . /context
 WORKDIR /context
-RUN pip install .
+RUN pip install --upgrade pip && pip install .
 
 # The runtime stage copies the built venv into a slim runtime container
-FROM python:${PYTHON_VERSION}-slim as runtime
+FROM python:${PYTHON_VERSION}-slim AS runtime
 # Add apt-get system dependecies for runtime here if needed
 COPY --from=build /venv/ /venv/
 ENV PATH=/venv/bin:$PATH
+
+# Make directory to run inside and generate bob files
+RUN mkdir -p /epics/opi
+
+WORKDIR /epics/opi
 
 # change this entrypoint if it is not the same as the repo
 ENTRYPOINT ["eiger-fastcs"]
