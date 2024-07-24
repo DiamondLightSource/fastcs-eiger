@@ -75,7 +75,7 @@ class HTTPConnection:
         async with session.get(self.full_url(uri)) as response:
             return response, await response.read()
 
-    async def put(self, uri, value) -> list[str]:
+    async def put(self, uri, value=None) -> list[str]:
         """Perform HTTP PUT request and return response content as json.
 
         If successful, the response is a list of parameters whose values may have
@@ -90,7 +90,7 @@ class HTTPConnection:
         session = self.get_session()
         async with session.put(
             self.full_url(uri),
-            json={"value": value},
+            json={"value": value} if value is not None else None,
             headers={"Content-Type": "application/json"},
         ) as response:
             if response.status != 200:
