@@ -46,6 +46,10 @@ MISSING_KEYS: dict[str, dict[str, list[str]]] = {
 }
 
 
+def command_uri(key: str) -> str:
+    return f"detector/api/1.8.0/command/{key}"
+
+
 def detector_command(fn) -> Any:
     return command(group="DetectorCommand")(fn)
 
@@ -156,12 +160,12 @@ class EigerController(Controller):
     Sets up all connections with the Simplon API to send and receive information
     """
 
-    # Detector Parameters
-    ntrigger = AttrRW(Int())  # TODO: Include URI and validate type from API
+    # Detector parameters to use in internal logic
+    trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
 
-    # Logic Parameters
-    manual_trigger = AttrRW(Bool(), handler=LogicHandler())
+    # Internal Attributes
     stale_parameters = AttrR(Bool())
+    trigger_exposure = AttrRW(Float(), handler=LogicHandler())
 
     def __init__(self, ip: str, port: int) -> None:
         super().__init__()
@@ -193,7 +197,7 @@ class EigerController(Controller):
         state_val = await self._connection.get("detector/api/1.8.0/status/state")
         if state_val["value"] == "na":
             print("Initializing Detector")
-            await self._connection.put("detector/api/1.8.0/command/initialize", "")
+            await self._connection.put("detector/api/1.8.0/command/initialize")
 
         try:
             parameters = await self._introspect_detector()
@@ -301,52 +305,35 @@ class EigerController(Controller):
         """Closing HTTP connection with device"""
         await self._connection.close()
 
-    async def arm(self):
-        """Arming Detector called by the start acquisition button"""
-        await self._connection.put("detector/api/1.8.0/command/arm", "")
-
     @detector_command
     async def initialize(self):
-        """Command to initialize Detector - will create a PVI button"""
-        await self._connection.put("detector/api/1.8.0/command/initialize", "")
+        await self._connection.put(command_uri("initialize"))
 
     @detector_command
-    async def disarm(self):
-        """Command to disarm Detector - will create a PVI button"""
-        await self._connection.put("detector/api/1.8.0/command/disarm", "")
-
-    @detector_command
-    async def abort(self):
-        """Command to abort any tasks Detector - will create a PVI button"""
-        await self._connection.put("detector/api/1.8.0/command/abort", "")
-
-    @detector_command
-    async def cancel(self):
-        """Command to cancel readings from Detector - will create a PVI button"""
-        await self._connection.put("detector/api/1.8.0/command/cancel", "")
+    async def arm(self):
+        await self._connection.put(command_uri("arm"))
 
     @detector_command
     async def trigger(self):
-        """
-        Command to trigger Detector when manual triggering is switched on.
-        will create a PVI button
-        """
-        await self._connection.put("detector/api/1.8.0/command/trigger", "")
+        match self.trigger_mode.get(), self.trigger_exposure.get():
+            case ("inte", exposure) if exposure > 0.0:
+                await self._connection.put(command_uri("trigger"), exposure)
+            case ("ints" | "inte", _):
+                await self._connection.put(command_uri("trigger"))
+            case _:
+                raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
 
     @detector_command
-    async def start_acquisition(self):
-        """
-        Command to start acquiring detector image.
+    async def disarm(self):
+        await self._connection.put(command_uri("disarm"))
 
-        Iterates through arming and triggering the detector if manual trigger off.
-        If manual triggers are on, it arms the detector, ready for triggering.
-        """
-        await self.arm()
-        # Current functionality is for ints triggering and multiple ntriggers for
-        # automatic triggering
-        if not self.manual_trigger.get():
-            for _ in range(self.ntrigger.get()):
-                await self.trigger()
+    @detector_command
+    async def abort(self):
+        await self._connection.put(command_uri("abort"))
+
+    @detector_command
+    async def cancel(self):
+        await self._connection.put(command_uri("cancel"))
 
     async def queue_update(self, parameters: list[str]):
         """Add the given parameters to the list of parameters to update.
