@@ -280,6 +280,7 @@ class EigerController(Controller):
                         datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
+                        allowed_values=parameter.response.get("allowed_values", None),
                     )
 
         return attributes
