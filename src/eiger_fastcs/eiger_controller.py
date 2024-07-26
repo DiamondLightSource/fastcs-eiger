@@ -67,7 +67,7 @@ class EigerHandler:
     update_period: float = 0.2
 
     async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
-        parameters_to_update = await controller._connection.put(self.name, value)
+        parameters_to_update = await controller.connection.put(self.name, value)
         if not parameters_to_update:
             parameters_to_update = [self.name.split("/")[-1]]
             print(f"Manually fetching parameter {parameters_to_update}")
@@ -80,7 +80,7 @@ class EigerHandler:
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
         try:
-            response = await controller._connection.get(self.name)
+            response = await controller.connection.get(self.name)
             await attr.set(response["value"])
         except Exception as e:
             print(f"Failed to get {self.name}:\n{e.__class__.__name__} {e}")
@@ -97,7 +97,7 @@ class EigerConfigHandler(EigerHandler):
             await super().update(controller, attr)
             if isinstance(attr, AttrRW):
                 # Sync readback value to demand
-                await attr._write_display_callback(attr.get())
+                await attr.update_display_without_process(attr.get())
 
             self.first_poll_complete = True
 
@@ -171,7 +171,7 @@ class EigerController(Controller):
         super().__init__()
         self._ip = ip
         self._port = port
-        self._connection = HTTPConnection(self._ip, self._port)
+        self.connection = HTTPConnection(self._ip, self._port)
 
         # Parameter update logic
         self._parameter_updates: set[str] = set()
@@ -183,7 +183,7 @@ class EigerController(Controller):
 
     async def connect(self) -> None:
         """Reopen connection on backend asyncio loop"""
-        self._connection.open()
+        self.connection.open()
 
     async def initialise(self) -> None:
         """Create attributes by introspecting detector.
@@ -191,13 +191,13 @@ class EigerController(Controller):
         The detector will be initialized if it is not already.
 
         """
-        self._connection.open()
+        self.connection.open()
 
         # Check current state of detector_state to see if initializing is required.
-        state_val = await self._connection.get("detector/api/1.8.0/status/state")
+        state_val = await self.connection.get("detector/api/1.8.0/status/state")
         if state_val["value"] == "na":
             print("Initializing Detector")
-            await self._connection.put("detector/api/1.8.0/command/initialize")
+            await self.connection.put("detector/api/1.8.0/command/initialize")
 
         try:
             parameters = await self._introspect_detector()
@@ -210,7 +210,7 @@ class EigerController(Controller):
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
 
-        await self._connection.close()
+        await self.connection.close()
 
     async def _introspect_detector(self) -> list[EigerParameter]:
         parameters = []
@@ -219,13 +219,13 @@ class EigerController(Controller):
         ):
             subsystem_keys = [
                 parameter
-                for parameter in await self._connection.get(
+                for parameter in await self.connection.get(
                     f"{subsystem}/api/1.8.0/{mode}/keys"
                 )
                 if parameter not in IGNORED_KEYS
             ] + MISSING_KEYS[subsystem][mode]
             requests = [
-                self._connection.get(f"{subsystem}/api/1.8.0/{mode}/{key}")
+                self.connection.get(f"{subsystem}/api/1.8.0/{mode}/{key}")
                 for key in subsystem_keys
             ]
             responses = await asyncio.gather(*requests)
@@ -304,37 +304,37 @@ class EigerController(Controller):
 
     async def close(self) -> None:
         """Closing HTTP connection with device"""
-        await self._connection.close()
+        await self.connection.close()
 
     @detector_command
     async def initialize(self):
-        await self._connection.put(command_uri("initialize"))
+        await self.connection.put(command_uri("initialize"))
 
     @detector_command
     async def arm(self):
-        await self._connection.put(command_uri("arm"))
+        await self.connection.put(command_uri("arm"))
 
     @detector_command
     async def trigger(self):
         match self.trigger_mode.get(), self.trigger_exposure.get():
             case ("inte", exposure) if exposure > 0.0:
-                await self._connection.put(command_uri("trigger"), exposure)
+                await self.connection.put(command_uri("trigger"), exposure)
             case ("ints" | "inte", _):
-                await self._connection.put(command_uri("trigger"))
+                await self.connection.put(command_uri("trigger"))
             case _:
                 raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
 
     @detector_command
     async def disarm(self):
-        await self._connection.put(command_uri("disarm"))
+        await self.connection.put(command_uri("disarm"))
 
     @detector_command
     async def abort(self):
-        await self._connection.put(command_uri("abort"))
+        await self.connection.put(command_uri("abort"))
 
     @detector_command
     async def cancel(self):
-        await self._connection.put(command_uri("cancel"))
+        await self.connection.put(command_uri("cancel"))
 
     async def queue_update(self, parameters: list[str]):
         """Add the given parameters to the list of parameters to update.
@@ -380,7 +380,7 @@ class EigerController(Controller):
     @scan(1)
     async def handle_monitor(self):
         """Poll monitor images to display."""
-        response, image_bytes = await self._connection.get_bytes(
+        response, image_bytes = await self.connection.get_bytes(
             "monitor/api/1.8.0/images/next"
         )
         if response.status != 200:
