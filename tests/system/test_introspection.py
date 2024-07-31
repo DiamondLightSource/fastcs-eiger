@@ -30,21 +30,37 @@ def eiger_controller():
     yield EigerController("i04-1-eiger01", 80)
 
 
+# Stolen from tickit-devices
+# https://docs.pytest.org/en/latest/example/parametrize.html#indirect-parametrization
 @pytest.fixture
-def sim_eiger_controller():
-    cmd = ["tickit", "all", str(HERE / "eiger.yaml")]
-    sim = subprocess.Popen(cmd)
+def sim_eiger_controller(request):
+    """Subprocess that runs ``tickit all <config_path>``."""
+    config_path: str = request.param
+    proc = subprocess.Popen(
+        ["tickit", "all", config_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+    # Wait until ready
+    while True:
+        line = proc.stdout.readline()
+        if "Starting HTTP server..." in line:
+            break
 
     sleep(3)
 
     yield EigerController("127.0.0.1", 8081)
 
-    sim.send_signal(signal.SIGTERM)
-    sleep(0.1)
-    sim.kill()
+    proc.send_signal(signal.SIGINT)
+    print(proc.communicate()[0])
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
+)
 async def test_introspection(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     # controller = eiger_controller
