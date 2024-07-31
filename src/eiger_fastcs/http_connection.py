@@ -1,4 +1,4 @@
-from aiohttp import ClientResponse, ClientSession
+from aiohttp import ClientResponse, ClientSession, ClientTimeout
 
 
 class HTTPRequestError(ConnectionError):
@@ -56,7 +56,9 @@ class HTTPConnection:
 
         """
         session = self.get_session()
-        async with session.get(self.full_url(uri), timeout=3) as response:
+        async with session.get(
+            self.full_url(uri), timeout=ClientTimeout(total=3)
+        ) as response:
             if response.status != 200:
                 raise HTTPRequestError(f"Failed to get {uri}", response)
             else:
