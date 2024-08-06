@@ -6,8 +6,7 @@ from itertools import product
 from typing import Any, Literal
 
 import numpy as np
-from attr import Attribute
-from fastcs.attributes import AttrR, AttrRW, AttrW
+from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW
 from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
@@ -177,14 +176,6 @@ class EigerController(Controller):
         self._parameter_updates: set[str] = set()
         self._parameter_update_lock = asyncio.Lock()
 
-        # Initialize parameters from hardware - run on ephemeral asyncio loop
-        # TODO: Make the backend asyncio loop available earlier
-        asyncio.run(self.initialise())
-
-    async def connect(self) -> None:
-        """Reopen connection on backend asyncio loop"""
-        self.connection.open()
-
     async def initialise(self) -> None:
         """Create attributes by introspecting detector.
 
@@ -197,7 +188,7 @@ class EigerController(Controller):
         state_val = await self.connection.get("detector/api/1.8.0/status/state")
         if state_val["value"] == "na":
             print("Initializing Detector")
-            await self.connection.put("detector/api/1.8.0/command/initialize")
+            await self.initialize()
 
         try:
             parameters = await self._introspect_detector()
@@ -209,8 +200,6 @@ class EigerController(Controller):
 
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
-
-        await self.connection.close()
 
     async def _introspect_detector(self) -> list[EigerParameter]:
         parameters = []
@@ -301,10 +290,6 @@ class EigerController(Controller):
                     parameter.has_unique_key = False
                     other.has_unique_key = False
                     break
-
-    async def close(self) -> None:
-        """Closing HTTP connection with device"""
-        await self.connection.close()
 
     @detector_command
     async def initialize(self):

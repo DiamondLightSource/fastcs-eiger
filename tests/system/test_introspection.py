@@ -65,7 +65,7 @@ async def test_introspection(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     # controller = eiger_controller
 
-    await controller.connect()
+    controller.connection.open()
     _parameters = await controller._introspect_detector()
     controller._tag_key_clashes(_parameters)
     parameters = {p.name: _serialise_parameter(p) for p in _parameters}
@@ -78,4 +78,4 @@ async def test_introspection(sim_eiger_controller: EigerController):
 
     assert parameters == expected_parameters, "Detector API does not match"
 
-    await controller.close()
+    await controller.connection.close()
