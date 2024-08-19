@@ -6,6 +6,8 @@ from pathlib import Path
 from time import sleep
 
 import pytest
+from fastcs.attributes import AttrR
+from fastcs.datatypes import Float
 
 from eiger_fastcs.eiger_controller import EigerController, EigerParameter
 
@@ -65,7 +67,7 @@ async def test_introspection(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     # controller = eiger_controller
 
-    await controller.connect()
+    controller.connection.open()
     _parameters = await controller._introspect_detector()
     controller._tag_key_clashes(_parameters)
     parameters = {p.name: _serialise_parameter(p) for p in _parameters}
@@ -78,4 +80,11 @@ async def test_introspection(sim_eiger_controller: EigerController):
 
     assert parameters == expected_parameters, "Detector API does not match"
 
-    await controller.close()
+    attributes = controller._create_attributes(_parameters)
+
+    assert len(attributes) == 91
+    assert isinstance(attributes["humidity"], AttrR)
+    assert isinstance(attributes["humidity"].datatype, Float)
+    assert attributes["humidity"]._group == "DetectorStatus"
+
+    await controller.connection.close()

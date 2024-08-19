@@ -5,7 +5,6 @@ import typer
 from fastcs.backends.asyncio_backend import AsyncioBackend
 from fastcs.backends.epics.backend import EpicsBackend
 from fastcs.backends.epics.gui import EpicsGUIOptions
-from fastcs.mapping import Mapping
 
 from eiger_fastcs import __version__
 from eiger_fastcs.eiger_controller import EigerController
@@ -51,27 +50,21 @@ def ioc(
 ):
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
 
-    mapping = get_controller_mapping(ip, port)
+    controller = EigerController(ip, port)
 
-    backend = EpicsBackend(mapping, pv_prefix)
+    backend = EpicsBackend(controller, pv_prefix)
     backend.create_gui(
         EpicsGUIOptions(output_path=ui_path / "eiger.bob", title=f"Eiger - {pv_prefix}")
     )
-    backend.get_ioc().run()
+    backend.run()
 
 
 @app.command()
 def asyncio(ip: str = EigerIp, port: int = EigerPort):
-    mapping = get_controller_mapping(ip, port)
-
-    backend = AsyncioBackend(mapping)
-    backend.run_interactive_session()
-
-
-def get_controller_mapping(ip: str, port: int) -> Mapping:
     controller = EigerController(ip, port)
 
-    return Mapping(controller)
+    backend = AsyncioBackend(controller)
+    backend.run_interactive_session()
 
 
 # test with: python -m eiger_fastcs
