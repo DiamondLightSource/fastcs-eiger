@@ -1,8 +1,9 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""Configuration file for the Sphinx documentation builder.
+
+This file only contains a selection of the most common options. For a full
+list see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""
 
 import sys
 from pathlib import Path
@@ -10,15 +11,15 @@ from subprocess import check_output
 
 import requests
 
-import eiger_fastcs
+import fastcs_eiger
 
 # -- General configuration ------------------------------------------------
 
 # General information about the project.
-project = "eiger-fastcs"
+project = "fastcs-eiger"
 
 # The full version, including alpha/beta/rc tags.
-release = eiger_fastcs.__version__
+release = fastcs_eiger.__version__
 
 # The short X.Y version.
 if "+" in release:
@@ -32,6 +33,8 @@ else:
 extensions = [
     # Use this for generating API docs
     "sphinx.ext.autodoc",
+    # and making summary tables at the top of API docs
+    "sphinx.ext.autosummary",
     # This can parse google style docstrings
     "sphinx.ext.napoleon",
     # For linking to external sphinx documentation
@@ -80,6 +83,12 @@ autodoc_member_order = "bysource"
 # Don't inherit docstrings from baseclasses
 autodoc_inherit_docstrings = False
 
+# Document only what is in __all__
+autosummary_ignore_module_all = False
+
+# Add any paths that contain templates here, relative to this directory.
+templates_path = ["_templates"]
+
 # Output graphviz directive produced images in a scalable format
 graphviz_output_format = "svg"
 
@@ -119,7 +128,7 @@ copybutton_prompt_is_regexp = True
 # a list of builtin themes.
 #
 html_theme = "pydata_sphinx_theme"
-github_repo = "eiger-fastcs"
+github_repo = "fastcs-eiger"
 github_user = "DiamondLightSource"
 switcher_json = f"https://{github_user}.github.io/{github_repo}/switcher.json"
 switcher_exists = requests.get(switcher_json).ok

@@ -6,8 +6,8 @@ from fastcs.backends.asyncio_backend import AsyncioBackend
 from fastcs.backends.epics.backend import EpicsBackend
 from fastcs.backends.epics.gui import EpicsGUIOptions
 
-from eiger_fastcs import __version__
-from eiger_fastcs.eiger_controller import EigerController
+from fastcs_eiger import __version__
+from fastcs_eiger.eiger_controller import EigerController
 
 __all__ = ["main"]
 
@@ -67,6 +67,6 @@ def asyncio(ip: str = EigerIp, port: int = EigerPort):
     backend.run_interactive_session()
 
 
-# test with: python -m eiger_fastcs
+# test with: python -m fastcs_eiger
 if __name__ == "__main__":
     app()

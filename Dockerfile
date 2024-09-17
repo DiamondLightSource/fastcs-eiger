@@ -30,5 +30,5 @@ RUN mkdir -p /epics/opi
 WORKDIR /epics/opi
 
 # change this entrypoint if it is not the same as the repo
-ENTRYPOINT ["eiger-fastcs"]
+ENTRYPOINT ["fastcs-eiger"]
 CMD ["--version"]

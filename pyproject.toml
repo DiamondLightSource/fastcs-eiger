@@ -3,7 +3,7 @@ requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "eiger-fastcs"
+name = "fastcs-eiger"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: Apache Software License",
@@ -45,17 +45,17 @@ dev = [
 ]
 
 [project.scripts]
-eiger-fastcs = "eiger_fastcs.__main__:app"
+fastcs-eiger = "fastcs_eiger.__main__:main"
 
 [project.urls]
-GitHub = "https://github.com/DiamondLightSource/eiger-fastcs"
+GitHub = "https://github.com/DiamondLightSource/fastcs-eiger"
 
 [[project.authors]] # Further authors may be added by duplicating this section
 email = "gary.yendell@diamond.ac.uk"
 name = "Gary Yendell"
 
 [tool.setuptools_scm]
-version_file = "src/eiger_fastcs/_version.py"
+version_file = "src/fastcs_eiger/_version.py"
 
 [tool.mypy]
 ignore_missing_imports = true # Ignore missing stubs in imported modules
@@ -71,7 +71,7 @@ filterwarnings = "error"
 testpaths = "docs src tests"
 
 [tool.coverage.run]
-data_file = "/tmp/eiger_fastcs.coverage"
+data_file = "/tmp/fastcs_eiger.coverage"
 
 [tool.coverage.paths]
 # Tests are run from installed location, map back to the src directory
@@ -97,7 +97,7 @@ allowlist_externals =
 commands =
     pre-commit: pre-commit run --all-files --show-diff-on-failure {posargs}
     type-checking: mypy src tests {posargs}
-    tests: pytest --cov=eiger_fastcs --cov-report term --cov-report xml:cov.xml {posargs}
+    tests: pytest --cov=fastcs_eiger --cov-report term --cov-report xml:cov.xml {posargs}
     docs: sphinx-{posargs:build -EW --keep-going} -T docs build/html
 """
 

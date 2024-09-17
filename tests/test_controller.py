@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from eiger_fastcs.eiger_controller import EigerController
+from fastcs_eiger.eiger_controller import EigerController
 
 
 @pytest.mark.asyncio
