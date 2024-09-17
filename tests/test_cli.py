@@ -1,10 +1,10 @@
 import subprocess
 import sys
 
-from eiger_fastcs import __version__
+from fastcs_eiger import __version__
 
 
 def test_cli_version():
-    cmd = [sys.executable, "-m", "eiger_fastcs", "--version"]
+    cmd = [sys.executable, "-m", "fastcs_eiger", "--version"]
     stdout = subprocess.check_output(cmd).decode().strip().split("\n")
     assert __version__ in stdout

@@ -1,9 +1,9 @@
-[![CI](https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/ci.yml/badge.svg)](https://github.com/DiamondLightSource/eiger-fastcs/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/DiamondLightSource/eiger-fastcs/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamondLightSource/eiger-fastcs)
-[![PyPI](https://img.shields.io/pypi/v/eiger-fastcs.svg)](https://pypi.org/project/eiger-fastcs)
+[![CI](https://github.com/DiamondLightSource/fastcs-eiger/actions/workflows/ci.yml/badge.svg)](https://github.com/DiamondLightSource/fastcs-eiger/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/DiamondLightSource/fastcs-eiger/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamondLightSource/fastcs-eiger)
+[![PyPI](https://img.shields.io/pypi/v/fastcs-eiger.svg)](https://pypi.org/project/fastcs-eiger)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Eiger FastCS
+# FastCS Eiger
 
 Control system integration for Dectris Eiger detectors using FastCS.
 
@@ -15,22 +15,21 @@ Control system integration for Dectris Eiger detectors using FastCS.
 
 2. Run the IOC against the simulated detector, either from a local checkout
 
-    i. `eiger-fastcs ioc EIGER` (or run `Eiger IOC` vscode launch config)
+    i. `fastcs-eiger ioc EIGER` (or run `Eiger IOC` vscode launch config)
 
 3. or the container
 
     i. Make a local directory for UIs `mkdir /tmp/opi`
 
-    ii. `podman run --rm -it -v /tmp/opi:/epics/opi --net=host ghcr.io/DiamondLightSource/eiger-fastcs:latest`
+    ii. `podman run --rm -it -v /tmp/opi:/epics/opi --net=host ghcr.io/DiamondLightSource/fastcs-eiger:latest`
 
-Source          | <https://github.com/DiamondLightSource/eiger-fastcs>
+Source          | <https://github.com/DiamondLightSource/fastcs-eiger>
 :---:           | :---:
-PyPI            | `pip install eiger-fastcs`
-Docker          | `docker run ghcr.io/diamondlightsource/eiger-fastcs:latest`
-Documentation   | <https://diamondlightsource.github.io/eiger-fastcs>
-Releases        | <https://github.com/DiamondLightSource/eiger-fastcs/releases>
-
+PyPI            | `pip install fastcs-eiger`
+Docker          | `docker run ghcr.io/diamondlightsource/fastcs-eiger:latest`
+Documentation   | <https://diamondlightsource.github.io/fastcs-eiger>
+Releases        | <https://github.com/DiamondLightSource/fastcs-eiger/releases>
 
 <!-- README only content. Anything below this line won't be included in index.md -->
 
-See https://diamondlightsource.github.io/eiger-fastcs for more detailed documentation.
+See https://diamondlightsource.github.io/fastcs-eiger for more detailed documentation.

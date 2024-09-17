@@ -9,7 +9,7 @@ import pytest
 from fastcs.attributes import AttrR
 from fastcs.datatypes import Float
 
-from eiger_fastcs.eiger_controller import EigerController, EigerParameter
+from fastcs_eiger.eiger_controller import EigerController, EigerParameter
 
 HERE = Path(__file__).parent
 

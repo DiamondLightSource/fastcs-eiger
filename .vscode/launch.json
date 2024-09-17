@@ -8,7 +8,7 @@
             "name": "Eiger IOC",
             "type": "debugpy",
             "request": "launch",
-            "module": "eiger_fastcs",
+            "module": "fastcs_eiger",
             "justMyCode": false,
             "console": "integratedTerminal",
             "args": ["ioc", "EIGER"]
@@ -17,7 +17,7 @@
             "name": "Eiger Asyncio",
             "type": "debugpy",
             "request": "launch",
-            "module": "eiger_fastcs",
+            "module": "fastcs_eiger",
             "justMyCode": false,
             "console": "integratedTerminal",
             "args": ["asyncio"]

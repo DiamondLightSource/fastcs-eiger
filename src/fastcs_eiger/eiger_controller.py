@@ -12,7 +12,7 @@ from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 from PIL import Image
 
-from eiger_fastcs.http_connection import HTTPConnection, HTTPRequestError
+from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [

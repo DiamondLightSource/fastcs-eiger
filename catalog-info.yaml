@@ -1,10 +1,10 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: eiger-fastcs
-  title: eiger-fastcs
+  name: fastcs-eiger
+  title: fastcs-eiger
   description: Eiger control system integration with FastCS
 spec:
-  type: documentation
+  type: service
   lifecycle: experimental
   owner: user:mef65357
