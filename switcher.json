@@ -1,42 +1,42 @@
 [
   {
     "version": "main",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/main/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/main/"
   },
   {
     "version": "0.1.0beta5",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/0.1.0beta5/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/0.1.0beta5/"
   },
   {
     "version": "0.1.0beta4",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/0.1.0beta4/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/0.1.0beta4/"
   },
   {
     "version": "0.1.0beta3",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/0.1.0beta3/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/0.1.0beta3/"
   },
   {
     "version": "0.1.0beta2",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/0.1.0beta2/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/0.1.0beta2/"
   },
   {
     "version": "0.1.0beta1",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/0.1.0beta1/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/0.1.0beta1/"
   },
   {
     "version": "api-fixes-2",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/api-fixes-2/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/api-fixes-2/"
   },
   {
     "version": "dev",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/dev/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/dev/"
   },
   {
     "version": "http-connection",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/http-connection/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/http-connection/"
   },
   {
     "version": "monitor",
-    "url": "https://DiamondLightSource.github.io/eiger-fastcs/monitor/"
+    "url": "https://DiamondLightSource.github.io/fastcs-eiger/monitor/"
   }
 ]
