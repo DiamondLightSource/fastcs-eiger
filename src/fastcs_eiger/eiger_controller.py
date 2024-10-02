@@ -62,27 +62,34 @@ class EigerHandler:
     Handler uses uri of detector to collect data for PVs
     """
 
-    name: str
+    uri: str
     update_period: float = 0.2
 
     async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
-        parameters_to_update = await controller.connection.put(self.name, value)
+        parameters_to_update = await controller.connection.put(self.uri, value)
         if not parameters_to_update:
-            parameters_to_update = [self.name.split("/")[-1]]
+            parameters_to_update = [self.uri.split("/", 4)[-1]]
             print(f"Manually fetching parameter {parameters_to_update}")
+        elif "difference_mode" in parameters_to_update:
+            parameters_to_update[
+                parameters_to_update.index("difference_mode")
+            ] = "threshold/difference/mode"
+            print(
+                f"Fetching parameters after setting {self.uri}: {parameters_to_update},"
+                " replacing incorrect key 'difference_mode'")
         else:
             print(
-                f"Fetching parameters after setting {self.name}: {parameters_to_update}"
+                f"Fetching parameters after setting {self.uri}: {parameters_to_update}"
             )
 
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerController", attr: AttrR) -> None:
         try:
-            response = await controller.connection.get(self.name)
+            response = await controller.connection.get(self.uri)
             await attr.set(response["value"])
         except Exception as e:
-            print(f"Failed to get {self.name}:\n{e.__class__.__name__} {e}")
+            print(f"Failed to get {self.uri}:\n{e.__class__.__name__} {e}")
 
 
 class EigerConfigHandler(EigerHandler):
