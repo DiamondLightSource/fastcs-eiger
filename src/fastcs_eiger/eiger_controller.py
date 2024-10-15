@@ -64,7 +64,9 @@ class EigerHandler:
     uri: str
     update_period: float = 0.2
 
-    async def put(self, controller: "EigerController", _: AttrW, value: Any) -> None:
+    async def put(
+        self, controller: "EigerSubsystemController", _: AttrW, value: Any
+    ) -> None:
         parameters_to_update = await controller.connection.put(self.uri, value)
         if not parameters_to_update:
             parameters_to_update = [self.uri.split("/", 4)[-1]]
@@ -142,6 +144,10 @@ class EigerParameter:
     """JSON response from GET of parameter."""
 
     @property
+    def attribute_name(self):
+        return _key_to_attribute_name(self.key)
+
+    @property
     def uri(self) -> str:
         """Full URI for HTTP requests."""
         return f"{self.subsystem}/api/1.8.0/{self.mode}/{self.key}"
@@ -163,12 +169,8 @@ class EigerController(Controller):
     Sets up all connections with the Simplon API to send and receive information
     """
 
-    # Detector parameters to use in internal logic
-    trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
-
-    # Internal Attributes
+    # Internal Attribute
     stale_parameters = AttrR(Bool())
-    trigger_exposure = AttrRW(Float(), handler=LogicHandler())
 
     def __init__(self, ip: str, port: int) -> None:
         super().__init__()
@@ -187,57 +189,30 @@ class EigerController(Controller):
         """
         self.connection.open()
 
-        # Check current state of detector_state to see if initializing is required.
-        state_val = await self.connection.get("detector/api/1.8.0/status/state")
-        if state_val["value"] == "na":
-            print("Initializing Detector")
-            await self.initialize()
-
         try:
             for subsystem in EIGER_PARAMETER_SUBSYSTEMS:
-                if subsystem == "detector":
-                    controller = EigerDetectorController(
-                        self.connection, self._parameter_update_lock
-                    )
-                else:
-                    controller = EigerSubsystemController(
-                        subsystem, self.connection, self._parameter_update_lock
-                    )
+                match subsystem:
+                    case "detector":
+                        controller = EigerDetectorController(
+                            self.connection, self._parameter_update_lock
+                        )
+                    case "monitor":
+                        controller = EigerMonitorController(
+                            self.connection, self._parameter_update_lock
+                        )
+                    case "stream":
+                        controller = EigerStreamController(
+                            self.connection, self._parameter_update_lock
+                        )
+                    case _:
+                        raise NotImplementedError(
+                            f"No subcontroller implemented for subsystem {subsystem}"
+                        )
                 self.register_sub_controller(subsystem.upper(), controller)
                 await controller.initialise()
         except HTTPRequestError:
             print("\nAn HTTP request failed while introspecting detector:\n")
             raise
-
-    @detector_command
-    async def initialize(self):
-        await self.connection.put(command_uri("initialize"))
-
-    @detector_command
-    async def arm(self):
-        await self.connection.put(command_uri("arm"))
-
-    @detector_command
-    async def trigger(self):
-        match self.trigger_mode.get(), self.trigger_exposure.get():
-            case ("inte", exposure) if exposure > 0.0:
-                await self.connection.put(command_uri("trigger"), exposure)
-            case ("ints" | "inte", _):
-                await self.connection.put(command_uri("trigger"))
-            case _:
-                raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
-
-    @detector_command
-    async def disarm(self):
-        await self.connection.put(command_uri("disarm"))
-
-    @detector_command
-    async def abort(self):
-        await self.connection.put(command_uri("abort"))
-
-    @detector_command
-    async def cancel(self):
-        await self.connection.put(command_uri("cancel"))
 
     @scan(0.1)
     async def update(self):
@@ -248,31 +223,16 @@ class EigerController(Controller):
         controller_updates = [c.update() for c in self.get_sub_controllers().values()]
         await asyncio.gather(*controller_updates)
 
-    @scan(1)
-    async def handle_monitor(self):
-        """Poll monitor images to display."""
-        response, image_bytes = await self.connection.get_bytes(
-            "monitor/api/1.8.0/images/next"
-        )
-        if response.status != 200:
-            return
-        else:
-            image = Image.open(BytesIO(image_bytes))
-
-            # TODO: Populate waveform PV to display as image, once supported in PVI
-            print(np.array(image))
-
 
 class EigerSubsystemController(SubController):
+    _subsystem: Literal["detector", "stream", "monitor"]
     stale_parameters = AttrR(Bool())
 
     def __init__(
         self,
-        subsystem: Literal["detector", "stream", "monitor"],
         connection: HTTPConnection,
         lock: asyncio.Lock,
     ):
-        self._subsystem = subsystem
         self.connection = connection
         self._parameter_update_lock = lock
         self._parameter_updates: set[str] = set()
@@ -317,14 +277,6 @@ class EigerSubsystemController(SubController):
         return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
 
     @classmethod
-    def _attribute_name(self, parameter: EigerParameter):
-        return _key_to_attribute_name(parameter.key)
-
-    @classmethod
-    def _group_and_name(self, parameter: EigerParameter) -> tuple[str, str]:
-        return (self._group(parameter), self._attribute_name(parameter))
-
-    @classmethod
     def _create_attributes(cls, parameters: list[EigerParameter]):
         """Create ``Attribute``s from ``EigerParameter``s.
 
@@ -334,7 +286,6 @@ class EigerSubsystemController(SubController):
         """
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
-            group, attribute_name = cls._group_and_name(parameter)
             match parameter.response["value_type"]:
                 case "float":
                     datatype = Float()
@@ -347,15 +298,16 @@ class EigerSubsystemController(SubController):
                 case _:
                     print(f"Failed to handle {parameter}")
 
+            group = cls._group(parameter)
             match parameter.response["access_mode"]:
                 case "r":
-                    attributes[attribute_name] = AttrR(
+                    attributes[parameter.attribute_name] = AttrR(
                         datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                     )
                 case "rw":
-                    attributes[attribute_name] = AttrRW(
+                    attributes[parameter.attribute_name] = AttrRW(
                         datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
@@ -381,6 +333,7 @@ class EigerSubsystemController(SubController):
         if not self._parameter_updates:
             if self.stale_parameters.get():
                 await self.stale_parameters.set(False)
+            return
 
         async with self._parameter_update_lock:
             parameters = self._parameter_updates.copy()
@@ -403,17 +356,76 @@ class EigerSubsystemController(SubController):
 
 
 class EigerDetectorController(EigerSubsystemController):
-    def __init__(self, connection: HTTPConnection, lock: asyncio.Lock):
-        super().__init__("detector", connection, lock)
+    _subsystem = "detector"
+
+    # Detector parameters to use in internal logic
+    trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
+    trigger_exposure = AttrRW(Float(), handler=LogicHandler())
+
+    @detector_command
+    async def trigger(self):
+        match self.trigger_mode.get(), self.trigger_exposure.get():
+            case ("inte", exposure) if exposure > 0.0:
+                await self.connection.put(command_uri("trigger"), exposure)
+            case ("ints" | "inte", _):
+                await self.connection.put(command_uri("trigger"))
+            case _:
+                raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
+
+    async def initialise(self) -> None:
+        # Check current state of detector_state to see if initializing is required.
+        state_val = await self.connection.get("detector/api/1.8.0/status/state")
+        if state_val["value"] == "na":
+            print("Initializing Detector")
+            await self.initialize()
+        await super().initialise()
+
+    @detector_command
+    async def initialize(self):
+        await self.connection.put(command_uri("initialize"))
+
+    @detector_command
+    async def arm(self):
+        await self.connection.put(command_uri("arm"))
+
+    @detector_command
+    async def disarm(self):
+        await self.connection.put(command_uri("disarm"))
+
+    @detector_command
+    async def abort(self):
+        await self.connection.put(command_uri("abort"))
+
+    @detector_command
+    async def cancel(self):
+        await self.connection.put(command_uri("cancel"))
 
     @classmethod
-    def _group_and_name(cls, parameter: EigerParameter) -> tuple[str, str]:
-        if "threshold" in parameter.key:
-            parts = parameter.key.split("/")
-            if len(parts) == 3 and parts[1].isnumeric():
-                group = f"Threshold{parts[1]}"
-            else:
-                group = "Threshold"
-            name = cls._attribute_name(parameter)
-            return (group, name)
-        return super()._group_and_name(parameter)
+    def _group(cls, parameter: EigerParameter) -> str:
+        if "/" in parameter.key:
+            group_parts = parameter.key.split("/")[:-1]
+            # e.g. "threshold/difference/mode" -> ThresholdDifference
+            return "".join(list(map(str.capitalize, group_parts)))
+        return super()._group(parameter)
+
+
+class EigerMonitorController(EigerSubsystemController):
+    _subsystem = "monitor"
+
+    @scan(1)
+    async def handle_monitor(self):
+        """Poll monitor images to display."""
+        response, image_bytes = await self.connection.get_bytes(
+            "monitor/api/1.8.0/images/next"
+        )
+        if response.status != 200:
+            return
+        else:
+            image = Image.open(BytesIO(image_bytes))
+
+            # TODO: Populate waveform PV to display as image, once supported in PVI
+            print(np.array(image))
+
+
+class EigerStreamController(EigerSubsystemController):
+    _subsystem = "stream"

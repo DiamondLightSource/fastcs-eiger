@@ -9,7 +9,8 @@ from fastcs_eiger.eiger_controller import (
     MISSING_KEYS,
     EigerController,
     EigerDetectorController,
-    EigerSubsystemController,
+    EigerMonitorController,
+    EigerStreamController,
 )
 
 _lock = asyncio.Lock()
@@ -43,8 +44,14 @@ async def test_detector_controller(
 
 
 @pytest.mark.asyncio
-async def test_subsystem_controller_initialises(mock_connection):
-    subsystem_controller = EigerSubsystemController("stream", mock_connection, _lock)
+async def test_monitor_controller_initialises(mock_connection):
+    subsystem_controller = EigerMonitorController(mock_connection, _lock)
+    await subsystem_controller.initialise()
+
+
+@pytest.mark.asyncio
+async def test_stream_controller_initialises(mock_connection):
+    subsystem_controller = EigerStreamController(mock_connection, _lock)
     await subsystem_controller.initialise()
 
 
@@ -56,6 +63,8 @@ async def test_detector_subsystem_controller(mock_connection):
     for attr_name in dir(subsystem_controller):
         attr = getattr(subsystem_controller, attr_name)
         if isinstance(attr, Attribute) and "threshold" in attr_name:
+            if attr_name == "threshold_energy":
+                continue
             assert "Threshold" in attr.group
 
 

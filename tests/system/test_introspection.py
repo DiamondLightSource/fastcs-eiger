@@ -13,8 +13,9 @@ from fastcs.datatypes import Float
 from fastcs_eiger.eiger_controller import (
     EigerController,
     EigerDetectorController,
+    EigerMonitorController,
     EigerParameter,
-    EigerSubsystemController,
+    EigerStreamController,
 )
 
 HERE = Path(__file__).parent
@@ -96,11 +97,11 @@ async def test_introspection(sim_eiger_controller: EigerController):
         subsystem_parameters["DETECTOR"]
     )
     assert len(detector_attributes) == 76
-    monitor_attributes = EigerSubsystemController._create_attributes(
+    monitor_attributes = EigerMonitorController._create_attributes(
         subsystem_parameters["MONITOR"]
     )
     assert len(monitor_attributes) == 7
-    stream_attributes = EigerSubsystemController._create_attributes(
+    stream_attributes = EigerStreamController._create_attributes(
         subsystem_parameters["STREAM"]
     )
     assert len(stream_attributes) == 8
@@ -109,6 +110,9 @@ async def test_introspection(sim_eiger_controller: EigerController):
     assert isinstance(detector_attributes["humidity"].datatype, Float)
     assert detector_attributes["humidity"]._group == "DetectorStatus"
     assert detector_attributes["threshold_2_energy"]._group == "Threshold2"
-    assert detector_attributes["threshold_energy"]._group == "Threshold"
+    assert (
+        detector_attributes["threshold_difference_lower_threshold"]._group
+        == "ThresholdDifference"
+    )
 
     await controller.connection.close()
