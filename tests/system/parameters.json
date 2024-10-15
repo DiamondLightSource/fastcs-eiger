@@ -1,933 +1,939 @@
 {
-    "humidity": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "humidity",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "link_0": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "link_0",
-        "response": {
-            "access_mode": "r",
-            "allowed_values": [
-                "up",
-                "down"
-            ],
-            "value_type": "string"
-        }
-    },
-    "link_1": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "link_1",
-        "response": {
-            "access_mode": "r",
-            "allowed_values": [
-                "up",
-                "down"
-            ],
-            "value_type": "string"
-        }
-    },
-    "series_unique_id": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "series_unique_id",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "detector_state": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "state",
-        "response": {
-            "access_mode": "r",
-            "allowed_values": [
-                "na",
-                "idle",
-                "ready",
-                "acquire",
-                "configure",
-                "initialize",
-                "error"
-            ],
-            "value_type": "string"
-        }
-    },
-    "temperature": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "temperature",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "time": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "time",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "detector_error": {
-        "subsystem": "detector",
-        "mode": "status",
-        "key": "error",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "auto_summation": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "auto_summation",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "beam_center_x": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "beam_center_x",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "beam_center_y": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "beam_center_y",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "bit_depth_image": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "bit_depth_image",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "bit_depth_readout": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "bit_depth_readout",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "chi_increment": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "chi_increment",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "chi_start": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "chi_start",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "compression": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "compression",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "lz4",
-                "bslz4",
-                "none"
-            ],
-            "value_type": "string"
-        }
-    },
-    "count_time": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "count_time",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "counting_mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "counting_mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "normal",
-                "retrigger"
-            ],
-            "value_type": "string"
-        }
-    },
-    "countrate_correction_applied": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "countrate_correction_applied",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "countrate_correction_count_cutoff": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "countrate_correction_count_cutoff",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "data_collection_date": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "data_collection_date",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "description": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "description",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "detector_distance": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "detector_distance",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "detector_number": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "detector_number",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "detector_readout_time": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "detector_readout_time",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "eiger_fw_version": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "eiger_fw_version",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "element": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "element",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "Li",
-                "Be",
-                "B",
-                "C",
-                "N",
-                "O",
-                "F",
-                "Ne",
-                "Na",
-                "Mg",
-                "Al",
-                "Si",
-                "P",
-                "S",
-                "Cl",
-                "Ar",
-                "K",
-                "Ca",
-                "Sc",
-                "Ti",
-                "V",
-                "Cr",
-                "Mn",
-                "Fe",
-                "Co",
-                "Ni",
-                "Cu",
-                "Zn"
-            ],
-            "value_type": "string"
-        }
-    },
-    "extg_mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "extg_mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "single",
-                "double"
-            ],
-            "value_type": "string"
-        }
-    },
-    "fast_arm": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "fast_arm",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "flatfield_correction_applied": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "flatfield_correction_applied",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "frame_count_time": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "frame_count_time",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "frame_time": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "frame_time",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "incident_energy": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "incident_energy",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "incident_particle_type": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "incident_particle_type",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "instrument_name": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "instrument_name",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "string"
-        }
-    },
-    "kappa_increment": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "kappa_increment",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "kappa_start": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "kappa_start",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "mask_to_zero": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "mask_to_zero",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "nexpi": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "nexpi",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "uint"
-        }
-    },
-    "nimages": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "nimages",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "uint"
-        }
-    },
-    "ntrigger": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "ntrigger",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "uint"
-        }
-    },
-    "ntriggers_skipped": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "ntriggers_skipped",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "uint"
-        }
-    },
-    "number_of_excluded_pixels": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "number_of_excluded_pixels",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "omega_increment": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "omega_increment",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "omega_start": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "omega_start",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "phi_increment": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "phi_increment",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "phi_start": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "phi_start",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "photon_energy": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "photon_energy",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "pixel_mask_applied": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "pixel_mask_applied",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "roi_mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "roi_mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "disabled",
-                "4M-L",
-                "4M-R"
-            ],
-            "value_type": "string"
-        }
-    },
-    "sample_name": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "sample_name",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "string"
-        }
-    },
-    "sensor_material": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "sensor_material",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "sensor_thickness": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "sensor_thickness",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "software_version": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "software_version",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "source_name": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "source_name",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "string"
-        }
-    },
-    "threshold/1/energy": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/1/energy",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "threshold/1/mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/1/mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "enabled",
-                "disabled"
-            ],
-            "value_type": "string"
-        }
-    },
-    "threshold/1/number_of_excluded_pixels": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/1/number_of_excluded_pixels",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "threshold/2/energy": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/2/energy",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "threshold/2/mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/2/mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "enabled",
-                "disabled"
-            ],
-            "value_type": "string"
-        }
-    },
-    "threshold/2/number_of_excluded_pixels": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/2/number_of_excluded_pixels",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "threshold/difference/lower_threshold": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/difference/lower_threshold",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "threshold/difference/mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/difference/mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "enabled",
-                "disabled"
-            ],
-            "value_type": "string"
-        }
-    },
-    "threshold/difference/upper_threshold": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold/difference/upper_threshold",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "threshold_energy": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "threshold_energy",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "total_flux": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "total_flux",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "trigger_mode": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "trigger_mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "eies",
-                "exte",
-                "extg",
-                "exts",
-                "inte",
-                "ints"
-            ],
-            "value_type": "string"
-        }
-    },
-    "trigger_start_delay": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "trigger_start_delay",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "two_theta_increment": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "two_theta_increment",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "two_theta_start": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "two_theta_start",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "virtual_pixel_correction_applied": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "virtual_pixel_correction_applied",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "x_pixel_size": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "x_pixel_size",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "x_pixels_in_detector": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "x_pixels_in_detector",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "y_pixel_size": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "y_pixel_size",
-        "response": {
-            "access_mode": "r",
-            "value_type": "float"
-        }
-    },
-    "y_pixels_in_detector": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "y_pixels_in_detector",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "wavelength": {
-        "subsystem": "detector",
-        "mode": "config",
-        "key": "wavelength",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "float"
-        }
-    },
-    "stream_dropped": {
-        "subsystem": "stream",
-        "mode": "status",
-        "key": "dropped",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "stream_state": {
-        "subsystem": "stream",
-        "mode": "status",
-        "key": "state",
-        "response": {
-            "access_mode": "r",
-            "allowed_values": [
-                "disabled",
-                "ready",
-                "acquire",
-                "error"
-            ],
-            "value_type": "string"
-        }
-    },
-    "stream_error": {
-        "subsystem": "stream",
-        "mode": "status",
-        "key": "error",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "format": {
-        "subsystem": "stream",
-        "mode": "config",
-        "key": "format",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "legacy",
-                "cbor"
-            ],
-            "value_type": "string"
-        }
-    },
-    "header_appendix": {
-        "subsystem": "stream",
-        "mode": "config",
-        "key": "header_appendix",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "string"
-        }
-    },
-    "header_detail": {
-        "subsystem": "stream",
-        "mode": "config",
-        "key": "header_detail",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "none",
-                "basic",
-                "all"
-            ],
-            "value_type": "string"
-        }
-    },
-    "image_appendix": {
-        "subsystem": "stream",
-        "mode": "config",
-        "key": "image_appendix",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "string"
-        }
-    },
-    "stream_mode": {
-        "subsystem": "stream",
-        "mode": "config",
-        "key": "mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "enabled",
-                "disabled"
-            ],
-            "value_type": "string"
-        }
-    },
-    "buffer_free": {
-        "subsystem": "monitor",
-        "mode": "status",
-        "key": "buffer_free",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "monitor_dropped": {
-        "subsystem": "monitor",
-        "mode": "status",
-        "key": "dropped",
-        "response": {
-            "access_mode": "r",
-            "value_type": "uint"
-        }
-    },
-    "monitor_error": {
-        "subsystem": "monitor",
-        "mode": "status",
-        "key": "error",
-        "response": {
-            "access_mode": "r",
-            "value_type": "string"
-        }
-    },
-    "monitor_state": {
-        "subsystem": "monitor",
-        "mode": "status",
-        "key": "state",
-        "response": {
-            "access_mode": "r",
-            "allowed_values": [
-                "normal",
-                "overflow"
-            ],
-            "value_type": "string"
-        }
-    },
-    "buffer_size": {
-        "subsystem": "monitor",
-        "mode": "config",
-        "key": "buffer_size",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "uint"
-        }
-    },
-    "discard_new": {
-        "subsystem": "monitor",
-        "mode": "config",
-        "key": "discard_new",
-        "response": {
-            "access_mode": "rw",
-            "value_type": "bool"
-        }
-    },
-    "monitor_mode": {
-        "subsystem": "monitor",
-        "mode": "config",
-        "key": "mode",
-        "response": {
-            "access_mode": "rw",
-            "allowed_values": [
-                "enabled",
-                "disabled"
-            ],
-            "value_type": "string"
+    "DETECTOR": {
+        "humidity": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "humidity",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "link_0": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "link_0",
+            "response": {
+                "access_mode": "r",
+                "allowed_values": [
+                    "up",
+                    "down"
+                ],
+                "value_type": "string"
+            }
+        },
+        "link_1": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "link_1",
+            "response": {
+                "access_mode": "r",
+                "allowed_values": [
+                    "up",
+                    "down"
+                ],
+                "value_type": "string"
+            }
+        },
+        "series_unique_id": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "series_unique_id",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "state": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "state",
+            "response": {
+                "access_mode": "r",
+                "allowed_values": [
+                    "na",
+                    "idle",
+                    "ready",
+                    "acquire",
+                    "configure",
+                    "initialize",
+                    "error"
+                ],
+                "value_type": "string"
+            }
+        },
+        "temperature": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "temperature",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "time": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "time",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "error": {
+            "subsystem": "detector",
+            "mode": "status",
+            "key": "error",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "auto_summation": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "auto_summation",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "beam_center_x": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "beam_center_x",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "beam_center_y": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "beam_center_y",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "bit_depth_image": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "bit_depth_image",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "bit_depth_readout": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "bit_depth_readout",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "chi_increment": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "chi_increment",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "chi_start": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "chi_start",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "compression": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "compression",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "lz4",
+                    "bslz4",
+                    "none"
+                ],
+                "value_type": "string"
+            }
+        },
+        "count_time": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "count_time",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "counting_mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "counting_mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "normal",
+                    "retrigger"
+                ],
+                "value_type": "string"
+            }
+        },
+        "countrate_correction_applied": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "countrate_correction_applied",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "countrate_correction_count_cutoff": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "countrate_correction_count_cutoff",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "data_collection_date": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "data_collection_date",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "description": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "description",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "detector_distance": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "detector_distance",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "detector_number": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "detector_number",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "detector_readout_time": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "detector_readout_time",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "eiger_fw_version": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "eiger_fw_version",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "element": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "element",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "Li",
+                    "Be",
+                    "B",
+                    "C",
+                    "N",
+                    "O",
+                    "F",
+                    "Ne",
+                    "Na",
+                    "Mg",
+                    "Al",
+                    "Si",
+                    "P",
+                    "S",
+                    "Cl",
+                    "Ar",
+                    "K",
+                    "Ca",
+                    "Sc",
+                    "Ti",
+                    "V",
+                    "Cr",
+                    "Mn",
+                    "Fe",
+                    "Co",
+                    "Ni",
+                    "Cu",
+                    "Zn"
+                ],
+                "value_type": "string"
+            }
+        },
+        "extg_mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "extg_mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "single",
+                    "double"
+                ],
+                "value_type": "string"
+            }
+        },
+        "fast_arm": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "fast_arm",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "flatfield_correction_applied": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "flatfield_correction_applied",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "frame_count_time": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "frame_count_time",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "frame_time": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "frame_time",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "incident_energy": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "incident_energy",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "incident_particle_type": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "incident_particle_type",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "instrument_name": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "instrument_name",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "string"
+            }
+        },
+        "kappa_increment": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "kappa_increment",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "kappa_start": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "kappa_start",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "mask_to_zero": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "mask_to_zero",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "nexpi": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "nexpi",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "uint"
+            }
+        },
+        "nimages": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "nimages",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "uint"
+            }
+        },
+        "ntrigger": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "ntrigger",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "uint"
+            }
+        },
+        "ntriggers_skipped": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "ntriggers_skipped",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "uint"
+            }
+        },
+        "number_of_excluded_pixels": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "number_of_excluded_pixels",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "omega_increment": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "omega_increment",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "omega_start": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "omega_start",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "phi_increment": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "phi_increment",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "phi_start": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "phi_start",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "photon_energy": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "photon_energy",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "pixel_mask_applied": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "pixel_mask_applied",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "roi_mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "roi_mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "disabled",
+                    "4M-L",
+                    "4M-R"
+                ],
+                "value_type": "string"
+            }
+        },
+        "sample_name": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "sample_name",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "string"
+            }
+        },
+        "sensor_material": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "sensor_material",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "sensor_thickness": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "sensor_thickness",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "software_version": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "software_version",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "source_name": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "source_name",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "string"
+            }
+        },
+        "threshold/1/energy": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/1/energy",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "threshold/1/mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/1/mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "enabled",
+                    "disabled"
+                ],
+                "value_type": "string"
+            }
+        },
+        "threshold/1/number_of_excluded_pixels": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/1/number_of_excluded_pixels",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "threshold/2/energy": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/2/energy",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "threshold/2/mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/2/mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "enabled",
+                    "disabled"
+                ],
+                "value_type": "string"
+            }
+        },
+        "threshold/2/number_of_excluded_pixels": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/2/number_of_excluded_pixels",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "threshold/difference/lower_threshold": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/difference/lower_threshold",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "threshold/difference/mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/difference/mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "enabled",
+                    "disabled"
+                ],
+                "value_type": "string"
+            }
+        },
+        "threshold/difference/upper_threshold": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold/difference/upper_threshold",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "threshold_energy": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "threshold_energy",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "total_flux": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "total_flux",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "trigger_mode": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "trigger_mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "eies",
+                    "exte",
+                    "extg",
+                    "exts",
+                    "inte",
+                    "ints"
+                ],
+                "value_type": "string"
+            }
+        },
+        "trigger_start_delay": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "trigger_start_delay",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "two_theta_increment": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "two_theta_increment",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "two_theta_start": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "two_theta_start",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        },
+        "virtual_pixel_correction_applied": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "virtual_pixel_correction_applied",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "x_pixel_size": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "x_pixel_size",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "x_pixels_in_detector": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "x_pixels_in_detector",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "y_pixel_size": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "y_pixel_size",
+            "response": {
+                "access_mode": "r",
+                "value_type": "float"
+            }
+        },
+        "y_pixels_in_detector": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "y_pixels_in_detector",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "wavelength": {
+            "subsystem": "detector",
+            "mode": "config",
+            "key": "wavelength",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "float"
+            }
+        }
+    },
+    "STREAM": {
+        "dropped": {
+            "subsystem": "stream",
+            "mode": "status",
+            "key": "dropped",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "state": {
+            "subsystem": "stream",
+            "mode": "status",
+            "key": "state",
+            "response": {
+                "access_mode": "r",
+                "allowed_values": [
+                    "disabled",
+                    "ready",
+                    "acquire",
+                    "error"
+                ],
+                "value_type": "string"
+            }
+        },
+        "error": {
+            "subsystem": "stream",
+            "mode": "status",
+            "key": "error",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "format": {
+            "subsystem": "stream",
+            "mode": "config",
+            "key": "format",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "legacy",
+                    "cbor"
+                ],
+                "value_type": "string"
+            }
+        },
+        "header_appendix": {
+            "subsystem": "stream",
+            "mode": "config",
+            "key": "header_appendix",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "string"
+            }
+        },
+        "header_detail": {
+            "subsystem": "stream",
+            "mode": "config",
+            "key": "header_detail",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "none",
+                    "basic",
+                    "all"
+                ],
+                "value_type": "string"
+            }
+        },
+        "image_appendix": {
+            "subsystem": "stream",
+            "mode": "config",
+            "key": "image_appendix",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "string"
+            }
+        },
+        "mode": {
+            "subsystem": "stream",
+            "mode": "config",
+            "key": "mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "enabled",
+                    "disabled"
+                ],
+                "value_type": "string"
+            }
+        }
+    },
+    "MONITOR": {
+        "buffer_free": {
+            "subsystem": "monitor",
+            "mode": "status",
+            "key": "buffer_free",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "dropped": {
+            "subsystem": "monitor",
+            "mode": "status",
+            "key": "dropped",
+            "response": {
+                "access_mode": "r",
+                "value_type": "uint"
+            }
+        },
+        "error": {
+            "subsystem": "monitor",
+            "mode": "status",
+            "key": "error",
+            "response": {
+                "access_mode": "r",
+                "value_type": "string"
+            }
+        },
+        "state": {
+            "subsystem": "monitor",
+            "mode": "status",
+            "key": "state",
+            "response": {
+                "access_mode": "r",
+                "allowed_values": [
+                    "normal",
+                    "overflow"
+                ],
+                "value_type": "string"
+            }
+        },
+        "buffer_size": {
+            "subsystem": "monitor",
+            "mode": "config",
+            "key": "buffer_size",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "uint"
+            }
+        },
+        "discard_new": {
+            "subsystem": "monitor",
+            "mode": "config",
+            "key": "discard_new",
+            "response": {
+                "access_mode": "rw",
+                "value_type": "bool"
+            }
+        },
+        "mode": {
+            "subsystem": "monitor",
+            "mode": "config",
+            "key": "mode",
+            "response": {
+                "access_mode": "rw",
+                "allowed_values": [
+                    "enabled",
+                    "disabled"
+                ],
+                "value_type": "string"
+            }
         }
     }
 }

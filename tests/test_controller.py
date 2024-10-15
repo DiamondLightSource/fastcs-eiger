@@ -1,45 +1,75 @@
+import asyncio
+
 import pytest
+from fastcs.attributes import Attribute
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import EigerController
+from fastcs_eiger.eiger_controller import (
+    IGNORED_KEYS,
+    MISSING_KEYS,
+    EigerController,
+    EigerDetectorController,
+    EigerSubsystemController,
+)
+
+_lock = asyncio.Lock()
 
 
 @pytest.mark.asyncio
-async def test_initialise(mocker: MockerFixture):
-    controller = EigerController("127.0.0.1", 80)
+async def test_detector_controller(
+    mock_connection, detector_config_keys, detector_status_keys
+):
+    detector_controller = EigerDetectorController(mock_connection, _lock)
+    parameters = await detector_controller._introspect_detector_subsystem()
+    assert all(parameter.key not in IGNORED_KEYS for parameter in parameters)
+    for parameter in parameters:
+        assert parameter.key not in IGNORED_KEYS
+        if parameter.mode == "config":
+            assert (
+                parameter.key in detector_config_keys
+                or parameter.key in MISSING_KEYS["detector"]["config"]
+            )
+        elif parameter.mode == "status":
+            assert (
+                parameter.key in detector_status_keys
+                or parameter.key in MISSING_KEYS["detector"]["status"]
+            )
 
-    connection = mocker.patch.object(controller, "connection")
-    connection.get = mocker.AsyncMock()
-    connection.get.return_value = {"value": "idle"}
-    initialize = mocker.patch.object(controller, "initialize")
-    introspect = mocker.patch.object(controller, "_introspect_detector")
-    create_attributes = mocker.patch.object(controller, "_create_attributes")
-    attr = mocker.MagicMock()
-    create_attributes.return_value = {"attr_name": attr}
-
-    await controller.initialise()
-
-    connection.get.assert_called_once_with("detector/api/1.8.0/status/state")
-    initialize.assert_not_called()
-    introspect.assert_awaited_once_with()
-    create_attributes.assert_called_once_with(introspect.return_value)
-    assert controller.attr_name == attr, "Attribute not added to controller"
+    # test queue_update side effect
+    assert not detector_controller.stale_parameters.get()
+    await detector_controller.queue_update(["chi_start"])
+    assert detector_controller._parameter_updates == {"chi_start"}
+    assert detector_controller.stale_parameters.get()
 
 
 @pytest.mark.asyncio
-async def test_initialise_state_na(mocker: MockerFixture):
-    controller = EigerController("127.0.0.1", 80)
+async def test_subsystem_controller_initialises(mock_connection):
+    subsystem_controller = EigerSubsystemController("stream", mock_connection, _lock)
+    await subsystem_controller.initialise()
 
-    connection = mocker.patch.object(controller, "connection")
-    connection.get = mocker.AsyncMock()
-    connection.get.return_value = {"value": "na"}
-    initialize = mocker.patch.object(controller, "initialize")
-    introspect = mocker.patch.object(controller, "_introspect_detector")
-    create_attributes = mocker.patch.object(controller, "_create_attributes")
 
-    await controller.initialise()
+@pytest.mark.asyncio
+async def test_detector_subsystem_controller(mock_connection):
+    subsystem_controller = EigerDetectorController(mock_connection, _lock)
+    await subsystem_controller.initialise()
 
-    connection.get.assert_called_once_with("detector/api/1.8.0/status/state")
-    initialize.assert_awaited_once_with()
-    introspect.assert_awaited_once_with()
-    create_attributes.assert_called_once_with(introspect.return_value)
+    for attr_name in dir(subsystem_controller):
+        attr = getattr(subsystem_controller, attr_name)
+        if isinstance(attr, Attribute) and "threshold" in attr_name:
+            assert "Threshold" in attr.group
+
+
+@pytest.mark.asyncio
+async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connection):
+    eiger_controller = EigerController("127.0.0.1", 80)
+    connection = mocker.patch.object(eiger_controller, "connection")
+    connection.get = mock_connection.get
+    await eiger_controller.initialise()
+    assert list(eiger_controller.get_sub_controllers().keys()) == [
+        "DETECTOR",
+        "STREAM",
+        "MONITOR",
+    ]
+    connection.get.assert_any_call("detector/api/1.8.0/status/state")
+    connection.get.assert_any_call("stream/api/1.8.0/status/state")
+    connection.get.assert_any_call("monitor/api/1.8.0/status/state")
