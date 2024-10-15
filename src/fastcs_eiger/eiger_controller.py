@@ -2,7 +2,6 @@ import asyncio
 from collections.abc import Coroutine
 from dataclasses import dataclass
 from io import BytesIO
-from itertools import product
 from typing import Any, Literal
 
 import numpy as np
@@ -71,12 +70,13 @@ class EigerHandler:
             parameters_to_update = [self.uri.split("/", 4)[-1]]
             print(f"Manually fetching parameter {parameters_to_update}")
         elif "difference_mode" in parameters_to_update:
-            parameters_to_update[
-                parameters_to_update.index("difference_mode")
-            ] = "threshold/difference/mode"
+            parameters_to_update[parameters_to_update.index("difference_mode")] = (
+                "threshold/difference/mode"
+            )
             print(
                 f"Fetching parameters after setting {self.uri}: {parameters_to_update},"
-                " replacing incorrect key 'difference_mode'")
+                " replacing incorrect key 'difference_mode'"
+            )
         else:
             print(
                 f"Fetching parameters after setting {self.uri}: {parameters_to_update}"
@@ -195,9 +195,15 @@ class EigerController(Controller):
 
         try:
             for subsystem in EIGER_PARAMETER_SUBSYSTEMS:
-                controller = EigerSubsystemController(
-                    subsystem, self.connection, self._parameter_update_lock)
-                self.register_sub_controller(subsystem, controller)
+                if subsystem == "detector":
+                    controller = EigerDetectorController(
+                        self.connection, self._parameter_update_lock
+                    )
+                else:
+                    controller = EigerSubsystemController(
+                        subsystem, self.connection, self._parameter_update_lock
+                    )
+                self.register_sub_controller(subsystem.upper(), controller)
                 await controller.initialise()
         except HTTPRequestError:
             print("\nAn HTTP request failed while introspecting detector:\n")
@@ -237,7 +243,8 @@ class EigerController(Controller):
     async def update(self):
         """Periodically check for parameters that need updating from the detector."""
         await self.stale_parameters.set(
-            any(c.stale_parameters.get() for c in self.get_sub_controllers().values()))
+            any(c.stale_parameters.get() for c in self.get_sub_controllers().values())
+        )
         controller_updates = [c.update() for c in self.get_sub_controllers().values()]
         await asyncio.gather(*controller_updates)
 
@@ -257,10 +264,14 @@ class EigerController(Controller):
 
 
 class EigerSubsystemController(SubController):
-
     stale_parameters = AttrR(Bool())
 
-    def __init__(self, subsystem: str, connection: HTTPConnection, lock: asyncio.Lock):
+    def __init__(
+        self,
+        subsystem: Literal["detector", "stream", "monitor"],
+        connection: HTTPConnection,
+        lock: asyncio.Lock,
+    ):
         self._subsystem = subsystem
         self.connection = connection
         self._parameter_update_lock = lock
@@ -301,7 +312,20 @@ class EigerSubsystemController(SubController):
         for name, attribute in attributes.items():
             setattr(self, name, attribute)
 
-    def _create_attributes(self, parameters: list[EigerParameter]):
+    @classmethod
+    def _group(cls, parameter: EigerParameter):
+        return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
+
+    @classmethod
+    def _attribute_name(self, parameter: EigerParameter):
+        return _key_to_attribute_name(parameter.key)
+
+    @classmethod
+    def _group_and_name(self, parameter: EigerParameter) -> tuple[str, str]:
+        return (self._group(parameter), self._attribute_name(parameter))
+
+    @classmethod
+    def _create_attributes(cls, parameters: list[EigerParameter]):
         """Create ``Attribute``s from ``EigerParameter``s.
 
         Args:
@@ -310,7 +334,7 @@ class EigerSubsystemController(SubController):
         """
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
-            group = f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
+            group, attribute_name = cls._group_and_name(parameter)
             match parameter.response["value_type"]:
                 case "float":
                     datatype = Float()
@@ -322,9 +346,6 @@ class EigerSubsystemController(SubController):
                     datatype = String()
                 case _:
                     print(f"Failed to handle {parameter}")
-
-            # Flatten nested uri keys - e.g. threshold/1/mode -> threshold_1_mode
-            attribute_name = _key_to_attribute_name(parameter.key)
 
             match parameter.response["access_mode"]:
                 case "r":
@@ -379,3 +400,20 @@ class EigerSubsystemController(SubController):
                 case _ as attr:
                     print(f"Failed to handle update for {parameter}: {attr}")
         await asyncio.gather(*parameter_updates)
+
+
+class EigerDetectorController(EigerSubsystemController):
+    def __init__(self, connection: HTTPConnection, lock: asyncio.Lock):
+        super().__init__("detector", connection, lock)
+
+    @classmethod
+    def _group_and_name(cls, parameter: EigerParameter) -> tuple[str, str]:
+        if "threshold" in parameter.key:
+            parts = parameter.key.split("/")
+            if len(parts) == 3 and parts[1].isnumeric():
+                group = f"Threshold{parts[1]}"
+            else:
+                group = "Threshold"
+            name = cls._attribute_name(parameter)
+            return (group, name)
+        return super()._group_and_name(parameter)
