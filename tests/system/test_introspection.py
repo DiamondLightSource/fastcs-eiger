@@ -94,15 +94,15 @@ async def test_introspection(sim_eiger_controller: EigerController):
     assert serialised_parameters == expected_parameters, "Detector API does not match"
 
     detector_attributes = EigerDetectorController._create_attributes(
-        subsystem_parameters["DETECTOR"]
+        subsystem_parameters["Detector"]
     )
     assert len(detector_attributes) == 76
     monitor_attributes = EigerMonitorController._create_attributes(
-        subsystem_parameters["MONITOR"]
+        subsystem_parameters["Monitor"]
     )
     assert len(monitor_attributes) == 7
     stream_attributes = EigerStreamController._create_attributes(
-        subsystem_parameters["STREAM"]
+        subsystem_parameters["Stream"]
     )
     assert len(stream_attributes) == 8
 

@@ -75,9 +75,9 @@ async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connecti
     connection.get = mock_connection.get
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [
-        "DETECTOR",
-        "STREAM",
-        "MONITOR",
+        "Detector",
+        "Stream",
+        "Monitor",
     ]
     connection.get.assert_any_call("detector/api/1.8.0/status/state")
     connection.get.assert_any_call("stream/api/1.8.0/status/state")

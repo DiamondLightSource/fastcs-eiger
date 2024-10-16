@@ -208,7 +208,7 @@ class EigerController(Controller):
                         raise NotImplementedError(
                             f"No subcontroller implemented for subsystem {subsystem}"
                         )
-                self.register_sub_controller(subsystem.upper(), controller)
+                self.register_sub_controller(subsystem.capitalize(), controller)
                 await controller.initialise()
         except HTTPRequestError:
             print("\nAn HTTP request failed while introspecting detector:\n")
@@ -274,6 +274,10 @@ class EigerSubsystemController(SubController):
 
     @classmethod
     def _group(cls, parameter: EigerParameter):
+        if "/" in parameter.key:
+            group_parts = parameter.key.split("/")[:-1]
+            # e.g. "threshold/difference/mode" -> ThresholdDifference
+            return "".join(list(map(str.capitalize, group_parts)))
         return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
 
     @classmethod
@@ -336,22 +340,22 @@ class EigerSubsystemController(SubController):
             return
 
         async with self._parameter_update_lock:
-            parameters = self._parameter_updates.copy()
+            keys_to_check = self._parameter_updates.copy()
             self._parameter_updates.clear()
 
         # Release lock while fetching parameters - this may be slow
         parameter_updates: list[Coroutine] = []
-        for parameter in parameters:
-            if parameter in IGNORED_KEYS:
+        for key in keys_to_check:
+            if key in IGNORED_KEYS:
                 continue
-            attr_name = _key_to_attribute_name(parameter)
+            attr_name = _key_to_attribute_name(key)
             match getattr(self, attr_name, None):
                 # TODO: mypy doesn't understand AttrR as a type for some reason:
                 # `error: Expected type in class pattern; found "Any"  [misc]`
                 case AttrR(updater=EigerConfigHandler() as updater) as attr:  # type: ignore [misc]
                     parameter_updates.append(updater.config_update(self, attr))
                 case _ as attr:
-                    print(f"Failed to handle update for {parameter}: {attr}")
+                    print(f"Failed to handle update for {key}: {attr}")
         await asyncio.gather(*parameter_updates)
 
 
@@ -361,16 +365,6 @@ class EigerDetectorController(EigerSubsystemController):
     # Detector parameters to use in internal logic
     trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
     trigger_exposure = AttrRW(Float(), handler=LogicHandler())
-
-    @detector_command
-    async def trigger(self):
-        match self.trigger_mode.get(), self.trigger_exposure.get():
-            case ("inte", exposure) if exposure > 0.0:
-                await self.connection.put(command_uri("trigger"), exposure)
-            case ("ints" | "inte", _):
-                await self.connection.put(command_uri("trigger"))
-            case _:
-                raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
 
     async def initialise(self) -> None:
         # Check current state of detector_state to see if initializing is required.
@@ -389,6 +383,16 @@ class EigerDetectorController(EigerSubsystemController):
         await self.connection.put(command_uri("arm"))
 
     @detector_command
+    async def trigger(self):
+        match self.trigger_mode.get(), self.trigger_exposure.get():
+            case ("inte", exposure) if exposure > 0.0:
+                await self.connection.put(command_uri("trigger"), exposure)
+            case ("ints" | "inte", _):
+                await self.connection.put(command_uri("trigger"))
+            case _:
+                raise RuntimeError("Can only do soft trigger in 'ints' or 'inte' mode")
+
+    @detector_command
     async def disarm(self):
         await self.connection.put(command_uri("disarm"))
 
@@ -399,14 +403,6 @@ class EigerDetectorController(EigerSubsystemController):
     @detector_command
     async def cancel(self):
         await self.connection.put(command_uri("cancel"))
-
-    @classmethod
-    def _group(cls, parameter: EigerParameter) -> str:
-        if "/" in parameter.key:
-            group_parts = parameter.key.split("/")[:-1]
-            # e.g. "threshold/difference/mode" -> ThresholdDifference
-            return "".join(list(map(str.capitalize, group_parts)))
-        return super()._group(parameter)
 
 
 class EigerMonitorController(EigerSubsystemController):

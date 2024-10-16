@@ -1,5 +1,5 @@
 {
-    "DETECTOR": {
+    "Detector": {
         "humidity": {
             "subsystem": "detector",
             "mode": "status",
@@ -770,7 +770,7 @@
             }
         }
     },
-    "STREAM": {
+    "Stream": {
         "dropped": {
             "subsystem": "stream",
             "mode": "status",
@@ -863,7 +863,7 @@
             }
         }
     },
-    "MONITOR": {
+    "Monitor": {
         "buffer_free": {
             "subsystem": "monitor",
             "mode": "status",
