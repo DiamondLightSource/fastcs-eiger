@@ -12,7 +12,7 @@ classifiers = [
 description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
-    "fastcs~=0.6.0",
+    "fastcs~=0.7.0",
     "numpy",
     "pillow",
     "typer",
