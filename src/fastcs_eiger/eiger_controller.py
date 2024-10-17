@@ -196,6 +196,16 @@ class EigerController(Controller):
                         controller = EigerDetectorController(
                             self.connection, self._parameter_update_lock
                         )
+                        # detector subsystem initialises first
+                        # Check current state of detector_state to see
+                        # if initializing is required.
+                        state_val = await self.connection.get(
+                            "detector/api/1.8.0/status/state"
+                        )
+                        if state_val["value"] == "na":
+                            print("Initializing Detector")
+                            # send initialize command to detector
+                            await controller.initialize()
                     case "monitor":
                         controller = EigerMonitorController(
                             self.connection, self._parameter_update_lock
@@ -210,6 +220,7 @@ class EigerController(Controller):
                         )
                 self.register_sub_controller(subsystem.capitalize(), controller)
                 await controller.initialise()
+
         except HTTPRequestError:
             print("\nAn HTTP request failed while introspecting detector:\n")
             raise
@@ -365,14 +376,6 @@ class EigerDetectorController(EigerSubsystemController):
     # Detector parameters to use in internal logic
     trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
     trigger_exposure = AttrRW(Float(), handler=LogicHandler())
-
-    async def initialise(self) -> None:
-        # Check current state of detector_state to see if initializing is required.
-        state_val = await self.connection.get("detector/api/1.8.0/status/state")
-        if state_val["value"] == "na":
-            print("Initializing Detector")
-            await self.initialize()
-        await super().initialise()
 
     @detector_command
     async def initialize(self):
