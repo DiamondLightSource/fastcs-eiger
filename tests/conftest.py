@@ -146,5 +146,68 @@ def mock_connection(mocker: MockerFixture):
             # dummy response
             return {"access_mode": "rw", "value": 0.0, "value_type": "float"}
 
+    async def _connection_put(uri: str, _):
+        # copied from tickit sim
+        key = uri.split("/", 4)[-1]
+        match key:
+            case "auto_summation":
+                return ["auto_summation", "frame_count_time"]
+            case "count_time" | "frame_time":
+                return [
+                    "bit_depth_image",
+                    "bit_depth_readout",
+                    "count_time",
+                    "countrate_correction_count_cutoff",
+                    "frame_count_time",
+                    "frame_time",
+                ]
+            case "flatfield":
+                return ["flatfield", "threshold/1/flatfield"]
+            case "incident_energy" | "photon_energy":
+                return [
+                    "element",
+                    "flatfield",
+                    "incident_energy",
+                    "photon_energy",
+                    "threshold/1/energy",
+                    "threshold/1/flatfield",
+                    "threshold/2/energy",
+                    "threshold/2/flatfield",
+                    "threshold_energy",
+                    "wavelength",
+                ]
+            case "pixel_mask":
+                return ["pixel_mask", "threshold/1/pixel_mask"]
+            case "threshold/1/flatfield":
+                return ["flatfield", "threshold/1/flatfield"]
+            case "roi_mode":
+                return ["count_time", "frame_time", "roi_mode"]
+            case "threshold_energy" | "threshold/1/energy":
+                return [
+                    "flatfield",
+                    "threshold/1/energy",
+                    "threshold/1/flatfield",
+                    "threshold/2/flatfield",
+                    "threshold_energy",
+                ]
+            case "threshold/2/energy":
+                return [
+                    "flatfield",
+                    "threshold/1/flatfield",
+                    "threshold/2/energy",
+                    "threshold/2/flatfield",
+                ]
+            case "threshold/1/mode":
+                return ["threshold/1/mode", "threshold/difference/mode"]
+            case "threshold/2/mode":
+                return ["threshold/2/mode", "threshold/difference/mode"]
+            case "threshold/1/pixel_mask":
+                return ["pixel_mask", "threshold/1/pixel_mask"]
+            case "threshold/difference/mode":
+                return ["difference_mode"]  # replicating API inconsistency
+            case _:
+                return [key]
+
     connection.get.side_effect = _connection_get
+    connection.put.side_effect = _connection_put
     return connection
