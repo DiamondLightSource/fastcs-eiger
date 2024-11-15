@@ -88,7 +88,7 @@ async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connecti
 
 
 @pytest.mark.asyncio
-async def test_EigerHandler_after_put(mock_connection):
+async def test_eiger_handler_after_put(mock_connection):
     subsystem_controller = EigerDetectorController(mock_connection, _lock)
     await subsystem_controller.initialise()
     attr = subsystem_controller.humidity
@@ -120,7 +120,7 @@ async def test_EigerHandler_after_put(mock_connection):
 
 
 @pytest.mark.asyncio
-async def test_EigerHandler_update_updates_value(mock_connection):
+async def test_eiger_handler_update_updates_value(mock_connection):
     subsystem_controller = EigerDetectorController(mock_connection, _lock)
     await subsystem_controller.initialise()
 
@@ -130,9 +130,8 @@ async def test_EigerHandler_update_updates_value(mock_connection):
     assert type(subsystem_controller.state.updater) is EigerHandler
     assert subsystem_controller.state.get() == 0
 
-    mock_connection.get = (
-        _get_1_as_value  # show that value changes after update is awaited
-    )
+    mock_connection.get = _get_1_as_value
+    # show that value changes after update is awaited
     await subsystem_controller.state.updater.update(
         subsystem_controller, subsystem_controller.state
     )
@@ -163,11 +162,9 @@ async def test_EigerConfigHandler(mock_connection):
 
     await subsystem_controller.update()
     assert subsystem_controller.stale_parameters.get()
-    assert subsystem_controller.threshold_energy.updater.config_update.mock_calls == [
-        mock.call.config_update(
-            subsystem_controller, subsystem_controller.threshold_energy
-        )
-    ]
+    subsystem_controller.threshold_energy.updater.config_update.assert_called_once_with(
+        subsystem_controller, subsystem_controller.threshold_energy
+    )
 
     await subsystem_controller.update()
     # stale does not get set False unless there are no stale parameters at start of
