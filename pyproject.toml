@@ -45,7 +45,7 @@ dev = [
 ]
 
 [project.scripts]
-fastcs-eiger = "fastcs_eiger.__main__:main"
+fastcs-eiger = "fastcs_eiger.__main__:app"
 
 [project.urls]
 GitHub = "https://github.com/DiamondLightSource/fastcs-eiger"
