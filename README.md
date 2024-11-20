@@ -1,7 +1,7 @@
 [![CI](https://github.com/DiamondLightSource/fastcs-eiger/actions/workflows/ci.yml/badge.svg)](https://github.com/DiamondLightSource/fastcs-eiger/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/DiamondLightSource/fastcs-eiger/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamondLightSource/fastcs-eiger)
 [![PyPI](https://img.shields.io/pypi/v/fastcs-eiger.svg)](https://pypi.org/project/fastcs-eiger)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 # FastCS Eiger
 
