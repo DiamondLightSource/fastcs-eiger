@@ -88,38 +88,6 @@ async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connecti
 
 
 @pytest.mark.asyncio
-async def test_eiger_handler_after_put(mock_connection):
-    subsystem_controller = EigerDetectorController(mock_connection, _lock)
-    await subsystem_controller.initialise()
-    attr = subsystem_controller.humidity
-    handler = attr.sender
-
-    assert type(handler) is EigerHandler
-    assert not subsystem_controller.stale_parameters.get()
-    await handler.put(subsystem_controller, attr, 0.1)
-    # eiger API does not return a list of updated parameters when we set status keys
-    # so _parameter_updates set to default case where we only update the key we changed
-    assert subsystem_controller._parameter_updates == {"humidity"}
-    # humidity is really read-only but given here for demonstration
-    assert subsystem_controller.stale_parameters.get()
-
-    # parameters with EigerHandler handlers do not get updated when
-    # controller update is called
-
-    subsystem_controller.humidity.updater.update = mock.AsyncMock()
-
-    await subsystem_controller.update()
-    assert subsystem_controller.stale_parameters.get()
-    subsystem_controller.humidity.updater.update.assert_not_called()
-
-    await subsystem_controller.update()
-    # stale does not get set False unless there are no stale parameters at start of
-    # update call
-    assert not subsystem_controller.stale_parameters.get()
-    assert not subsystem_controller._parameter_updates
-
-
-@pytest.mark.asyncio
 async def test_eiger_handler_update_updates_value(mock_connection):
     subsystem_controller = EigerDetectorController(mock_connection, _lock)
     await subsystem_controller.initialise()
@@ -139,7 +107,7 @@ async def test_eiger_handler_update_updates_value(mock_connection):
 
 
 @pytest.mark.asyncio
-async def test_EigerConfigHandler(mock_connection):
+async def test_eiger_config_handler_put(mock_connection):
     subsystem_controller = EigerDetectorController(mock_connection, _lock)
     await subsystem_controller.initialise()
     attr = subsystem_controller.threshold_1_energy

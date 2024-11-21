@@ -99,7 +99,7 @@ class EigerConfigHandler(EigerHandler):
 
     first_poll_complete: bool = False
 
-    async def update(self, controller: "EigerController", attr: AttrR) -> None:
+    async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
         # Only poll once on startup
         if not self.first_poll_complete:
             await super().update(controller, attr)
@@ -109,7 +109,9 @@ class EigerConfigHandler(EigerHandler):
 
             self.first_poll_complete = True
 
-    async def config_update(self, controller: "EigerController", attr: AttrR) -> None:
+    async def config_update(
+        self, controller: "EigerSubsystemController", attr: AttrR
+    ) -> None:
         await super().update(controller, attr)
 
 
