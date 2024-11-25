@@ -2,7 +2,6 @@ import os
 from typing import Any
 
 import pytest
-from pytest_mock import MockerFixture
 
 # Prevent pytest from catching exceptions when debugging in vscode so that break on
 # exception works correctly (see: https://github.com/pytest-dev/pytest/issues/7409)
@@ -115,7 +114,7 @@ _monitor_status_keys = ["buffer_free", "dropped", "error", "state"]
 
 
 @pytest.fixture
-def detector_config_keys():
+def detector_config_keys() -> list[str]:
     return _detector_config_keys
 
 
@@ -125,89 +124,87 @@ def detector_status_keys():
 
 
 @pytest.fixture
-def mock_connection(mocker: MockerFixture):
-    connection = mocker.patch("fastcs_eiger.http_connection.HTTPConnection")
-    connection.get = mocker.AsyncMock()
+def monitor_config_keys():
+    return _monitor_config_keys
 
-    async def _connection_get(uri):
-        if "detector/api/1.8.0/status/keys" in uri:
-            return _detector_status_keys
-        elif "detector/api/1.8.0/config/keys" in uri:
-            return _detector_config_keys
-        elif "monitor/api/1.8.0/status/keys" in uri:
-            return _monitor_status_keys
-        elif "monitor/api/1.8.0/config/keys" in uri:
-            return _monitor_config_keys
-        elif "stream/api/1.8.0/status/keys" in uri:
-            return _stream_status_keys
-        elif "stream/api/1.8.0/config/keys" in uri:
-            return _stream_config_keys
-        else:
-            # dummy response
-            return {"access_mode": "rw", "value": 0.0, "value_type": "float"}
 
-    async def _connection_put(uri: str, _):
-        # copied from tickit sim
-        key = uri.split("/", 4)[-1]
-        match key:
-            case "auto_summation":
-                return ["auto_summation", "frame_count_time"]
-            case "count_time" | "frame_time":
-                return [
-                    "bit_depth_image",
-                    "bit_depth_readout",
-                    "count_time",
-                    "countrate_correction_count_cutoff",
-                    "frame_count_time",
-                    "frame_time",
-                ]
-            case "flatfield":
-                return ["flatfield", "threshold/1/flatfield"]
-            case "incident_energy" | "photon_energy":
-                return [
-                    "element",
-                    "flatfield",
-                    "incident_energy",
-                    "photon_energy",
-                    "threshold/1/energy",
-                    "threshold/1/flatfield",
-                    "threshold/2/energy",
-                    "threshold/2/flatfield",
-                    "threshold_energy",
-                    "wavelength",
-                ]
-            case "pixel_mask":
-                return ["pixel_mask", "threshold/1/pixel_mask"]
-            case "threshold/1/flatfield":
-                return ["flatfield", "threshold/1/flatfield"]
-            case "roi_mode":
-                return ["count_time", "frame_time", "roi_mode"]
-            case "threshold_energy" | "threshold/1/energy":
-                return [
-                    "flatfield",
-                    "threshold/1/energy",
-                    "threshold/1/flatfield",
-                    "threshold/2/flatfield",
-                    "threshold_energy",
-                ]
-            case "threshold/2/energy":
-                return [
-                    "flatfield",
-                    "threshold/1/flatfield",
-                    "threshold/2/energy",
-                    "threshold/2/flatfield",
-                ]
-            case "threshold/1/mode":
-                return ["threshold/1/mode", "threshold/difference/mode"]
-            case "threshold/2/mode":
-                return ["threshold/2/mode", "threshold/difference/mode"]
-            case "threshold/1/pixel_mask":
-                return ["pixel_mask", "threshold/1/pixel_mask"]
-            case "threshold/difference/mode":
-                return ["difference_mode"]  # replicating API inconsistency
-            case _:
-                return [key]
+@pytest.fixture
+def monitor_status_keys():
+    return _monitor_status_keys
 
-    connection.get.side_effect = _connection_get
-    connection.put.side_effect = _connection_put
-    return connection
+
+@pytest.fixture
+def stream_config_keys():
+    return _stream_config_keys
+
+
+@pytest.fixture
+def stream_status_keys():
+    return _stream_status_keys
+
+
+@pytest.fixture
+def keys_mapping() -> dict[str, list[str]]:
+    return {
+        "detector/api/1.8.0/status/keys": _detector_status_keys,
+        "detector/api/1.8.0/config/keys": _detector_config_keys,
+        "monitor/api/1.8.0/status/keys": _monitor_status_keys,
+        "monitor/api/1.8.0/config/keys": _monitor_config_keys,
+        "stream/api/1.8.0/status/keys": _stream_status_keys,
+        "stream/api/1.8.0/config/keys": _stream_config_keys,
+    }
+
+
+@pytest.fixture
+def put_response_mapping() -> dict[str, list[str]]:
+    time_keys = [
+        "bit_depth_image",
+        "bit_depth_readout",
+        "count_time",
+        "countrate_correction_count_cutoff",
+        "frame_count_time",
+        "frame_time",
+    ]
+    energy_keys = [
+        "element",
+        "flatfield",
+        "incident_energy",
+        "photon_energy",
+        "threshold/1/energy",
+        "threshold/1/flatfield",
+        "threshold/2/energy",
+        "threshold/2/flatfield",
+        "threshold_energy",
+        "wavelength",
+    ]
+    threshold_energy_keys = [
+        "flatfield",
+        "threshold/1/energy",
+        "threshold/1/flatfield",
+        "threshold/2/flatfield",
+        "threshold_energy",
+    ]
+    return {
+        "auto_summation": ["auto_summation", "frame_count_time"],
+        "count_time": time_keys,
+        "frame_time": time_keys,
+        "flatfield": ["flatfield", "threshold/1/flatfield"],
+        "incident_energy": energy_keys,
+        "photon_energy": energy_keys,
+        "pixel_mask": ["pixel_mask", "threshold/1/pixel_mask"],
+        "threshold/1/flatfield": ["flatfield", "threshold/1/flatfield"],
+        "roi_mode": ["count_time", "frame_time", "roi_mode"],
+        "threshold_energy": threshold_energy_keys,
+        "threshold/1/energy": threshold_energy_keys,
+        "threshold/2/energy": [
+            "flatfield",
+            "threshold/1/flatfield",
+            "threshold/2/energy",
+            "threshold/2/flatfield",
+        ],
+        "threshold/1/mode": ["threshold/1/mode", "threshold/difference/mode"],
+        "threshold/2/mode": ["threshold/2/mode", "threshold/difference/mode"],
+        "threshold/1/pixel_mask": ["pixel_mask", "threshold/1/pixel_mask"],
+        "threshold/difference/mode": ["difference_mode"],
+        # replicating API inconsistency
+    }

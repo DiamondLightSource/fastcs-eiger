@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -21,9 +22,20 @@ _lock = asyncio.Lock()
 
 @pytest.mark.asyncio
 async def test_detector_controller(
-    mock_connection, detector_config_keys, detector_status_keys
+    keys_mapping: dict[str, list[str]],
+    detector_config_keys: list[str],
+    detector_status_keys: list[str],
 ):
-    detector_controller = EigerDetectorController(mock_connection, _lock)
+    connection = mock.Mock()
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get = _get
+    detector_controller = EigerDetectorController(connection, _lock)
     parameters = await detector_controller._introspect_detector_subsystem()
     assert all(parameter.key not in IGNORED_KEYS for parameter in parameters)
     for parameter in parameters:
@@ -47,20 +59,47 @@ async def test_detector_controller(
 
 
 @pytest.mark.asyncio
-async def test_monitor_controller_initialises(mock_connection):
-    subsystem_controller = EigerMonitorController(mock_connection, _lock)
+async def test_monitor_controller_initialises(keys_mapping: dict[str, list[str]]):
+    connection = mock.Mock()
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get = _get
+    subsystem_controller = EigerMonitorController(connection, _lock)
     await subsystem_controller.initialise()
 
 
 @pytest.mark.asyncio
-async def test_stream_controller_initialises(mock_connection):
-    subsystem_controller = EigerStreamController(mock_connection, _lock)
+async def test_stream_controller_initialises(keys_mapping: dict[str, list[str]]):
+    connection = mock.Mock()
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get = _get
+    subsystem_controller = EigerStreamController(connection, _lock)
     await subsystem_controller.initialise()
 
 
 @pytest.mark.asyncio
-async def test_detector_subsystem_controller(mock_connection):
-    subsystem_controller = EigerDetectorController(mock_connection, _lock)
+async def test_detector_subsystem_controller(keys_mapping: dict[str, list[str]]):
+    connection = mock.Mock()
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get = _get
+    subsystem_controller = EigerDetectorController(connection, _lock)
     await subsystem_controller.initialise()
 
     for attr_name in dir(subsystem_controller):
@@ -68,14 +107,24 @@ async def test_detector_subsystem_controller(mock_connection):
         if isinstance(attr, Attribute) and "threshold" in attr_name:
             if attr_name == "threshold_energy":
                 continue
-            assert "Threshold" in attr.group
+            assert attr.group and "Threshold" in attr.group
 
 
 @pytest.mark.asyncio
-async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connection):
+async def test_eiger_controller_initialises(
+    mocker: MockerFixture, keys_mapping: dict[str, list[str]]
+):
     eiger_controller = EigerController("127.0.0.1", 80)
     connection = mocker.patch.object(eiger_controller, "connection")
-    connection.get = mock_connection.get
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get.side_effect = _get
+
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [
         "Detector",
@@ -88,17 +137,24 @@ async def test_eiger_controller_initialises(mocker: MockerFixture, mock_connecti
 
 
 @pytest.mark.asyncio
-async def test_eiger_handler_update_updates_value(mock_connection):
-    subsystem_controller = EigerDetectorController(mock_connection, _lock)
-    await subsystem_controller.initialise()
+async def test_eiger_handler_update_updates_value(keys_mapping: dict[str, list[str]]):
+    connection = mock.Mock()
 
-    async def _get_1_as_value(*args, **kwargs):
-        return {"access_mode": "r", "value": 1, "value_type": "int"}
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        if "state" in uri:  # get 1 as value for state
+            return {"access_mode": "r", "value": 1, "value_type": "int"}
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    connection.get = _get
+    subsystem_controller = EigerDetectorController(connection, _lock)
+    await subsystem_controller.initialise()
 
     assert type(subsystem_controller.state.updater) is EigerHandler
     assert subsystem_controller.state.get() == 0
 
-    mock_connection.get = _get_1_as_value
     # show that value changes after update is awaited
     await subsystem_controller.state.updater.update(
         subsystem_controller, subsystem_controller.state
@@ -107,8 +163,27 @@ async def test_eiger_handler_update_updates_value(mock_connection):
 
 
 @pytest.mark.asyncio
-async def test_eiger_config_handler_put(mock_connection):
-    subsystem_controller = EigerDetectorController(mock_connection, _lock)
+async def test_eiger_config_handler_put(
+    keys_mapping: dict[str, list[str]], put_response_mapping: dict[str, list[str]]
+):
+    connection = mock.Mock()
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        if "state" in uri:  # get 1 as value for state
+            return {"access_mode": "r", "value": 1, "value_type": "int"}
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    async def _put(uri: str, _):
+        key = uri.split("/", 4)[-1]
+        # return [key] if not in mapping
+        return put_response_mapping.get(key, [key])
+
+    connection.get.side_effect = _get
+    connection.put.side_effect = _put
+    subsystem_controller = EigerDetectorController(connection, _lock)
     await subsystem_controller.initialise()
     attr = subsystem_controller.threshold_1_energy
     handler = attr.sender
@@ -142,30 +217,50 @@ async def test_eiger_config_handler_put(mock_connection):
 
 
 @pytest.mark.asyncio
-async def test_stale_parameter_propagates_to_top_controller(mock_connection):
-    top_controller = EigerController("127.0.0.1", 80)
-    top_controller.connection = mock_connection
-    await top_controller.initialise()
-    detector_controller = top_controller.get_sub_controllers()["Detector"]
+async def test_stale_parameter_propagates_to_top_controller(
+    mocker: MockerFixture,
+    keys_mapping: dict[str, list[str]],
+    put_response_mapping: dict[str, list[str]],
+):
+    eiger_controller = EigerController("127.0.0.1", 80)
+    connection = mocker.patch.object(eiger_controller, "connection")
+
+    async def _get(uri: str) -> dict[str, Any] | list[str]:
+        # if not in mapping, get dummy parameter dict
+        return keys_mapping.get(
+            uri, {"access_mode": "rw", "value": 0.0, "value_type": "float"}
+        )
+
+    async def _put(uri: str, _):
+        key = uri.split("/", 4)[-1]
+        # return [key] if not in mapping
+        return put_response_mapping.get(key, [key])
+
+    connection.get.side_effect = _get
+    connection.put.side_effect = _put
+
+    await eiger_controller.initialise()
+
+    detector_controller = eiger_controller.get_sub_controllers()["Detector"]
     attr = detector_controller.threshold_energy
 
     assert not detector_controller.stale_parameters.get()
-    assert not top_controller.stale_parameters.get()
+    assert not eiger_controller.stale_parameters.get()
 
     await attr.sender.put(detector_controller, attr, 100.0)
     assert detector_controller.stale_parameters.get()
     # top controller not stale until update called
-    assert not top_controller.stale_parameters.get()
-    await top_controller.update()
-    assert top_controller.stale_parameters.get()
+    assert not eiger_controller.stale_parameters.get()
+    await eiger_controller.update()
+    assert eiger_controller.stale_parameters.get()
 
     # need to update again to make detector controller update its
     # stale parameter attribute
-    await top_controller.update()
+    await eiger_controller.update()
     assert not detector_controller.stale_parameters.get()
-    assert top_controller.stale_parameters.get()
+    assert eiger_controller.stale_parameters.get()
 
     # top controller needs to update another final time so that the
     # detector controller stale  attribute returning to False propagates to top
-    await top_controller.update()
-    assert not top_controller.stale_parameters.get()
+    await eiger_controller.update()
+    assert not eiger_controller.stale_parameters.get()
