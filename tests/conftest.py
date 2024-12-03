@@ -1,8 +1,12 @@
 import os
+import signal
+import subprocess
+from time import sleep
 from typing import Any
 
 import pytest
-from pytest_mock import MockerFixture
+
+from fastcs_eiger.eiger_controller import EigerController
 
 # Prevent pytest from catching exceptions when debugging in vscode so that break on
 # exception works correctly (see: https://github.com/pytest-dev/pytest/issues/7409)
@@ -22,129 +26,28 @@ if os.getenv("PYTEST_RAISE", "0") == "1":
         raise excinfo.value
 
 
-_detector_config_keys = [
-    "auto_summation",
-    "beam_center_x",
-    "beam_center_y",
-    "bit_depth_image",
-    "bit_depth_readout",
-    "chi_increment",
-    "chi_start",
-    "compression",
-    "count_time",
-    "counting_mode",
-    "countrate_correction_applied",
-    "countrate_correction_count_cutoff",
-    "data_collection_date",
-    "description",
-    "detector_distance",
-    "detector_number",
-    "detector_readout_time",
-    "eiger_fw_version",
-    "element",
-    "extg_mode",
-    "fast_arm",
-    "flatfield_correction_applied",
-    "frame_count_time",
-    "frame_time",
-    "incident_energy",
-    "incident_particle_type",
-    "instrument_name",
-    "kappa_increment",
-    "kappa_start",
-    "mask_to_zero",
-    "nexpi",
-    "nimages",
-    "ntrigger",
-    "ntriggers_skipped",
-    "number_of_excluded_pixels",
-    "omega_increment",
-    "omega_start",
-    "phi_increment",
-    "phi_start",
-    "photon_energy",
-    "pixel_mask_applied",
-    "roi_mode",
-    "sample_name",
-    "sensor_material",
-    "sensor_thickness",
-    "software_version",
-    "source_name",
-    "threshold/1/energy",
-    "threshold/1/mode",
-    "threshold/1/number_of_excluded_pixels",
-    "threshold/2/energy",
-    "threshold/2/mode",
-    "threshold/2/number_of_excluded_pixels",
-    "threshold/difference/lower_threshold",
-    "threshold/difference/mode",
-    "threshold/difference/upper_threshold",
-    "threshold_energy",
-    "total_flux",
-    "trigger_mode",
-    "trigger_start_delay",
-    "two_theta_increment",
-    "two_theta_start",
-    "virtual_pixel_correction_applied",
-    "x_pixel_size",
-    "x_pixels_in_detector",
-    "y_pixel_size",
-    "y_pixels_in_detector",
-]
-
-_detector_status_keys = [
-    "humidity",
-    "link_0",
-    "link_1",
-    "series_unique_id",
-    "state",
-    "temperature",
-    "time",
-]
-
-_stream_config_keys = [
-    "format",
-    "header_appendix",
-    "header_detail",
-    "image_appendix",
-    "mode",
-]
-_stream_status_keys = ["dropped", "state"]
-_monitor_config_keys = ["buffer_size", "discard_new", "mode"]
-_monitor_status_keys = ["buffer_free", "dropped", "error", "state"]
-
-
+# Stolen from tickit-devices
+# https://docs.pytest.org/en/latest/example/parametrize.html#indirect-parametrization
 @pytest.fixture
-def detector_config_keys():
-    return _detector_config_keys
+def sim_eiger_controller(request):
+    """Subprocess that runs ``tickit all <config_path>``."""
+    config_path: str = request.param
+    proc = subprocess.Popen(
+        ["tickit", "all", config_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
 
+    # Wait until ready
+    while True:
+        line = proc.stdout.readline()
+        if "Starting HTTP server..." in line:
+            break
 
-@pytest.fixture
-def detector_status_keys():
-    return _detector_status_keys
+    sleep(3)
 
+    yield EigerController("127.0.0.1", 8081)
 
-@pytest.fixture
-def mock_connection(mocker: MockerFixture):
-    connection = mocker.patch("fastcs_eiger.http_connection.HTTPConnection")
-    connection.get = mocker.AsyncMock()
-
-    async def _connection_get(uri):
-        if "detector/api/1.8.0/status/keys" in uri:
-            return _detector_status_keys
-        elif "detector/api/1.8.0/config/keys" in uri:
-            return _detector_config_keys
-        elif "monitor/api/1.8.0/status/keys" in uri:
-            return _monitor_status_keys
-        elif "monitor/api/1.8.0/config/keys" in uri:
-            return _monitor_config_keys
-        elif "stream/api/1.8.0/status/keys" in uri:
-            return _stream_status_keys
-        elif "stream/api/1.8.0/config/keys" in uri:
-            return _stream_config_keys
-        else:
-            # dummy response
-            return {"access_mode": "rw", "value": 0.0, "value_type": "float"}
-
-    connection.get.side_effect = _connection_get
-    return connection
+    proc.send_signal(signal.SIGINT)
+    print(proc.communicate()[0])
