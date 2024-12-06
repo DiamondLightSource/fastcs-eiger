@@ -15,4 +15,4 @@ github_org: DiamondLightSource
 package_name: fastcs_eiger
 pypi: true
 repo_name: fastcs-eiger
-type_checker: mypy
+type_checker: pyright

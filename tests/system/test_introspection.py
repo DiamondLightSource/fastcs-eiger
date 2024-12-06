@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from fastcs.attributes import Attribute, AttrR
+from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.datatypes import Float
 
 from fastcs_eiger.eiger_controller import (
@@ -15,6 +15,7 @@ from fastcs_eiger.eiger_controller import (
     EigerMonitorController,
     EigerParameter,
     EigerStreamController,
+    EigerSubsystemController,
 )
 
 HERE = Path(__file__).parent
@@ -43,6 +44,7 @@ async def test_attribute_creation(sim_eiger_controller: EigerController):
     serialised_parameters: dict[str, dict[str, Any]] = {}
     subsystem_parameters = {}
     for subsystem_name, subcontroller in controller.get_sub_controllers().items():
+        assert isinstance(subcontroller, EigerSubsystemController)
         serialised_parameters[subsystem_name] = {}
         subsystem_parameters[
             subsystem_name
@@ -95,6 +97,7 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
 
     for subsystem in MISSING_KEYS:
         subcontroller = controller.get_sub_controllers()[subsystem.title()]
+        assert isinstance(subcontroller, EigerSubsystemController)
         parameters = await subcontroller._introspect_detector_subsystem()
         if subsystem == "detector":
             # ignored keys should not get added to the controller
@@ -107,9 +110,9 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
                     if attr_name == "threshold_energy":
                         continue
                     assert attr.group and "Threshold" in attr.group
-
-            attr = subcontroller.threshold_1_energy
+            attr: AttrRW = subcontroller.attributes["threshold_1_energy"]  # type: ignore
             sender = attr.sender
+            assert sender is not None
             await sender.put(subcontroller, attr, 100.0)
             # set parameters to update based on response to put request
             assert subcontroller._parameter_updates == {
@@ -123,8 +126,9 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
             subcontroller._parameter_updates.clear()
 
             # make sure API inconsistency for threshold/difference/mode is addressed
-            attr = subcontroller.threshold_difference_mode
+            attr: AttrRW = subcontroller.attributes["threshold_difference_mode"]  # type: ignore
             sender = attr.sender
+            assert sender is not None
             await sender.put(subcontroller, attr, "enabled")
             assert subcontroller._parameter_updates == {"threshold/difference/mode"}
 

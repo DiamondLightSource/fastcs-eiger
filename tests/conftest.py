@@ -40,7 +40,7 @@ def sim_eiger_controller(request):
     )
 
     # Wait until ready
-    while True:
+    while proc.stdout is not None:
         line = proc.stdout.readline()
         if "Starting HTTP server..." in line:
             break
