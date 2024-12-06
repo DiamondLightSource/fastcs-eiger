@@ -4,7 +4,11 @@ from unittest import mock
 import pytest
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import EigerController, EigerHandler
+from fastcs_eiger.eiger_controller import (
+    EigerController,
+    EigerDetectorController,
+    EigerHandler,
+)
 
 _lock = asyncio.Lock()
 
@@ -71,7 +75,7 @@ async def test_stale_parameter_propagates_to_top_controller(mocker: MockerFixtur
     await eiger_controller.initialise()
 
     detector_controller = eiger_controller.get_sub_controllers()["Detector"]
-
+    assert isinstance(detector_controller, EigerDetectorController)
     # queueing update sets subcontroller to stale
     assert detector_controller.stale_parameters.get() is False
     await detector_controller.queue_update(["dummy_attribute"])
