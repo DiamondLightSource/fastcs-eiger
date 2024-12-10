@@ -43,15 +43,14 @@ async def test_attribute_creation(sim_eiger_controller: EigerController):
     await controller.initialise()
     serialised_parameters: dict[str, dict[str, Any]] = {}
     subsystem_parameters = {}
-    for subsystem_name, subcontroller in controller.get_sub_controllers().items():
-        assert isinstance(subcontroller, EigerSubsystemController)
-        serialised_parameters[subsystem_name] = {}
+    for subcontroller in controller.get_subsystem_controllers():
+        serialised_parameters[subcontroller._subsystem] = {}
         subsystem_parameters[
-            subsystem_name
+            subcontroller._subsystem
         ] = await subcontroller._introspect_detector_subsystem()
-        for param in subsystem_parameters[subsystem_name]:
-            serialised_parameters[subsystem_name][param.key] = _serialise_parameter(
-                param
+        for param in subsystem_parameters[subcontroller._subsystem]:
+            serialised_parameters[subcontroller._subsystem][param.key] = (
+                _serialise_parameter(param)
             )
 
     expected_file = HERE / "parameters.json"
@@ -63,15 +62,15 @@ async def test_attribute_creation(sim_eiger_controller: EigerController):
     assert serialised_parameters == expected_parameters, "Detector API does not match"
 
     detector_attributes = EigerDetectorController._create_attributes(
-        subsystem_parameters["Detector"]
+        subsystem_parameters["detector"]
     )
     assert len(detector_attributes) == 76
     monitor_attributes = EigerMonitorController._create_attributes(
-        subsystem_parameters["Monitor"]
+        subsystem_parameters["monitor"]
     )
     assert len(monitor_attributes) == 7
     stream_attributes = EigerStreamController._create_attributes(
-        subsystem_parameters["Stream"]
+        subsystem_parameters["stream"]
     )
     assert len(stream_attributes) == 8
 

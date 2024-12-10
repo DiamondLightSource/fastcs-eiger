@@ -44,9 +44,6 @@ MISSING_KEYS: dict[str, dict[str, list[str]]] = {
 }
 
 
-_datatypes = {int: Int(), float: Float(), str: String(), bool: Bool()}
-
-
 def command_uri(key: str) -> str:
     return f"detector/api/1.8.0/command/{key}"
 
@@ -317,13 +314,13 @@ class EigerSubsystemController(SubController):
         for parameter in parameters:
             match parameter.response["value_type"]:
                 case "float":
-                    datatype = _datatypes[float]
+                    datatype = Float()
                 case "int" | "uint":
-                    datatype = _datatypes[int]
+                    datatype = Int()
                 case "bool":
-                    datatype = _datatypes[bool]
+                    datatype = Bool()
                 case "string" | "datetime" | "State" | "string[]":
-                    datatype = _datatypes[str]
+                    datatype = String()
                 case _:
                     print(f"Failed to handle {parameter}")
                     continue
@@ -332,13 +329,13 @@ class EigerSubsystemController(SubController):
             match parameter.response["access_mode"]:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
-                        datatype,
+                        datatype,  # type: ignore
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        datatype,
+                        datatype,  # type: ignore
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                         allowed_values=parameter.response.get("allowed_values", None),
@@ -375,9 +372,7 @@ class EigerSubsystemController(SubController):
             if key in IGNORED_KEYS:
                 continue
             attr_name = _key_to_attribute_name(key)
-            match getattr(self, attr_name, None):
-                # TODO: mypy doesn't understand AttrR as a type for some reason:
-                # `error: Expected type in class pattern; found "Any"  [misc]`
+            match self.attributes.get(attr_name, None):
                 case AttrR(updater=EigerConfigHandler() as updater) as attr:
                     parameter_updates.append(updater.config_update(self, attr))
                 case _ as attr:
