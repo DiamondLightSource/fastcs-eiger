@@ -89,7 +89,12 @@ class EigerHandler:
     async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
         try:
             response = await controller.connection.get(self.uri)
-            await attr.set(response["value"])
+            value = response["value"]
+            if isinstance(value, list) and all(
+                isinstance(s, str) for s in value
+            ):  # error is a list of strings
+                value = ", ".join(value)
+            await attr.set(value)
         except Exception as e:
             print(f"Failed to get {self.uri}:\n{e.__class__.__name__} {e}")
 
