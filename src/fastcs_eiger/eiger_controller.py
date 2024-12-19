@@ -5,8 +5,8 @@ from io import BytesIO
 from typing import Any, Literal
 
 import numpy as np
-from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW
-from fastcs.controller import Controller, SubController
+from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW, Handler
+from fastcs.controller import BaseController, Controller, SubController
 from fastcs.datatypes import Bool, Float, Int, String
 from fastcs.wrappers import command, scan
 from PIL import Image
@@ -62,10 +62,10 @@ class EigerHandler:
     """
 
     uri: str
-    update_period: float = 0.2
+    update_period: float | None = 0.2
 
     async def put(
-        self, controller: "EigerSubsystemController", _: AttrW, value: Any
+        self, controller: "EigerSubsystemController", attr: AttrW, value: Any
     ) -> None:
         parameters_to_update = await controller.connection.put(self.uri, value)
         if not parameters_to_update:
@@ -86,10 +86,15 @@ class EigerHandler:
 
         await controller.queue_update(parameters_to_update)
 
-    async def update(self, controller: "EigerController", attr: AttrR) -> None:
+    async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
         try:
             response = await controller.connection.get(self.uri)
-            await attr.set(response["value"])
+            value = response["value"]
+            if isinstance(value, list) and all(
+                isinstance(s, str) for s in value
+            ):  # error is a list of strings
+                value = ", ".join(value)
+            await attr.set(value)
         except Exception as e:
             print(f"Failed to get {self.uri}:\n{e.__class__.__name__} {e}")
 
@@ -116,7 +121,7 @@ class EigerConfigHandler(EigerHandler):
 
 
 @dataclass
-class LogicHandler:
+class LogicHandler(Handler):
     """
     Handler for FastCS Attribute Creation
 
@@ -124,7 +129,8 @@ class LogicHandler:
     Used for dynamically created attributes that are added for additional logic
     """
 
-    async def put(self, _: "EigerController", attr: AttrW, value: Any) -> None:
+    async def put(self, controller: BaseController, attr: AttrW, value: Any) -> None:
+        assert isinstance(attr, AttrR)  # AttrW does not implement set
         await attr.set(value)
 
 
@@ -227,13 +233,21 @@ class EigerController(Controller):
             print("\nAn HTTP request failed while introspecting detector:\n")
             raise
 
+    def get_subsystem_controllers(self) -> list["EigerSubsystemController"]:
+        return [
+            controller
+            for controller in self.get_sub_controllers().values()
+            if isinstance(controller, EigerSubsystemController)
+        ]
+
     @scan(0.1)
     async def update(self):
         """Periodically check for parameters that need updating from the detector."""
+        subsystem_controllers = self.get_subsystem_controllers()
         await self.stale_parameters.set(
-            any(c.stale_parameters.get() for c in self.get_sub_controllers().values())
+            any(c.stale_parameters.get() for c in subsystem_controllers)
         )
-        controller_updates = [c.update() for c in self.get_sub_controllers().values()]
+        controller_updates = [c.update() for c in subsystem_controllers]
         await asyncio.gather(*controller_updates)
 
 
@@ -283,7 +297,7 @@ class EigerSubsystemController(SubController):
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
-            setattr(self, name, attribute)
+            self.attributes[name] = attribute
 
     @classmethod
     def _group(cls, parameter: EigerParameter):
@@ -314,18 +328,19 @@ class EigerSubsystemController(SubController):
                     datatype = String()
                 case _:
                     print(f"Failed to handle {parameter}")
+                    continue
 
             group = cls._group(parameter)
             match parameter.response["access_mode"]:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
-                        datatype,
+                        datatype,  # type: ignore
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        datatype,
+                        datatype,  # type: ignore
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                         allowed_values=parameter.response.get("allowed_values", None),
@@ -362,10 +377,8 @@ class EigerSubsystemController(SubController):
             if key in IGNORED_KEYS:
                 continue
             attr_name = _key_to_attribute_name(key)
-            match getattr(self, attr_name, None):
-                # TODO: mypy doesn't understand AttrR as a type for some reason:
-                # `error: Expected type in class pattern; found "Any"  [misc]`
-                case AttrR(updater=EigerConfigHandler() as updater) as attr:  # type: ignore [misc]
+            match self.attributes.get(attr_name, None):
+                case AttrR(updater=EigerConfigHandler() as updater) as attr:
                     parameter_updates.append(updater.config_update(self, attr))
                 case _ as attr:
                     print(f"Failed to handle update for {key}: {attr}")

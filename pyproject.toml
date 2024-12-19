@@ -12,7 +12,7 @@ classifiers = [
 description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
-    "fastcs~=0.7.0",
+    "fastcs~=0.8.0",
     "numpy",
     "pillow",
     "typer",
@@ -27,11 +27,11 @@ dev = [
     "tickit-devices @ git+https://github.com/dls-controls/tickit-devices.git@eiger-stream2",
     "black",
     "copier",
-    "mypy",
     "myst-parser",
     "pipdeptree",
     "pre-commit",
     "pydata-sphinx-theme>=0.12",
+    "pyright",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
@@ -57,8 +57,9 @@ name = "Gary Yendell"
 [tool.setuptools_scm]
 version_file = "src/fastcs_eiger/_version.py"
 
-[tool.mypy]
-ignore_missing_imports = true # Ignore missing stubs in imported modules
+[tool.pyright]
+typeCheckingMode = "standard"
+reportMissingImports = false # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
@@ -91,12 +92,12 @@ passenv = *
 allowlist_externals =
     pytest
     pre-commit
-    mypy
+    pyright
     sphinx-build
     sphinx-autobuild
 commands =
     pre-commit: pre-commit run --all-files --show-diff-on-failure {posargs}
-    type-checking: mypy src tests {posargs}
+    type-checking: pyright src tests {posargs}
     tests: pytest --cov=fastcs_eiger --cov-report term --cov-report xml:cov.xml {posargs}
     docs: sphinx-{posargs:build -EW --keep-going} -T docs build/html
 """
