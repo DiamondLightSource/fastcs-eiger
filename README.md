@@ -13,6 +13,9 @@ Control system integration for Dectris Eiger detectors using FastCS.
 
     i. `podman run --rm -it -v /dev/shm:/dev/shm -v /tmp:/tmp --net=host ghcr.io/dls-controls/eiger-detector-runtime:latest`
 
+    ii. It may be necessary to add the flag `--security-opt label=disable` if there are
+    SELinux permissions restrictions.
+
 2. Run the IOC against the simulated detector, either from a local checkout
 
     i. `fastcs-eiger ioc EIGER` (or run `Eiger IOC` vscode launch config)
