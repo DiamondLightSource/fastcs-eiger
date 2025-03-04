@@ -13,6 +13,8 @@ from PIL import Image
 
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
+FETCH_BEFORE_RETURNING = ["bit_depth_image", "bit_depth_readout"]
+
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
     # Big arrays
@@ -83,7 +85,12 @@ class EigerHandler:
             print(
                 f"Fetching parameters after setting {self.uri}: {parameters_to_update}"
             )
-
+        for param in FETCH_BEFORE_RETURNING:
+            if param in parameters_to_update:
+                print(f"Fetching parameter {param} before returning from put")
+                parameters_to_update.remove(param)
+                attr = controller.attributes.get(_key_to_attribute_name(param))
+                await attr.updater.config_update(controller, attr)
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:

@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
@@ -134,5 +135,37 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
         for keys in MISSING_KEYS[subsystem].values():  # loop over status, config keys
             for key in keys:
                 assert any(param.key == key for param in parameters)
+
+    await controller.connection.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
+)
+async def test_fetch_before_returning_parameters(
+    sim_eiger_controller: EigerController,
+):
+    controller = sim_eiger_controller
+    await controller.initialise()
+    detector_controller = controller.get_sub_controllers()["Detector"]
+    count_time_attr = detector_controller.attributes.get("count_time")
+    bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
+    bit_depth_image_attr.updater.config_update = AsyncMock()  # type: ignore
+    count_time_attr.updater.config_update = AsyncMock()  # type: ignore
+    assert not detector_controller._parameter_updates  # type: ignore
+    await count_time_attr.updater.put(  # type: ignore
+        detector_controller, count_time_attr, 2
+    )
+    to_update: list[str] = detector_controller._parameter_updates  # type: ignore
+    assert (
+        to_update
+        and "bit_depth_image" not in to_update
+        and "bit_depth_readout" not in to_update
+    )
+    count_time_attr.updater.config_update.assert_not_called()  # type: ignore
+    bit_depth_image_attr.updater.config_update.assert_called()  # type: ignore
+    await detector_controller.update()  # type: ignore
+    count_time_attr.updater.config_update.assert_called()  # type: ignore
 
     await controller.connection.close()
