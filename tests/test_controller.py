@@ -80,19 +80,8 @@ async def test_stale_parameter_propagates_to_top_controller(mocker: MockerFixtur
     assert detector_controller.stale_parameters.get() is False
     await detector_controller.queue_update(["dummy_attribute"])
     assert detector_controller.stale_parameters.get() is True
-
-    # top controller not stale until update called
-    assert eiger_controller.stale_parameters.get() is False
-    await eiger_controller.update()
     assert eiger_controller.stale_parameters.get() is True
-    assert detector_controller.stale_parameters.get() is True
-
-    # on next update, queued updates are handled and stale is cleared
+    # top controller should be set to stale
     await eiger_controller.update()
-    assert not detector_controller.stale_parameters.get()
-    assert eiger_controller.stale_parameters.get()
-
-    # top controller needs to update another final time so that the
-    # detector controller stale  attribute returning to False propagates to top
-    await eiger_controller.update()
-    assert not eiger_controller.stale_parameters.get()
+    assert eiger_controller.stale_parameters.get() is False
+    assert detector_controller.stale_parameters.get() is False
