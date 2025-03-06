@@ -187,6 +187,7 @@ class EigerController(Controller):
         self.connection = HTTPConnection(self._ip, self._port)
         # Parameter update logic
         self._parameter_update_lock = asyncio.Lock()
+        self._stale_controllers: dict[EigerSubsystemController, bool] = {}
 
     async def initialise(self) -> None:
         """Create attributes by introspecting detector.
@@ -203,7 +204,7 @@ class EigerController(Controller):
                         controller = EigerDetectorController(
                             self.connection,
                             self._parameter_update_lock,
-                            self.set_stale_parameter,
+                            self.set_stale_parameters,
                         )
                         # detector subsystem initialises first
                         # Check current state of detector_state to see
@@ -219,18 +220,19 @@ class EigerController(Controller):
                         controller = EigerMonitorController(
                             self.connection,
                             self._parameter_update_lock,
-                            self.set_stale_parameter,
+                            self.set_stale_parameters,
                         )
                     case "stream":
                         controller = EigerStreamController(
                             self.connection,
                             self._parameter_update_lock,
-                            self.set_stale_parameter,
+                            self.set_stale_parameters,
                         )
                     case _:
                         raise NotImplementedError(
                             f"No subcontroller implemented for subsystem {subsystem}"
                         )
+                self._stale_controllers[controller] = False
                 self.register_sub_controller(subsystem.capitalize(), controller)
                 await controller.initialise()
 
@@ -252,30 +254,28 @@ class EigerController(Controller):
         controller_updates = [c.update() for c in subsystem_controllers]
         await asyncio.gather(*controller_updates)
 
-    async def set_stale_parameter(
+    async def set_stale_parameters(
         self, subcontroller: "EigerSubsystemController", stale: bool
     ):
-        await subcontroller.stale_parameters.set(stale)
-        await self.stale_parameters.set(
-            any(c.stale_parameters.get() for c in self.get_subsystem_controllers())
-        )
+        self._stale_controllers[subcontroller] = stale
+        await self.stale_parameters.set(any(self._stale_controllers.values()))
 
 
 class EigerSubsystemController(SubController):
     _subsystem: Literal["detector", "stream", "monitor"]
 
-    stale_parameters = AttrR(Bool())
-
     def __init__(
         self,
         connection: HTTPConnection,
         lock: asyncio.Lock,
-        set_stale: Callable[["EigerSubsystemController", bool], Awaitable[None]],
+        set_stale_parameters: Callable[
+            ["EigerSubsystemController", bool], Awaitable[None]
+        ],
     ):
         self.connection = connection
         self._parameter_update_lock = lock
         self._parameter_updates: set[str] = set()
-        self._set_stale = set_stale
+        self._set_stale_parameters = set_stale_parameters
         super().__init__()
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
@@ -371,11 +371,11 @@ class EigerSubsystemController(SubController):
         async with self._parameter_update_lock:
             for parameter in parameters:
                 self._parameter_updates.add(parameter)
-            await self._set_stale(self, True)
+            await self._set_stale_parameters(self, True)
 
     async def update(self):
         if not self._parameter_updates:
-            await self._set_stale(self, False)
+            await self._set_stale_parameters(self, False)
             return
 
         async with self._parameter_update_lock:
@@ -394,7 +394,7 @@ class EigerSubsystemController(SubController):
                 case _ as attr:
                     print(f"Failed to handle update for {key}: {attr}")
         await asyncio.gather(*parameter_updates)
-        await self._set_stale(self, False)
+        await self._set_stale_parameters(self, False)
 
 
 class EigerDetectorController(EigerSubsystemController):
