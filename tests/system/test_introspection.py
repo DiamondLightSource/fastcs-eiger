@@ -153,6 +153,7 @@ async def test_fetch_before_returning_parameters(
     bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
     bit_depth_image_attr.updater.config_update = AsyncMock()  # type: ignore
     count_time_attr.updater.config_update = AsyncMock()  # type: ignore
+
     assert not detector_controller._parameter_updates  # type: ignore
     await count_time_attr.updater.put(  # type: ignore
         detector_controller, count_time_attr, 2
@@ -165,6 +166,7 @@ async def test_fetch_before_returning_parameters(
     )
     count_time_attr.updater.config_update.assert_not_called()  # type: ignore
     bit_depth_image_attr.updater.config_update.assert_called()  # type: ignore
+
     await detector_controller.update()  # type: ignore
     count_time_attr.updater.config_update.assert_called()  # type: ignore
 

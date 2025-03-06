@@ -87,10 +87,15 @@ class EigerHandler:
             )
         for param in FETCH_BEFORE_RETURNING:
             if param in parameters_to_update:
-                print(f"Fetching parameter {param} before returning from put")
                 parameters_to_update.remove(param)
-                attr = controller.attributes.get(_key_to_attribute_name(param))
-                await attr.updater.config_update(controller, attr)
+                attr_to_update = controller.attributes.get(
+                    _key_to_attribute_name(param)
+                )
+                assert isinstance(attr_to_update, AttrR)
+                assert isinstance(attr_to_update.updater, EigerConfigHandler)
+                print(f"Fetching parameter {param} before returning from put")
+                await attr_to_update.updater.config_update(controller, attr_to_update)
+
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
