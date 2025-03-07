@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Coroutine
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Literal
@@ -219,10 +219,7 @@ class EigerController(Controller):
                 match subsystem:
                     case "detector":
                         controller = EigerDetectorController(
-                            self.connection,
-                            self._parameter_update_lock,
-                            self.queue,
-                            self.stale_parameters,
+                            self.connection, self.queue_subsystem_update
                         )
                         # detector subsystem initialises first
                         # Check current state of detector_state to see
@@ -236,17 +233,11 @@ class EigerController(Controller):
                             await controller.initialize()
                     case "monitor":
                         controller = EigerMonitorController(
-                            self.connection,
-                            self._parameter_update_lock,
-                            self.queue,
-                            self.stale_parameters,
+                            self.connection, self.queue_subsystem_update
                         )
                     case "stream":
                         controller = EigerStreamController(
-                            self.connection,
-                            self._parameter_update_lock,
-                            self.queue,
-                            self.stale_parameters,
+                            self.connection, self.queue_subsystem_update
                         )
                     case _:
                         raise NotImplementedError(
@@ -276,6 +267,13 @@ class EigerController(Controller):
                     await update
         await self.stale_parameters.set(False)
 
+    async def queue_subsystem_update(self, coros: list[Coroutine]):
+        if coros:
+            await self.stale_parameters.set(True)
+            async with self._parameter_update_lock:
+                for coro in coros:
+                    await self.queue.put(coro)
+
 
 class EigerSubsystemController(SubController):
     _subsystem: Literal["detector", "stream", "monitor"]
@@ -283,14 +281,10 @@ class EigerSubsystemController(SubController):
     def __init__(
         self,
         connection: HTTPConnection,
-        lock: asyncio.Lock,
-        queue: asyncio.Queue,
-        stale_parameters: AttrR[bool],
+        queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
     ):
         self.connection = connection
-        self._parameter_update_lock = lock
-        self._queue = queue
-        self._stale_parameters = stale_parameters
+        self._queue_subsystem_update = queue_subsystem_update
         super().__init__()
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
@@ -383,24 +377,19 @@ class EigerSubsystemController(SubController):
             parameters: Parameters to be updated
 
         """
-        async with self._parameter_update_lock:
-            if not parameters:
-                return
-            coros: list[Coroutine] = []
-            for parameter in parameters:
-                attr_name = _key_to_attribute_name(parameter)
-                match self.attributes.get(attr_name, None):
-                    case AttrR(updater=EigerConfigHandler() as updater) as attr:
-                        coros.append(updater.config_update(self, attr))
-                    case _ as attr:
-                        print(
-                            f"Failed to handle update for {parameter}"
-                            f" with attribute {attr}"
-                        )
-            if coros:
-                await self._stale_parameters.set(True)
-                for coro in coros:
-                    await self._queue.put(coro)
+        if not parameters:
+            return
+        coros: list[Coroutine] = []
+        for parameter in parameters:
+            attr_name = _key_to_attribute_name(parameter)
+            match self.attributes.get(attr_name, None):
+                case AttrR(updater=EigerConfigHandler() as updater) as attr:
+                    coros.append(updater.config_update(self, attr))
+                case _ as attr:
+                    print(
+                        f"Failed to handle update for {parameter} with attribute {attr}"
+                    )
+        await self._queue_subsystem_update(coros)
 
 
 class EigerDetectorController(EigerSubsystemController):
