@@ -1,16 +1,10 @@
-import asyncio
-from unittest import mock
-
 import pytest
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
     EigerController,
-    EigerDetectorController,
     EigerHandler,
 )
-
-_lock = asyncio.Lock()
 
 
 @pytest.mark.asyncio
@@ -64,24 +58,3 @@ async def test_eiger_handler_put(mocker: MockerFixture):
     await EigerHandler(no_updated_params_uri).put(controller, mocker.Mock(), 0.1)
     controller.connection.put.assert_awaited_with(no_updated_params_uri, 0.1)
     controller.queue_update.assert_awaited_with(["no_updated_params"])
-
-
-@pytest.mark.asyncio
-async def test_stale_parameter_propagates_to_top_controller(mocker: MockerFixture):
-    eiger_controller = EigerController("127.0.0.1", 80)
-    connection = mocker.patch.object(eiger_controller, "connection")
-    connection.get = mock.AsyncMock()
-
-    await eiger_controller.initialise()
-
-    detector_controller = eiger_controller.get_sub_controllers()["Detector"]
-    assert isinstance(detector_controller, EigerDetectorController)
-    # queueing update sets subcontroller to stale
-    assert eiger_controller._stale_controllers[detector_controller] is False
-    await detector_controller.queue_update(["dummy_attribute"])
-    assert eiger_controller._stale_controllers[detector_controller] is True
-    assert eiger_controller.stale_parameters.get() is True
-    # top controller should be set to stale
-    await eiger_controller.update()
-    assert eiger_controller.stale_parameters.get() is False
-    assert eiger_controller._stale_controllers[detector_controller] is False
