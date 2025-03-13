@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>FastCS Eiger &#8212; fastcs-eiger 0.2.2.dev3+gffd383c documentation</title>
+    <title>FastCS Eiger &#8212; fastcs-eiger 0.2.2.dev6+g6984e42 documentation</title>
   
   
   
@@ -30,7 +30,7 @@
   <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=5fa74e73"></script>
+    <script src="_static/documentation_options.js?v=24ec7ee9"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -428,12 +428,17 @@
 <ol class="arabic">
 <li><p>Run eiger-detector development environment with data writers and simulated detector</p>
 <p>i. <code class="docutils literal notranslate"><span class="pre">podman</span> <span class="pre">run</span> <span class="pre">--rm</span> <span class="pre">-it</span> <span class="pre">-v</span> <span class="pre">/dev/shm:/dev/shm</span> <span class="pre">-v</span> <span class="pre">/tmp:/tmp</span> <span class="pre">--net=host</span> <span class="pre">ghcr.io/dls-controls/eiger-detector-runtime:latest</span></code></p>
+<p>ii. It may be necessary to add the flag <code class="docutils literal notranslate"><span class="pre">--security-opt</span> <span class="pre">label=disable</span></code> if there are
+SELinux permissions restrictions.</p>
 </li>
 <li><p>Run the IOC against the simulated detector, either from a local checkout</p>
-<p>i. <code class="docutils literal notranslate"><span class="pre">fastcs-eiger</span> <span class="pre">ioc</span> <span class="pre">EIGER</span></code> (or run <code class="docutils literal notranslate"><span class="pre">Eiger</span> <span class="pre">IOC</span></code> vscode launch config)</p>
+<p>i. <code class="docutils literal notranslate"><span class="pre">fastcs-eiger</span> <span class="pre">ioc</span> <span class="pre">`hostname</span> <span class="pre">-s`-EIGER</span></code></p>
+<p>ii. or run the <code class="docutils literal notranslate"><span class="pre">Eiger</span> <span class="pre">IOC</span></code> vscode launch config, but edit it to include your
+hostname or there could be PV clashes from duplicate IOCs on the same network.</p>
 </li>
-<li><p>or the container</p>
-<p>i. Make a local directory for UIs <code class="docutils literal notranslate"><span class="pre">mkdir</span> <span class="pre">/tmp/opi</span></code></p>
+<li><p>or to run the latest release directly from the container registry</p>
+<p>i. Make a local directory for UIs <code class="docutils literal notranslate"><span class="pre">mkdir</span> <span class="pre">/tmp/opi</span></code> - bob files will appear here that
+can be opened on the host with Phoebus.</p>
 <p>ii. <code class="docutils literal notranslate"><span class="pre">podman</span> <span class="pre">run</span> <span class="pre">--rm</span> <span class="pre">-it</span> <span class="pre">-v</span> <span class="pre">/tmp/opi:/epics/opi</span> <span class="pre">--net=host</span> <span class="pre">ghcr.io/DiamondLightSource/fastcs-eiger:latest</span></code></p>
 </li>
 </ol>
