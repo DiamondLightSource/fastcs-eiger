@@ -7,10 +7,17 @@ from typing import Any, Literal
 import numpy as np
 from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW, Handler
 from fastcs.controller import BaseController, Controller, SubController
-from fastcs.datatypes import Bool, Float, Int, String
+from fastcs.datatypes import Bool, Float, String
 from fastcs.wrappers import command, scan
 from PIL import Image
 
+from fastcs_eiger.eiger_parameter import (
+    EIGER_PARAMETER_MODES,
+    EIGER_PARAMETER_SUBSYSTEMS,
+    EigerParameter,
+    EigerParameterResponse,
+    key_to_attribute_name,
+)
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 # Keys to be ignored when introspecting the detector to create parameters
@@ -140,35 +147,6 @@ EIGER_HANDLERS: dict[str, type[EigerHandler]] = {
 }
 
 
-@dataclass
-class EigerParameter:
-    key: str
-    """Last section of URI within a subsystem/mode."""
-    subsystem: Literal["detector", "stream", "monitor"]
-    """Subsystem within detector API."""
-    mode: Literal["status", "config"]
-    """Mode of parameter within subsystem."""
-    response: dict[str, Any]
-    """JSON response from GET of parameter."""
-
-    @property
-    def attribute_name(self):
-        return _key_to_attribute_name(self.key)
-
-    @property
-    def uri(self) -> str:
-        """Full URI for HTTP requests."""
-        return f"{self.subsystem}/api/1.8.0/{self.mode}/{self.key}"
-
-
-EIGER_PARAMETER_SUBSYSTEMS = EigerParameter.__annotations__["subsystem"].__args__
-EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
-
-
-def _key_to_attribute_name(key: str):
-    return key.replace("/", "_")
-
-
 class EigerController(Controller):
     """
     Controller Class for Eiger Detector
@@ -284,7 +262,10 @@ class EigerSubsystemController(SubController):
             parameters.extend(
                 [
                     EigerParameter(
-                        key=key, subsystem=self._subsystem, mode=mode, response=response
+                        key=key,
+                        subsystem=self._subsystem,
+                        mode=mode,
+                        response=EigerParameterResponse.model_validate(response),
                     )
                     for key, response in zip(subsystem_keys, responses, strict=False)
                 ]
@@ -317,35 +298,21 @@ class EigerSubsystemController(SubController):
         """
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
-            match parameter.response["value_type"]:
-                case "float":
-                    datatype = Float()
-                case "int" | "uint":
-                    datatype = Int()
-                case "bool":
-                    datatype = Bool()
-                case "string" | "datetime" | "State" | "string[]":
-                    datatype = String()
-                case _:
-                    print(f"Failed to handle {parameter}")
-                    continue
-
             group = cls._group(parameter)
-            match parameter.response["access_mode"]:
+            match parameter.response.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
-                        datatype,  # type: ignore
+                        parameter.response.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        datatype,  # type: ignore
+                        parameter.response.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
-                        allowed_values=parameter.response.get("allowed_values", None),
+                        allowed_values=parameter.response.allowed_values,
                     )
-
         return attributes
 
     async def queue_update(self, parameters: list[str]):
@@ -376,7 +343,7 @@ class EigerSubsystemController(SubController):
         for key in keys_to_check:
             if key in IGNORED_KEYS:
                 continue
-            attr_name = _key_to_attribute_name(key)
+            attr_name = key_to_attribute_name(key)
             match self.attributes.get(attr_name, None):
                 case AttrR(updater=EigerConfigHandler() as updater) as attr:
                     parameter_updates.append(updater.config_update(self, attr))
