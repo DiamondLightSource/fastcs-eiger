@@ -2,15 +2,16 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.datatypes import Float
+from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
     IGNORED_KEYS,
     MISSING_KEYS,
+    EigerConfigHandler,
     EigerController,
     EigerDetectorController,
     EigerMonitorController,
@@ -144,30 +145,34 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
 async def test_fetch_before_returning_parameters(
-    sim_eiger_controller: EigerController,
+    sim_eiger_controller: EigerController, mocker: MockerFixture
 ):
     controller = sim_eiger_controller
     await controller.initialise()
     detector_controller = controller.get_sub_controllers()["Detector"]
+    assert isinstance(detector_controller, EigerDetectorController)
+
     count_time_attr = detector_controller.attributes.get("count_time")
     bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
-    bit_depth_image_attr.updater.config_update = AsyncMock()  # type: ignore
-    count_time_attr.updater.config_update = AsyncMock()  # type: ignore
+    assert isinstance(count_time_attr, AttrRW)
+    assert isinstance(bit_depth_image_attr, AttrR)
+    count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
+    bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
 
-    assert not detector_controller._parameter_updates  # type: ignore
-    await count_time_attr.updater.put(  # type: ignore
-        detector_controller, count_time_attr, 2
-    )
-    to_update: list[str] = detector_controller._parameter_updates  # type: ignore
+    assert not detector_controller._parameter_updates
+    assert isinstance(count_time_attr.updater, EigerConfigHandler)
+    await count_time_attr.updater.put(detector_controller, count_time_attr, 2)
+    to_update: set[str] = detector_controller._parameter_updates
     assert (
         to_update
         and "bit_depth_image" not in to_update
         and "bit_depth_readout" not in to_update
     )
-    count_time_attr.updater.config_update.assert_not_called()  # type: ignore
-    bit_depth_image_attr.updater.config_update.assert_called()  # type: ignore
 
-    await detector_controller.update()  # type: ignore
-    count_time_attr.updater.config_update.assert_called()  # type: ignore
+    count_time_spy.assert_not_called()
+    bit_depth_image_spy.assert_called()
+
+    await detector_controller.update()
+    count_time_spy.assert_called()
 
     await controller.connection.close()
