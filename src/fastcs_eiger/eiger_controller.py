@@ -85,10 +85,12 @@ class EigerHandler:
             # update params which should be fetched early and remove from update queue
             parameters.remove(param)
             attr_to_update = controller.attributes.get(_key_to_attribute_name(param))
-            assert isinstance(attr_to_update, AttrR)
-            assert isinstance(attr_to_update.updater, EigerConfigHandler)
-            print(f"Fetching parameter {param} before returning from put")
-            await attr_to_update.updater.config_update(controller, attr_to_update)
+            match attr_to_update:
+                case AttrR(updater=EigerConfigHandler() as updater):
+                    print(f"Fetching parameter {param} before returning from put")
+                    await updater.config_update(controller, attr_to_update)
+                case _:
+                    print(f"Could not handle update for parameter {param}")
 
     async def put(
         self, controller: "EigerSubsystemController", attr: AttrW, value: Any
