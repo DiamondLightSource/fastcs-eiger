@@ -13,7 +13,7 @@ from PIL import Image
 
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
-FETCH_BEFORE_RETURNING = ["bit_depth_image", "bit_depth_readout"]
+FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -66,36 +66,39 @@ class EigerHandler:
     uri: str
     update_period: float | None = 0.2
 
+    async def _handle_params_to_update(
+        self, parameters: list[str], controller: "EigerSubsystemController"
+    ):
+        if not parameters:  # no response, queue update for the parameter we just put to
+            parameters.append(self.uri.split("/", 4)[-1])
+            print(f"Manually fetching parameter {parameters}")
+            return
+        elif "difference_mode" in parameters:
+            parameters[parameters.index("difference_mode")] = (
+                "threshold/difference/mode"
+            )
+            print(
+                f"Fetching parameters after setting {self.uri}: {parameters},"
+                " replacing incorrect key 'difference_mode'"
+            )
+        for param in FETCH_BEFORE_RETURNING.intersection(parameters):
+            # update params which should be fetched early and remove from update queue
+            parameters.remove(param)
+            attr_to_update = controller.attributes.get(_key_to_attribute_name(param))
+            assert isinstance(attr_to_update, AttrR)
+            assert isinstance(attr_to_update.updater, EigerConfigHandler)
+            print(f"Fetching parameter {param} before returning from put")
+            await attr_to_update.updater.config_update(controller, attr_to_update)
+
     async def put(
         self, controller: "EigerSubsystemController", attr: AttrW, value: Any
     ) -> None:
         parameters_to_update = await controller.connection.put(self.uri, value)
-        if not parameters_to_update:
-            parameters_to_update = [self.uri.split("/", 4)[-1]]
-            print(f"Manually fetching parameter {parameters_to_update}")
-        elif "difference_mode" in parameters_to_update:
-            parameters_to_update[parameters_to_update.index("difference_mode")] = (
-                "threshold/difference/mode"
-            )
-            print(
-                f"Fetching parameters after setting {self.uri}: {parameters_to_update},"
-                " replacing incorrect key 'difference_mode'"
-            )
-        else:
-            print(
-                f"Fetching parameters after setting {self.uri}: {parameters_to_update}"
-            )
-        for param in FETCH_BEFORE_RETURNING:
-            if param in parameters_to_update:
-                parameters_to_update.remove(param)
-                attr_to_update = controller.attributes.get(
-                    _key_to_attribute_name(param)
-                )
-                assert isinstance(attr_to_update, AttrR)
-                assert isinstance(attr_to_update.updater, EigerConfigHandler)
-                print(f"Fetching parameter {param} before returning from put")
-                await attr_to_update.updater.config_update(controller, attr_to_update)
-
+        await self._handle_params_to_update(parameters_to_update, controller)
+        print(
+            f"Queueing updates for parameters after setting {self.uri}:"
+            f" {parameters_to_update}"
+        )
         await controller.queue_update(parameters_to_update)
 
     async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
