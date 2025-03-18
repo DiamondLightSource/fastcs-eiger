@@ -412,9 +412,11 @@ class EigerSubsystemController(SubController):
                 case AttrR(updater=EigerConfigHandler() as updater) as attr:
                     coros.append(updater.config_update(self, attr))
                 case _ as attr:
-                    print(
-                        f"Failed to find updater for {parameter} with attribute {attr}"
-                    )
+                    if parameter not in IGNORED_KEYS:
+                        print(
+                            f"Failed to find updater for {parameter}"
+                            f"with attribute {attr}"
+                        )
         return coros
 
 
