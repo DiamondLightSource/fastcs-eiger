@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
@@ -112,36 +111,42 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
                     if attr_name == "threshold_energy":
                         continue
                     assert attr.group and "Threshold" in attr.group
-            attr: AttrRW = subcontroller.attributes["threshold_1_energy"]  # type: ignore
-
-            subcontroller.queue_update = AsyncMock()
-
-            sender = attr.sender
-            assert sender is not None
-            await sender.put(subcontroller, attr, 100.0)
-            # set parameters to update based on response to put request
-            subcontroller.queue_update.assert_called_with(
-                [
-                    "flatfield",
-                    "threshold/1/energy",
-                    "threshold/1/flatfield",
-                    "threshold/2/flatfield",
-                    "threshold_energy",
-                ]
-            )
-
-            # make sure API inconsistency for threshold/difference/mode is addressed
-            attr: AttrRW = subcontroller.attributes["threshold_difference_mode"]  # type: ignore
-            sender = attr.sender
-            assert sender is not None
-            await sender.put(subcontroller, attr, "enabled")
-            subcontroller.queue_update.assert_called_with(["threshold/difference/mode"])
 
         for keys in MISSING_KEYS[subsystem].values():  # loop over status, config keys
             for key in keys:
                 assert any(param.key == key for param in parameters)
 
     await controller.connection.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
+)
+async def test_threshold_mode_api_consistency_handled(
+    sim_eiger_controller: EigerController, mocker: MockerFixture
+):
+    controller = sim_eiger_controller
+    await controller.initialise()
+    detector_controller = controller.get_sub_controllers()["Detector"]
+    assert isinstance(detector_controller, EigerDetectorController)
+
+    attr: AttrRW = detector_controller.attributes["threshold_1_energy"]  # type: ignore
+
+    queue_update_spy = mocker.spy(detector_controller, "queue_update")
+
+    # make sure API inconsistency for threshold/difference/mode is addressed
+    attr: AttrRW = detector_controller.attributes["threshold_difference_mode"]  # type: ignore
+    sender: EigerConfigHandler = attr.sender  # type: ignore
+    assert sender is not None
+
+    api_put_response = await controller.connection.put(sender.uri, "enabled")
+    assert api_put_response == ["difference_mode"]
+    # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
+
+    await sender.put(detector_controller, attr, "enabled")
+    queue_update_spy.assert_called_with(["threshold/difference/mode"])
+    await detector_controller.connection.close()
 
 
 @pytest.mark.asyncio
