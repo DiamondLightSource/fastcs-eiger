@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Iterable
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Literal
@@ -81,16 +81,13 @@ class EigerHandler:
                 f"Fetching parameters after setting {self.uri}: {parameters},"
                 " replacing incorrect key 'difference_mode'"
             )
-        for param in FETCH_BEFORE_RETURNING.intersection(parameters):
+        fetch_before_return = FETCH_BEFORE_RETURNING.intersection(parameters)
+        if fetch_before_return:
             # update params which should be fetched early and remove from update queue
-            parameters.remove(param)
-            attr_to_update = controller.attributes.get(_key_to_attribute_name(param))
-            match attr_to_update:
-                case AttrR(updater=EigerConfigHandler() as updater):
-                    print(f"Fetching parameter {param} before returning from put")
-                    await updater.config_update(controller, attr_to_update)
-                case _:
-                    print(f"Could not handle update for parameter {param}")
+            for param in fetch_before_return:
+                parameters.remove(param)
+
+            await controller.update_now(fetch_before_return)
 
     async def put(
         self, controller: "EigerSubsystemController", attr: AttrW, value: Any
@@ -219,7 +216,9 @@ class EigerController(Controller):
                 match subsystem:
                     case "detector":
                         controller = EigerDetectorController(
-                            self.connection, self.queue_subsystem_update
+                            self.connection,
+                            self.queue_subsystem_update,
+                            self._parameter_update_lock,
                         )
                         # detector subsystem initialises first
                         # Check current state of detector_state to see
@@ -233,11 +232,15 @@ class EigerController(Controller):
                             await controller.initialize()
                     case "monitor":
                         controller = EigerMonitorController(
-                            self.connection, self.queue_subsystem_update
+                            self.connection,
+                            self.queue_subsystem_update,
+                            self._parameter_update_lock,
                         )
                     case "stream":
                         controller = EigerStreamController(
-                            self.connection, self.queue_subsystem_update
+                            self.connection,
+                            self.queue_subsystem_update,
+                            self._parameter_update_lock,
                         )
                     case _:
                         raise NotImplementedError(
@@ -282,9 +285,11 @@ class EigerSubsystemController(SubController):
         self,
         connection: HTTPConnection,
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
+        parameter_update_lock: asyncio.Lock,
     ):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
+        self._parameter_update_lock = parameter_update_lock
         super().__init__()
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
@@ -370,7 +375,7 @@ class EigerSubsystemController(SubController):
 
         return attributes
 
-    async def queue_update(self, parameters: list[str]):
+    async def queue_update(self, parameters: Iterable[str]):
         """Add the given parameters to the list of parameters to update.
 
         Args:
@@ -379,6 +384,27 @@ class EigerSubsystemController(SubController):
         """
         if not parameters:
             return
+        coros: list[Coroutine] = self._get_update_coros_for_parameters(parameters)
+        await self._queue_subsystem_update(coros)
+
+    async def update_now(self, parameters: Iterable[str]):
+        """Update the given parameters immediately without queueing or setting the
+        top controller's stale_parameters ``Attribute``.
+        Args:
+            parameters: Parameters to be updated immediately
+
+        """
+        if parameters:
+            print(
+                f"Attempting to update {parameters} without setting controller to stale"
+            )
+            async with self._parameter_update_lock:
+                coros = self._get_update_coros_for_parameters(parameters)
+                await asyncio.gather(*coros)
+
+    def _get_update_coros_for_parameters(
+        self, parameters: Iterable[str]
+    ) -> list[Coroutine]:
         coros: list[Coroutine] = []
         for parameter in parameters:
             attr_name = _key_to_attribute_name(parameter)
@@ -387,9 +413,9 @@ class EigerSubsystemController(SubController):
                     coros.append(updater.config_update(self, attr))
                 case _ as attr:
                     print(
-                        f"Failed to handle update for {parameter} with attribute {attr}"
+                        f"Failed to find updater for {parameter} with attribute {attr}"
                     )
-        await self._queue_subsystem_update(coros)
+        return coros
 
 
 class EigerDetectorController(EigerSubsystemController):

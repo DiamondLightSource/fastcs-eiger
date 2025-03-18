@@ -162,21 +162,29 @@ async def test_fetch_before_returning_parameters(
     assert isinstance(bit_depth_image_attr, AttrR)
     count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
     bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
+    queue_update_spy = mocker.spy(detector_controller, "queue_update")
+    update_now_spy = mocker.spy(detector_controller, "update_now")
+    controller_update_spy = mocker.spy(controller, "update")
 
-    assert not detector_controller._parameter_updates
     assert isinstance(count_time_attr.updater, EigerConfigHandler)
     await count_time_attr.updater.put(detector_controller, count_time_attr, 2)
-    to_update: set[str] = detector_controller._parameter_updates
-    assert (
-        to_update
-        and "bit_depth_image" not in to_update
-        and "bit_depth_readout" not in to_update
+
+    update_now_spy.assert_awaited_once_with({"bit_depth_image", "bit_depth_readout"})
+
+    # bit_depth_image and bit_depth_readout handled early
+    queue_update_spy.assert_awaited_once_with(
+        [
+            "count_time",
+            "countrate_correction_count_cutoff",
+            "frame_count_time",
+            "frame_time",
+        ]
     )
+    count_time_spy.assert_not_awaited()
+    bit_depth_image_spy.assert_awaited()
+    controller_update_spy.assert_not_awaited()
 
-    count_time_spy.assert_not_called()
-    bit_depth_image_spy.assert_called()
-
-    await detector_controller.update()
+    await controller.update()
     count_time_spy.assert_called()
 
     await controller.connection.close()
