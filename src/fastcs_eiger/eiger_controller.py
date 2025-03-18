@@ -264,10 +264,11 @@ class EigerController(Controller):
     async def update(self):
         """Periodically check for parameters that need updating from the detector."""
         if not self.queue.empty():
+            coros: list[Coroutine] = []
             async with self._parameter_update_lock:
                 while not self.queue.empty():
-                    update = await self.queue.get()
-                    await update
+                    coros.append(await self.queue.get())
+            await asyncio.gather(*coros)
         await self.stale_parameters.set(False)
 
     async def queue_subsystem_update(self, coros: list[Coroutine]):
