@@ -48,7 +48,7 @@ async def test_eiger_handler_put(mocker: MockerFixture):
     await EigerHandler(dummy_uri).put(controller, mocker.Mock(), 0.1)
     controller.connection.put.assert_awaited_once_with(dummy_uri, 0.1)
     controller.queue_update.assert_awaited_once_with(
-        controller.connection.put.return_value
+        list(controller.connection.put.return_value)
     )
 
     # if controller.connection.put returns [],

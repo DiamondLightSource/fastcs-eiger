@@ -174,7 +174,7 @@ async def test_fetch_before_returning_parameters(
     assert isinstance(count_time_attr.updater, EigerConfigHandler)
     await count_time_attr.updater.put(detector_controller, count_time_attr, 2)
 
-    update_now_spy.assert_awaited_once_with({"bit_depth_image", "bit_depth_readout"})
+    update_now_spy.assert_awaited_once_with(["bit_depth_image", "bit_depth_readout"])
 
     # bit_depth_image and bit_depth_readout handled early
     queue_update_spy.assert_awaited_once_with(
