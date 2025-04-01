@@ -13,7 +13,7 @@ from PIL import Image
 
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
-FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
+FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout", "nexpi"}
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -351,17 +351,15 @@ class EigerSubsystemController(SubController):
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
                         datatype,  # type: ignore
-                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
+                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),  # type: ignore
                         group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
                         datatype,  # type: ignore
-                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
+                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),  # type: ignore
                         group=group,
-                        allowed_values=parameter.response.get("allowed_values", None),
                     )
-
         return attributes
 
     async def queue_update(self, parameters: Iterable[str]):
