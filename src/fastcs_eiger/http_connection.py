@@ -89,6 +89,7 @@ class HTTPConnection:
         Returns: ClientResponse header and response payload as bytes
 
         """
+        print(self.full_url(uri))
         session = self.get_session()
         async with session.put(
             self.full_url(uri),

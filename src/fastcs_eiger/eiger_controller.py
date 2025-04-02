@@ -14,6 +14,7 @@ from PIL import Image
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout", "nexpi"}
+SET_CUSTOM_PREC = {"count_time": 3}
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -296,7 +297,6 @@ class EigerSubsystemController(SubController):
                 for key in subsystem_keys
             ]
             responses = await asyncio.gather(*requests)
-
             parameters.extend(
                 [
                     EigerParameter(
@@ -335,7 +335,9 @@ class EigerSubsystemController(SubController):
         for parameter in parameters:
             match parameter.response["value_type"]:
                 case "float":
-                    datatype = Float()
+                    datatype = Float(
+                        prec=SET_CUSTOM_PREC.get(parameter.attribute_name, 2)
+                    )
                 case "int" | "uint":
                     datatype = Int()
                 case "bool":
