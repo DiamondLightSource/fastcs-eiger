@@ -28,7 +28,7 @@ def _serialise_parameter(parameter: EigerParameter) -> dict:
         "key": parameter.key,
         "response": {
             k: v
-            for k, v in parameter.response.items()
+            for k, v in parameter.response.model_dump(exclude_none=True).items()
             if k not in ("max", "min", "unit", "value")
         },
     }
