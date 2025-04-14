@@ -9,18 +9,20 @@ class EigerParameterResponse(BaseModel):
     access_mode: str
     allowed_values: Any | None = None
     value: Any
-    value_type: Literal["float", "int", "bool", "str"]
+    value_type: Literal[
+        "float", "int", "bool", "uint", "string", "datetime", "State", "string[]"
+    ]
 
     @property
     def fastcs_datatype(self) -> DataType:
         match self.value_type:
             case "float":
                 return Float()
-            case "int":
+            case "int" | "uint":
                 return Int()
             case "bool":
                 return Bool()
-            case "str":
+            case "string" | "datetime" | "State" | "string[]":
                 return String()
             case _:
                 raise ValueError(f"Unsupported data type: {self.value_type}")
