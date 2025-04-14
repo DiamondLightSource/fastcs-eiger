@@ -13,12 +13,27 @@ from fastcs_eiger.eiger_controller import (
 _lock = asyncio.Lock()
 
 
-@pytest.mark.asyncio
-async def test_eiger_controller_creates_subcontrollers(mocker: MockerFixture):
+@pytest.fixture
+def mock_connection(mocker: MockerFixture):
     eiger_controller = EigerController("127.0.0.1", 80)
     connection = mocker.patch.object(eiger_controller, "connection")
-    connection.get = mocker.AsyncMock()
-    connection.put = mocker.AsyncMock()
+    connection.get = mock.AsyncMock()
+    # Arbitrary values to satisfy pydantic model.
+    connection.get.return_value = {
+        "access_mode": "read",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": "string",
+    }
+    connection.put = mock.AsyncMock()
+    return eiger_controller, connection
+
+
+@pytest.mark.asyncio
+async def test_eiger_controller_creates_subcontrollers(
+    mocker: MockerFixture, mock_connection
+):
+    eiger_controller, connection = mock_connection
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [
         "Detector",
@@ -67,10 +82,10 @@ async def test_eiger_handler_put(mocker: MockerFixture):
 
 
 @pytest.mark.asyncio
-async def test_stale_parameter_propagates_to_top_controller(mocker: MockerFixture):
-    eiger_controller = EigerController("127.0.0.1", 80)
-    connection = mocker.patch.object(eiger_controller, "connection")
-    connection.get = mock.AsyncMock()
+async def test_stale_parameter_propagates_to_top_controller(
+    mocker: MockerFixture, mock_connection
+):
+    eiger_controller, connection = mock_connection
 
     await eiger_controller.initialise()
 
