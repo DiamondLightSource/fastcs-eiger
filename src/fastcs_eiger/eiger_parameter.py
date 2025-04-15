@@ -24,8 +24,6 @@ class EigerParameterResponse(BaseModel):
                 return Bool()
             case "string" | "datetime" | "State" | "string[]":
                 return String()
-            case _:
-                raise ValueError(f"Unsupported data type: {self.value_type}")
 
 
 @dataclass
