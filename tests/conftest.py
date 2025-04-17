@@ -3,8 +3,10 @@ import signal
 import subprocess
 from time import sleep
 from typing import Any
+from unittest import mock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import EigerController
 
@@ -51,3 +53,19 @@ def sim_eiger_controller(request):
 
     proc.send_signal(signal.SIGINT)
     print(proc.communicate()[0])
+
+
+@pytest.fixture
+def mock_connection(mocker: MockerFixture):
+    eiger_controller = EigerController("127.0.0.1", 80)
+    connection = mocker.patch.object(eiger_controller, "connection")
+    connection.get = mock.AsyncMock()
+    # Arbitrary values to satisfy pydantic model.
+    connection.get.return_value = {
+        "access_mode": "read",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": "string",
+    }
+    connection.put = mock.AsyncMock()
+    return eiger_controller, connection
