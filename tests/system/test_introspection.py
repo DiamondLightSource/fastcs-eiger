@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.datatypes import Float
+from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
@@ -221,3 +222,22 @@ async def test_stale_propagates_to_top_controller(
     assert controller.queue.empty()
 
     await controller.connection.close()
+
+
+@pytest.mark.asyncio
+async def test_attribute_validation(mocker: MockerFixture, mock_connection):
+    eiger_controller, connection = mock_connection
+    connection.get.return_value = {
+        "access_mode": "read",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": "invalid_type",
+    }
+    with pytest.raises(ValidationError) as e:
+        await eiger_controller.initialise()
+
+    assert (
+        "Input should be "
+        "'float', 'int', 'bool', 'uint', 'string', 'datetime', 'State' or 'string[]'"
+        in str(e.value)
+    )
