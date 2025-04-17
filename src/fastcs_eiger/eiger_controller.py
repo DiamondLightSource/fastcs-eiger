@@ -318,13 +318,13 @@ class EigerSubsystemController(SubController):
             match parameter.response.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
-                        parameter.response.fastcs_datatype,
+                        parameter.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        parameter.response.fastcs_datatype,
+                        parameter.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
                         allowed_values=parameter.response.allowed_values,
