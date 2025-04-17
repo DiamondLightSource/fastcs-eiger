@@ -17,6 +17,7 @@ from fastcs_eiger.eiger_controller import (
     EigerDetectorController,
     EigerMonitorController,
     EigerParameter,
+    EigerParameterResponse,
     EigerStreamController,
     EigerSubsystemController,
 )
@@ -224,8 +225,15 @@ async def test_stale_propagates_to_top_controller(
     await controller.connection.close()
 
 
+EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
+    "value_type"
+].__args__
+
+
 @pytest.mark.asyncio
-async def test_attribute_validation(mocker: MockerFixture, mock_connection):
+async def test_attribute_validation_raises_for_invalid_type(
+    mocker: MockerFixture, mock_connection
+):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
         "access_mode": "read",
@@ -236,8 +244,23 @@ async def test_attribute_validation(mocker: MockerFixture, mock_connection):
     with pytest.raises(ValidationError) as e:
         await eiger_controller.initialise()
 
-    assert (
-        "Input should be "
-        "'float', 'int', 'bool', 'uint', 'string', 'datetime', 'State' or 'string[]'"
-        in str(e.value)
+    error_msg = str(e.value)
+    assert "Input should be" in error_msg and all(
+        f"'{t}'" in error_msg for t in EIGER_PARAMETER_VALID_VALUES
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("valid_type", EIGER_PARAMETER_VALID_VALUES)
+async def test_attribute_validation_accepts_valid_typess(
+    mocker, mock_connection, valid_type
+):
+    eiger_controller, connection = mock_connection
+    connection.get.return_value = {
+        "access_mode": "read",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": valid_type,
+    }
+
+    await eiger_controller.initialise()
