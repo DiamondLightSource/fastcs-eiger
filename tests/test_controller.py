@@ -5,9 +5,7 @@ from fastcs_eiger.eiger_controller import EigerHandler
 
 
 @pytest.mark.asyncio
-async def test_eiger_controller_creates_subcontrollers(
-    mocker: MockerFixture, mock_connection
-):
+async def test_eiger_controller_creates_subcontrollers(mock_connection):
     eiger_controller, connection = mock_connection
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [

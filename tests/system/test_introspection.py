@@ -230,9 +230,7 @@ async def test_stale_propagates_to_top_controller(
 
 
 @pytest.mark.asyncio
-async def test_attribute_validation_raises_for_invalid_type(
-    mocker: MockerFixture, mock_connection
-):
+async def test_attribute_validation_raises_for_invalid_type(mock_connection):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
         "access_mode": "read",
@@ -251,9 +249,7 @@ async def test_attribute_validation_raises_for_invalid_type(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("valid_type", EIGER_PARAMETER_VALID_VALUES)
-async def test_attribute_validation_accepts_valid_typess(
-    mocker, mock_connection, valid_type
-):
+async def test_attribute_validation_accepts_valid_types(mock_connection, valid_type):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
         "access_mode": "read",
