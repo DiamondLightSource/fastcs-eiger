@@ -24,6 +24,10 @@ from fastcs_eiger.eiger_controller import (
 
 HERE = Path(__file__).parent
 
+EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
+    "value_type"
+].__args__
+
 
 def _serialise_parameter(parameter: EigerParameter) -> dict:
     return {
@@ -223,11 +227,6 @@ async def test_stale_propagates_to_top_controller(
     assert controller.queue.empty()
 
     await controller.connection.close()
-
-
-EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
-    "value_type"
-].__args__
 
 
 @pytest.mark.asyncio
