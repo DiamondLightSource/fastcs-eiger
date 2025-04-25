@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.datatypes import Float
+from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
@@ -16,11 +17,16 @@ from fastcs_eiger.eiger_controller import (
     EigerDetectorController,
     EigerMonitorController,
     EigerParameter,
+    EigerParameterResponse,
     EigerStreamController,
     EigerSubsystemController,
 )
 
 HERE = Path(__file__).parent
+
+EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
+    "value_type"
+].__args__
 
 
 def _serialise_parameter(parameter: EigerParameter) -> dict:
@@ -30,7 +36,7 @@ def _serialise_parameter(parameter: EigerParameter) -> dict:
         "key": parameter.key,
         "response": {
             k: v
-            for k, v in parameter.response.items()
+            for k, v in parameter.response.model_dump(exclude_none=True).items()
             if k not in ("max", "min", "unit", "value")
         },
     }
@@ -221,3 +227,35 @@ async def test_stale_propagates_to_top_controller(
     assert controller.queue.empty()
 
     await controller.connection.close()
+
+
+@pytest.mark.asyncio
+async def test_attribute_validation_raises_for_invalid_type(mock_connection):
+    eiger_controller, connection = mock_connection
+    connection.get.return_value = {
+        "access_mode": "r",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": "invalid_type",
+    }
+    with pytest.raises(ValidationError) as e:
+        await eiger_controller.initialise()
+
+    error_msg = str(e.value)
+    assert "Input should be" in error_msg and all(
+        f"'{t}'" in error_msg for t in EIGER_PARAMETER_VALID_VALUES
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("valid_type", EIGER_PARAMETER_VALID_VALUES)
+async def test_attribute_validation_accepts_valid_types(mock_connection, valid_type):
+    eiger_controller, connection = mock_connection
+    connection.get.return_value = {
+        "access_mode": "r",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": valid_type,
+    }
+
+    await eiger_controller.initialise()

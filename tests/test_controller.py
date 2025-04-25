@@ -1,18 +1,12 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import (
-    EigerController,
-    EigerHandler,
-)
+from fastcs_eiger.eiger_controller import EigerHandler
 
 
 @pytest.mark.asyncio
-async def test_eiger_controller_creates_subcontrollers(mocker: MockerFixture):
-    eiger_controller = EigerController("127.0.0.1", 80)
-    connection = mocker.patch.object(eiger_controller, "connection")
-    connection.get = mocker.AsyncMock()
-    connection.put = mocker.AsyncMock()
+async def test_eiger_controller_creates_subcontrollers(mock_connection):
+    eiger_controller, connection = mock_connection
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [
         "Detector",
