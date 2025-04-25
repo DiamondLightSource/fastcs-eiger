@@ -233,7 +233,7 @@ async def test_stale_propagates_to_top_controller(
 async def test_attribute_validation_raises_for_invalid_type(mock_connection):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
-        "access_mode": "read",
+        "access_mode": "r",
         "allowed_values": None,
         "value": "test_value",
         "value_type": "invalid_type",
@@ -252,7 +252,7 @@ async def test_attribute_validation_raises_for_invalid_type(mock_connection):
 async def test_attribute_validation_accepts_valid_types(mock_connection, valid_type):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
-        "access_mode": "read",
+        "access_mode": "r",
         "allowed_values": None,
         "value": "test_value",
         "value_type": valid_type,

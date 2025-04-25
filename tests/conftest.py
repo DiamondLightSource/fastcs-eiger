@@ -62,7 +62,7 @@ def mock_connection(mocker: MockerFixture):
     connection.get = mock.AsyncMock()
     # Arbitrary values to satisfy pydantic model.
     connection.get.return_value = {
-        "access_mode": "read",
+        "access_mode": "rw",
         "allowed_values": None,
         "value": "test_value",
         "value_type": "string",
