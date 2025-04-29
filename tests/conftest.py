@@ -60,12 +60,5 @@ def mock_connection(mocker: MockerFixture):
     eiger_controller = EigerController("127.0.0.1", 80)
     connection = mocker.patch.object(eiger_controller, "connection")
     connection.get = mock.AsyncMock()
-    # Arbitrary values to satisfy pydantic model.
-    connection.get.return_value = {
-        "access_mode": "rw",
-        "allowed_values": None,
-        "value": "test_value",
-        "value_type": "string",
-    }
     connection.put = mock.AsyncMock()
     return eiger_controller, connection

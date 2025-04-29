@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
@@ -259,3 +260,38 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
     }
 
     await eiger_controller.initialise()
+
+
+@pytest.mark.asyncio
+async def test_if_min_value_provided_then_prec_set_correctly(mock_connection):
+    eiger_controller, connection = mock_connection
+
+    connection.get.side_effect = [
+        {"value": "test_state_val"},
+        ["test_float_attr"],
+        {
+            "access_mode": "r",
+            "allowed_values": None,
+            "value": 1.0,
+            "value_type": "float",
+            "min": 0.0001,  # Based on this field, prec should be set to 4.
+        },
+        {
+            "access_mode": "r",
+            "allowed_values": None,
+            "value": "test_error_value",
+            "value_type": "string[]",
+        },  # Second dict populates missing stream key.
+    ]
+
+    with (
+        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS", ["detector"]),
+        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_MODES", ["status"]),
+    ):
+        await eiger_controller.initialise()
+
+    test_float_attr = eiger_controller.get_sub_controllers()["Detector"].attributes.get(
+        "test_float_attr"
+    )
+
+    assert test_float_attr.datatype == Float(prec=4)
