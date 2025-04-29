@@ -263,7 +263,22 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
 
 
 @pytest.mark.asyncio
-async def test_if_min_value_provided_then_prec_set_correctly(mock_connection):
+@pytest.mark.parametrize(
+    "mock_min, expected_prec",
+    [
+        [0.0001, 4],
+        [0.001, 3],
+        [0.01, 2],
+        [0.1, 1],
+        [1, 2],  # Case where min is int.
+        [123.123, 3],
+        [0, 2],
+        [0.0, 1],
+    ],
+)
+async def test_if_min_value_provided_then_prec_set_correctly(
+    mock_min, expected_prec, mock_connection
+):
     eiger_controller, connection = mock_connection
 
     connection.get.side_effect = [
@@ -274,7 +289,7 @@ async def test_if_min_value_provided_then_prec_set_correctly(mock_connection):
             "allowed_values": None,
             "value": 1.0,
             "value_type": "float",
-            "min": 0.0001,  # Based on this field, prec should be set to 4.
+            "min": mock_min,
         },
         {
             "access_mode": "r",
@@ -294,4 +309,4 @@ async def test_if_min_value_provided_then_prec_set_correctly(mock_connection):
         "test_float_attr"
     )
 
-    assert test_float_attr.datatype == Float(prec=4)
+    assert test_float_attr.datatype == Float(prec=expected_prec)
