@@ -7,6 +7,15 @@ from fastcs_eiger.eiger_controller import EigerHandler
 @pytest.mark.asyncio
 async def test_eiger_controller_creates_subcontrollers(mock_connection):
     eiger_controller, connection = mock_connection
+
+    # Arbitrary HTTP response for pydantic model.
+    connection.get.return_value = {
+        "access_mode": "r",
+        "allowed_values": None,
+        "value": "test_value",
+        "value_type": "string",
+    }
+
     await eiger_controller.initialise()
     assert list(eiger_controller.get_sub_controllers().keys()) == [
         "Detector",
