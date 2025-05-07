@@ -39,8 +39,7 @@ class EigerParameter:
     def fastcs_datatype(self) -> DataType:
         match self.response.value_type:
             case "float":
-                min = self.response.min
-                prec = len(str(min).split(".")[1]) if isinstance(min, float) else 2
+                prec = float_to_precision(str(self.response.min))
                 return Float(prec=prec)
             case "int" | "uint":
                 return Int()
@@ -56,3 +55,14 @@ EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
 
 def key_to_attribute_name(key: str):
     return key.replace("/", "_")
+
+
+def float_to_precision(value: str) -> int:
+    for separator in [".", "e"]:
+        if separator in value:
+            return (
+                len(value.split(separator)[1])
+                if separator == "."
+                else abs(int(value.split(separator)[1]))
+            )
+    return 2

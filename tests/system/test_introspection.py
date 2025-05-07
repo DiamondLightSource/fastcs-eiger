@@ -274,6 +274,9 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
         [123.123, 3],
         [0, 2],
         [0.0, 1],
+        [1e-5, 5],
+        [1e5, 1],
+        [None, 2],
     ],
 )
 async def test_if_min_value_provided_then_prec_set_correctly(
