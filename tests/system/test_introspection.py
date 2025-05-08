@@ -266,9 +266,10 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
 async def test_eiger_controller_trigger(
-    sim_eiger_controller: EigerController,
+    mocker: MockerFixture, sim_eiger_controller: EigerController
 ):
     controller = sim_eiger_controller
+    controller.connection.put = mocker.AsyncMock()
     await controller.initialise()
 
     detector_controller = controller.get_sub_controllers()["Detector"]
