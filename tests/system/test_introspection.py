@@ -269,7 +269,6 @@ async def test_eiger_controller_trigger(
     mocker: MockerFixture, sim_eiger_controller: EigerController
 ):
     controller = sim_eiger_controller
-    controller.connection.put = mocker.AsyncMock()
     await controller.initialise()
 
     detector_controller = controller.get_sub_controllers()["Detector"]
@@ -283,3 +282,4 @@ async def test_eiger_controller_trigger(
 
     await detector_controller.trigger_exposure.set(0.1)
     await detector_controller.trigger()
+    await controller.connection.close()
