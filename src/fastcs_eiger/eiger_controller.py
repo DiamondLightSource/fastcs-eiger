@@ -379,8 +379,15 @@ class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
 
     # Detector parameters to use in internal logic
-    trigger_mode = AttrRW(String())  # TODO: Include URI and validate type from API
     trigger_exposure = AttrRW(Float(), handler=LogicHandler())
+
+    async def initialise(self):
+        await super().initialise()
+
+        _trigger_mode = self.attributes.get("trigger_mode", AttrRW(String()))
+        assert isinstance(_trigger_mode, AttrRW)
+        self.trigger_mode = _trigger_mode
+        # TODO: Improve how we define internal attributes that are also introspected.
 
     @detector_command
     async def initialize(self):
