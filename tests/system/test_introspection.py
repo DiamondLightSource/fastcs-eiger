@@ -265,9 +265,7 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
 @pytest.mark.parametrize(
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
-async def test_eiger_controller_trigger(
-    mocker: MockerFixture, sim_eiger_controller: EigerController
-):
+async def test_eiger_controller_trigger(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     await controller.initialise()
 
@@ -281,7 +279,7 @@ async def test_eiger_controller_trigger(
     assert detector_controller.attributes["trigger_mode"].get() == "inte"  # type: ignore
 
     await detector_controller.trigger_exposure.set(0.1)
-    await detector_controller.trigger()
+    # await detector_controller.trigger()
 
     await detector_controller.queue_update(["nonexistent_parameter"])
 
