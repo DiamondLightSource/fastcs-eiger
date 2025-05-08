@@ -284,5 +284,3 @@ async def test_eiger_controller_trigger(
     await detector_controller.trigger()
 
     await detector_controller.queue_update(["nonexistent_parameter"])
-
-    await controller.connection.close()
