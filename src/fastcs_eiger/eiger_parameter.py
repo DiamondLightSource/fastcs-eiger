@@ -56,7 +56,7 @@ def key_to_attribute_name(key: str):
     return key.replace("/", "_")
 
 
-def minimum_to_precision(value: float | int | None) -> int:
+def minimum_to_precision(value: float | None) -> int:
     if value is not None:
         value_as_str = str(value)
         for separator in [".", "e"]:
