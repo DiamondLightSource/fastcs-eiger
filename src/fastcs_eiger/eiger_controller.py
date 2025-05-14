@@ -295,6 +295,8 @@ class EigerSubsystemController(SubController):
 
         for name, attribute in attributes.items():
             self.attributes[name] = attribute
+            if getattr(self, name, None):
+                setattr(self, name, attribute)
 
     @classmethod
     def _group(cls, parameter: EigerParameter):
@@ -380,14 +382,7 @@ class EigerDetectorController(EigerSubsystemController):
 
     # Detector parameters to use in internal logic
     trigger_exposure = AttrRW(Float(), handler=LogicHandler())
-
-    async def initialise(self):
-        await super().initialise()
-
-        _trigger_mode = self.attributes.get("trigger_mode", AttrRW(String()))
-        assert isinstance(_trigger_mode, AttrRW)
-        self.trigger_mode = _trigger_mode
-        # TODO: Improve how we define internal attributes that are also introspected.
+    trigger_mode = AttrRW(String())
 
     @detector_command
     async def initialize(self):
