@@ -59,11 +59,8 @@ def key_to_attribute_name(key: str):
 def minimum_to_precision(value: float | None) -> int:
     if value is not None:
         value_as_str = str(value)
-        for separator in [".", "e"]:
-            if separator in value_as_str:
-                return (
-                    len(value_as_str.split(separator)[1])
-                    if separator == "."
-                    else abs(int(value_as_str.split(separator)[1]))
-                )
+        if "." in value_as_str:
+            return len(value_as_str.split(".")[1])
+        elif "e" in value_as_str:
+            return abs(int(value_as_str.split("e")[1]))
     return 2
