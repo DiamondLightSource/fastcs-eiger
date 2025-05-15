@@ -8,6 +8,7 @@ from pydantic import BaseModel
 class EigerParameterResponse(BaseModel):
     access_mode: Literal["r", "w", "rw"]
     allowed_values: Any | None = None
+    min: float | int | None = None
     value: Any
     value_type: Literal[
         "float", "int", "bool", "uint", "string", "datetime", "State", "string[]"
@@ -38,7 +39,7 @@ class EigerParameter:
     def fastcs_datatype(self) -> DataType:
         match self.response.value_type:
             case "float":
-                return Float()
+                return Float(prec=minimum_to_precision(self.response.min))
             case "int" | "uint":
                 return Int()
             case "bool":
@@ -53,3 +54,13 @@ EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
 
 def key_to_attribute_name(key: str):
     return key.replace("/", "_")
+
+
+def minimum_to_precision(value: float | None) -> int:
+    if value is not None:
+        value_as_str = str(value)
+        if "." in value_as_str:
+            return len(value_as_str.split(".")[1])
+        elif "e" in value_as_str:
+            return abs(int(value_as_str.split("e")[1]))
+    return 2

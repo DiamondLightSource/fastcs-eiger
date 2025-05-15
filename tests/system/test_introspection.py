@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
@@ -286,3 +287,55 @@ async def test_eiger_controller_trigger(
     await detector_controller.queue_update(["nonexistent_parameter"])
 
     await controller.connection.close()
+
+
+@pytest.mark.parametrize(
+    "mock_min, expected_prec",
+    [
+        [0.0001, 4],
+        [0.001, 3],
+        [0.01, 2],
+        [0.1, 1],
+        [1, 2],  # Case where min is int.
+        [123.123, 3],
+        [0, 2],
+        [0.0, 1],
+        [1e-5, 5],
+        [1e5, 1],
+        [None, 2],
+    ],
+)
+async def test_if_min_value_provided_then_prec_set_correctly(
+    mock_min, expected_prec, mock_connection
+):
+    eiger_controller, connection = mock_connection
+
+    connection.get.side_effect = [
+        {"value": "test_state_val"},
+        ["test_float_attr"],
+        {
+            "access_mode": "r",
+            "allowed_values": None,
+            "value": 1.0,
+            "value_type": "float",
+            "min": mock_min,
+        },
+        {
+            "access_mode": "r",
+            "allowed_values": None,
+            "value": "test_error_value",
+            "value_type": "string[]",
+        },  # Second dict populates missing stream key.
+    ]
+
+    with (
+        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS", ["detector"]),
+        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_MODES", ["status"]),
+    ):
+        await eiger_controller.initialise()
+
+    test_float_attr = eiger_controller.get_sub_controllers()["Detector"].attributes.get(
+        "test_float_attr"
+    )
+
+    assert test_float_attr.datatype == Float(prec=expected_prec)
