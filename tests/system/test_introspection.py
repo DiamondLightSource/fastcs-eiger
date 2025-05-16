@@ -2,10 +2,11 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
-from fastcs.datatypes import Float
+from fastcs.datatypes import Float, String
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
@@ -265,7 +266,7 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
 @pytest.mark.parametrize(
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
-async def test_eiger_controller_trigger(
+async def test_eiger_controller_trigger_correctly_introspected(
     mocker: MockerFixture, sim_eiger_controller: EigerController
 ):
     controller = sim_eiger_controller
@@ -285,4 +286,40 @@ async def test_eiger_controller_trigger(
 
     await detector_controller.queue_update(["nonexistent_parameter"])
 
+    await controller.connection.close()
+
+
+@patch(
+    "fastcs_eiger.eiger_controller.EigerDetectorController.trigger_mode",
+    AttrRW(Float()),
+)
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
+)
+async def test_class_and_introspected_attributes_of_different_datatypes_raise_error(
+    sim_eiger_controller: EigerController,
+):
+    controller = sim_eiger_controller
+    with pytest.raises(AssertionError) as e:
+        await controller.initialise()
+    assert "does not match datatype of its class defined attribute" in str(e.value)
+    await controller.connection.close()
+
+
+@patch(
+    "fastcs_eiger.eiger_controller.EigerDetectorController.trigger_mode",
+    String(),
+)
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
+)
+async def test_class_and_introspected_attributes_of_different_types_raise_error(
+    sim_eiger_controller: EigerController,
+):
+    controller = sim_eiger_controller
+    with pytest.raises(AssertionError) as e:
+        await controller.initialise()
+    assert "is not an instance of its introspected attribute's type" in str(e.value)
     await controller.connection.close()
