@@ -362,7 +362,6 @@ class EigerSubsystemController(SubController):
                         parameter.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
-                        # allowed_values=parameter.response.allowed_values,
                     )
         return attributes
 
