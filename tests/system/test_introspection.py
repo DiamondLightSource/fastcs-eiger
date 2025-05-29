@@ -50,7 +50,6 @@ def _serialise_parameter(parameter: EigerParameter) -> dict:
 async def test_attribute_creation(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
     serialised_parameters: dict[str, dict[str, Any]] = {}
     subsystem_parameters = {}
     for subcontroller in controller.get_subsystem_controllers():
@@ -103,7 +102,6 @@ async def test_attribute_creation(sim_eiger_controller: EigerController):
 async def test_controller_groups_and_parameters(sim_eiger_controller: EigerController):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
 
     for subsystem in MISSING_KEYS:
         subcontroller = controller.get_sub_controllers()[subsystem.title()]
