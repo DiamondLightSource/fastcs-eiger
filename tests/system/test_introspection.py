@@ -156,6 +156,7 @@ async def test_threshold_mode_api_consistency_handled(
 
     await sender.put(attr, "enabled")
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
+    await controller.update()
     await detector_controller.connection.close()
 
 
