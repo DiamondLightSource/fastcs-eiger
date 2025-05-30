@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Any, Literal
 
 import numpy as np
-from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW, Handler
+from fastcs.attributes import AttrHandlerRW, Attribute, AttrR, AttrRW, AttrW
 from fastcs.controller import BaseController, Controller, SubController
 from fastcs.datatypes import Bool, Float, String
 from fastcs.wrappers import command, scan
@@ -62,7 +62,7 @@ def detector_command(fn) -> Any:
 
 
 @dataclass
-class EigerHandler:
+class EigerHandler(AttrHandlerRW):
     """
     Handler for FastCS Attribute Creation
 
@@ -72,6 +72,18 @@ class EigerHandler:
 
     uri: str
     update_period: float | None = 0.2
+    _controller: "EigerSubsystemController | None" = None
+
+    async def initialise(self, controller: BaseController):
+        assert isinstance(controller, EigerSubsystemController)
+        self._controller = controller
+
+    @property
+    def controller(self) -> "EigerSubsystemController":
+        if self._controller is None:
+            raise RuntimeError("Handler not initialised")
+
+        return self._controller
 
     def _handle_params_to_update(self, parameters: list[str]):
         update_now = []
@@ -89,20 +101,18 @@ class EigerHandler:
                     update_later.append(parameter)
         return update_now, update_later
 
-    async def put(
-        self, controller: "EigerSubsystemController", attr: AttrW, value: Any
-    ) -> None:
-        parameters_to_update = await controller.connection.put(self.uri, value)
+    async def put(self, attr: AttrW, value: Any) -> None:
+        parameters_to_update = await self.controller.connection.put(self.uri, value)
         update_now, update_later = self._handle_params_to_update(parameters_to_update)
-        await controller.update_now(update_now)
+        await self.controller.update_now(update_now)
         print(
             f"Queueing updates for parameters after setting {self.uri}: {update_later}"
         )
-        await controller.queue_update(update_later)
+        await self.controller.queue_update(update_later)
 
-    async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
+    async def update(self, attr: AttrR) -> None:
         try:
-            response = await controller.connection.get(self.uri)
+            response = await self.controller.connection.get(self.uri)
             value = response["value"]
             if isinstance(value, list) and all(
                 isinstance(s, str) for s in value
@@ -118,24 +128,22 @@ class EigerConfigHandler(EigerHandler):
 
     first_poll_complete: bool = False
 
-    async def update(self, controller: "EigerSubsystemController", attr: AttrR) -> None:
+    async def update(self, attr: AttrR) -> None:
         # Only poll once on startup
         if not self.first_poll_complete:
-            await super().update(controller, attr)
+            await super().update(attr)
             if isinstance(attr, AttrRW):
                 # Sync readback value to demand
                 await attr.update_display_without_process(attr.get())
 
             self.first_poll_complete = True
 
-    async def config_update(
-        self, controller: "EigerSubsystemController", attr: AttrR
-    ) -> None:
-        await super().update(controller, attr)
+    async def config_update(self, attr: AttrR) -> None:
+        await super().update(attr)
 
 
 @dataclass
-class LogicHandler(Handler):
+class LogicHandler(AttrHandlerRW):
     """
     Handler for FastCS Attribute Creation
 
@@ -143,7 +151,20 @@ class LogicHandler(Handler):
     Used for dynamically created attributes that are added for additional logic
     """
 
-    async def put(self, controller: BaseController, attr: AttrW, value: Any) -> None:
+    _controller: BaseController | None = None
+
+    async def initialise(self, controller: BaseController):
+        assert isinstance(controller, BaseController)
+        self._controller = controller
+
+    @property
+    def controller(self) -> BaseController:
+        if self._controller is None:
+            raise RuntimeError("Handler not initialised")
+
+        return self._controller
+
+    async def put(self, attr: AttrW, value: Any) -> None:
         assert isinstance(attr, AttrR)  # AttrW does not implement set
         await attr.set(value)
 
@@ -341,7 +362,6 @@ class EigerSubsystemController(SubController):
                         parameter.fastcs_datatype,
                         handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
-                        allowed_values=parameter.response.allowed_values,
                     )
         return attributes
 
@@ -379,7 +399,7 @@ class EigerSubsystemController(SubController):
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
                 case AttrR(updater=EigerConfigHandler() as updater) as attr:
-                    coros.append(updater.config_update(self, attr))
+                    coros.append(updater.config_update(attr))
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:
                         print(

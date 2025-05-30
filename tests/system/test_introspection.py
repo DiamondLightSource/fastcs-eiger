@@ -135,6 +135,7 @@ async def test_threshold_mode_api_consistency_handled(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
+    await controller.attribute_initialise()
     detector_controller = controller.get_sub_controllers()["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
 
@@ -151,8 +152,9 @@ async def test_threshold_mode_api_consistency_handled(
     assert api_put_response == ["difference_mode"]
     # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
 
-    await sender.put(detector_controller, attr, "enabled")
+    await sender.put(attr, "enabled")
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
+    await controller.update()
     await detector_controller.connection.close()
 
 
@@ -163,43 +165,51 @@ async def test_threshold_mode_api_consistency_handled(
 async def test_fetch_before_returning_parameters(
     sim_eiger_controller: EigerController, mocker: MockerFixture
 ):
-    controller = sim_eiger_controller
-    await controller.initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
-    assert isinstance(detector_controller, EigerDetectorController)
+    # Need to mock @scan to spy controller.update()
+    with patch("fastcs_eiger.eiger_controller.scan"):
+        controller = sim_eiger_controller
+        await controller.initialise()
+        await controller.attribute_initialise()
+        detector_controller = controller.get_sub_controllers()["Detector"]
+        assert isinstance(detector_controller, EigerDetectorController)
 
-    count_time_attr = detector_controller.attributes.get("count_time")
-    bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
-    assert isinstance(count_time_attr, AttrRW)
-    assert isinstance(bit_depth_image_attr, AttrR)
-    count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
-    bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
-    queue_update_spy = mocker.spy(detector_controller, "queue_update")
-    update_now_spy = mocker.spy(detector_controller, "update_now")
-    controller_update_spy = mocker.spy(controller, "update")
+        count_time_attr = detector_controller.attributes.get("count_time")
+        frame_time_attr = detector_controller.attributes.get("frame_time")
+        bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
+        assert isinstance(count_time_attr, AttrRW)
+        assert isinstance(frame_time_attr, AttrRW)
+        assert isinstance(bit_depth_image_attr, AttrR)
+        count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
+        bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
+        queue_update_spy = mocker.spy(detector_controller, "queue_update")
+        update_now_spy = mocker.spy(detector_controller, "update_now")
+        controller_update_spy = mocker.spy(controller, "update")
+        controller_update_spy = mocker.AsyncMock()
 
-    assert isinstance(count_time_attr.updater, EigerConfigHandler)
-    await count_time_attr.updater.put(detector_controller, count_time_attr, 2)
+        assert isinstance(count_time_attr.updater, EigerConfigHandler)
+        await count_time_attr.updater.put(count_time_attr, 2.0)
 
-    update_now_spy.assert_awaited_once_with(["bit_depth_image", "bit_depth_readout"])
+        update_now_spy.assert_awaited_once_with(
+            ["bit_depth_image", "bit_depth_readout"]
+        )
 
-    # bit_depth_image and bit_depth_readout handled early
-    queue_update_spy.assert_awaited_once_with(
-        [
-            "count_time",
-            "countrate_correction_count_cutoff",
-            "frame_count_time",
-            "frame_time",
-        ]
-    )
-    count_time_spy.assert_not_awaited()
-    bit_depth_image_spy.assert_awaited()
-    controller_update_spy.assert_not_awaited()
+        # bit_depth_image and bit_depth_readout handled early
+        queue_update_spy.assert_awaited_once_with(
+            [
+                "count_time",
+                "countrate_correction_count_cutoff",
+                "frame_count_time",
+                "frame_time",
+            ]
+        )
+        count_time_spy.assert_not_awaited()
+        bit_depth_image_spy.assert_awaited()
+        controller_update_spy.assert_not_awaited()
 
-    await controller.update()
-    count_time_spy.assert_called()
+        await controller.update()
+        count_time_spy.assert_called()
 
-    await controller.connection.close()
+        await controller.connection.close()
 
 
 @pytest.mark.asyncio
@@ -211,6 +221,7 @@ async def test_stale_propagates_to_top_controller(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
+    await controller.attribute_initialise()
     detector_controller = controller.get_sub_controllers()["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     await detector_controller.queue_update(["threshold_energy"])
@@ -271,6 +282,7 @@ async def test_eiger_controller_trigger_correctly_introspected(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
+    await controller.attribute_initialise()
     detector_controller = controller.get_sub_controllers()["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     detector_controller.connection = mocker.AsyncMock()
