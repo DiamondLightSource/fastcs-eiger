@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from fastcs.datatypes import Bool, DataType, Float, Int, String
+from fastcs2 import DataType
 from pydantic import BaseModel
 
 
@@ -36,16 +36,16 @@ class EigerParameter:
         return f"{self.subsystem}/api/1.8.0/{self.mode}/{self.key}"
 
     @property
-    def fastcs_datatype(self) -> DataType:
+    def fastcs_datatype(self) -> type[DataType]:
         match self.response.value_type:
             case "float":
-                return Float(prec=minimum_to_precision(self.response.min))
+                return float
             case "int" | "uint":
-                return Int()
+                return int
             case "bool":
-                return Bool()
+                return bool
             case "string" | "datetime" | "State" | "string[]":
-                return String()
+                return str
 
 
 EIGER_PARAMETER_SUBSYSTEMS = EigerParameter.__annotations__["subsystem"].__args__
