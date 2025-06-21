@@ -5,9 +5,10 @@ from typing import Literal
 
 from fastcs2 import AttributeR, AttributeRW, Controller
 
-from fastcs_eiger.attribute_io import EIGER_IO_REFS
-from fastcs_eiger.attribute_io.eiger_attribute_io import EigerAttributeIO
-from fastcs_eiger.attribute_io.eiger_config_attribute_io import EigerConfigAttributeIO
+from fastcs_eiger.attribute_io.eiger_attribute_io import (
+    EigerAttributeIO,
+    EigerAttributeIORef,
+)
 from fastcs_eiger.attribute_io.internal_attribute_io import InternalAttributeIO
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -35,11 +36,8 @@ class EigerSubsystemController(Controller):
         self.queue_update_fn = queue_update_fn
 
         attribute_ios = [
-            # TODO: We don't need different IOs just mode in ref
-            # then could extend to read once statuses
             InternalAttributeIO(),
             EigerAttributeIO(connection, self._handle_parameter_update),
-            EigerConfigAttributeIO(connection, self._handle_parameter_update),
         ]
 
         super().__init__(attribute_ios)
@@ -107,25 +105,25 @@ class EigerSubsystemController(Controller):
         attributes: dict[str, AttributeR | AttributeRW] = {}
         for parameter in parameters:
             group = cls._group(parameter)
+            io_ref = EigerAttributeIORef(
+                parameter.subsystem, parameter.mode, parameter.key
+            )
             match parameter.response.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttributeR(
-                        parameter.attribute_name,
-                        parameter.fastcs_datatype,
-                        EIGER_IO_REFS[parameter.mode](
-                            parameter.subsystem, parameter.mode, parameter.key
-                        ),
+                        name=parameter.attribute_name,
+                        datatype=parameter.fastcs_datatype,
+                        io_ref=io_ref,
                         # group=group,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttributeRW(
-                        parameter.attribute_name,
-                        parameter.fastcs_datatype,
-                        EIGER_IO_REFS[parameter.mode](
-                            parameter.subsystem, parameter.mode, parameter.key
-                        ),
+                        name=parameter.attribute_name,
+                        datatype=parameter.fastcs_datatype,
+                        io_ref=io_ref,
                         # group=group,
                     )
+
         return attributes
 
     @classmethod
@@ -189,7 +187,7 @@ class EigerSubsystemController(Controller):
             match self._attributes.get(attr_name, None):
                 case AttributeR() as attr if attr.io_ref.update_period is not None:
                     attr_io = self._attribute_ref_io_map[type(attr.io_ref)]
-                    assert isinstance(attr_io, EigerConfigAttributeIO)
+                    assert isinstance(attr_io, EigerAttributeIO)
                     coros.append(attr_io.config_update(attr))
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:

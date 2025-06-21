@@ -1,7 +1,9 @@
+import logging
 from collections.abc import Callable, Coroutine
 from dataclasses import KW_ONLY, dataclass
+from typing import Any
 
-from fastcs2.attribute import AttributeR
+from fastcs2.attribute import AttributeR, AttributeRW
 from fastcs2.attribute_io import AttributeIO
 from fastcs2.attribute_io_ref import AttributeIORef
 from fastcs2.datatypes import DataType
@@ -31,6 +33,8 @@ class EigerAttributeIO(AttributeIO):
     Handler uses uri of detector to collect data for PVs
     """
 
+    first_poll_complete: bool = False
+
     def __init__(
         self,
         connection: HTTPConnection,
@@ -42,7 +46,7 @@ class EigerAttributeIO(AttributeIO):
 
         super().__init__(io_ref)
 
-    async def update(self, attr: AttributeR[EigerAttributeIORef, DataType]) -> None:
+    async def _update(self, attr: AttributeR[EigerAttributeIORef, DataType]) -> None:
         try:
             response = await self._connection.get(attr.io_ref.uri)
             value = response["value"]
@@ -53,3 +57,26 @@ class EigerAttributeIO(AttributeIO):
             await attr.update(value)
         except Exception as e:
             print(f"Failed to get {attr.io_ref.uri}:\n{e.__class__.__name__} {e}")
+
+    async def update(self, attr: AttributeR) -> None:
+        # Only poll once on startup
+        if attr.io_ref.mode == "config" and self.first_poll_complete:
+            return
+
+        await self._update(attr)
+        # if isinstance(attr, AttributeRW):
+        #     # Sync readback value to demand
+        #     await attr.publish(attr.get())
+
+        self.first_poll_complete = True
+
+    async def config_update(self, attr: AttributeR) -> None:
+        await self._update(attr)
+
+    async def send(
+        self, attr: AttributeRW[EigerAttributeIORef, DataType], value: Any
+    ) -> None:
+        logging.info(f"Sending {value} to {attr.io_ref.uri}")
+        parameters_to_update = await self._connection.put(attr.io_ref.uri, value)
+        await self._handle_update(attr.io_ref.key, parameters_to_update)
+        logging.info("Put complete")

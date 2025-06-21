@@ -1,8 +1,6 @@
 from fastcs2 import AttributeRW
 
-from fastcs_eiger.attribute_io.eiger_config_attribute_io import (
-    EigerConfigAttributeIORef,
-)
+from fastcs_eiger.attribute_io.eiger_attribute_io import EigerAttributeIORef
 from fastcs_eiger.attribute_io.internal_attribute_io import InternalAttributeIORef
 from fastcs_eiger.controller.eiger_subsystem_controller import EigerSubsystemController
 
@@ -12,7 +10,7 @@ class EigerDetectorController(EigerSubsystemController):
 
     # Detector parameters to use in internal logic
     trigger_exposure = AttributeRW("trigger_exposure", float, InternalAttributeIORef())
-    trigger_mode: AttributeRW[EigerConfigAttributeIORef, str]
+    trigger_mode: AttributeRW[EigerAttributeIORef, str]
 
     # @detector_command
     # async def initialize(self):
