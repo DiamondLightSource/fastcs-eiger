@@ -3,7 +3,7 @@ from io import BytesIO
 import numpy as np
 from PIL import Image
 
-from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
+from fastcs_eiger.controller.eiger_subsystem_controller import EigerSubsystemController
 
 
 class EigerMonitorController(EigerSubsystemController):

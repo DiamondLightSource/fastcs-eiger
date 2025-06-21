@@ -4,6 +4,38 @@ from typing import Any, Literal
 from fastcs2 import DataType
 from pydantic import BaseModel
 
+# Keys to be ignored when introspecting the detector to create parameters
+IGNORED_KEYS = [
+    # Big arrays
+    "countrate_correction_table",
+    "pixel_mask",
+    "threshold/1/pixel_mask",
+    "threshold/2/pixel_mask",
+    "flatfield",
+    "threshold/1/flatfield",
+    "threshold/2/flatfield",
+    # Deprecated
+    "board_000/th0_humidity",
+    "board_000/th0_temp",
+    # TODO: Value is [value, max], rather than using max metadata
+    "buffer_fill_level",
+    # TODO: Handle array values
+    "detector_orientation",
+    "detector_translation",
+    # TODO: Is it a bad idea to include these?
+    "test_image_mode",
+    "test_image_value",
+]
+
+# Parameters that are in the API but missing from keys
+MISSING_KEYS: dict[str, dict[str, list[str]]] = {
+    "detector": {"status": ["error"], "config": ["wavelength"]},
+    "monitor": {"status": [], "config": []},
+    "stream": {"status": ["error"], "config": []},
+}
+
+FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
+
 
 class EigerParameterResponse(BaseModel):
     access_mode: Literal["r", "w", "rw"]

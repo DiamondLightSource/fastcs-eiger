@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from collections.abc import Coroutine, Iterable
+from collections.abc import Callable, Coroutine, Iterable
 from typing import Literal
 
 from fastcs2 import AttributeR, AttributeRW, Controller
@@ -8,70 +8,63 @@ from fastcs2 import AttributeR, AttributeRW, Controller
 from fastcs_eiger.attribute_io import EIGER_IO_REFS
 from fastcs_eiger.attribute_io.eiger_attribute_io import EigerAttributeIO
 from fastcs_eiger.attribute_io.eiger_config_attribute_io import EigerConfigAttributeIO
-from fastcs_eiger.attribute_io.internal_attribute_io import (
-    InternalAttributeIO,
-    InternalAttributeIORef,
-)
+from fastcs_eiger.attribute_io.internal_attribute_io import InternalAttributeIO
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
+    FETCH_BEFORE_RETURNING,
+    IGNORED_KEYS,
+    MISSING_KEYS,
     EigerParameter,
     EigerParameterResponse,
     key_to_attribute_name,
 )
 from fastcs_eiger.http_connection import HTTPConnection
 
-# Keys to be ignored when introspecting the detector to create parameters
-IGNORED_KEYS = [
-    # Big arrays
-    "countrate_correction_table",
-    "pixel_mask",
-    "threshold/1/pixel_mask",
-    "threshold/2/pixel_mask",
-    "flatfield",
-    "threshold/1/flatfield",
-    "threshold/2/flatfield",
-    # Deprecated
-    "board_000/th0_humidity",
-    "board_000/th0_temp",
-    # TODO: Value is [value, max], rather than using max metadata
-    "buffer_fill_level",
-    # TODO: Handle array values
-    "detector_orientation",
-    "detector_translation",
-    # TODO: Is it a bad idea to include these?
-    "test_image_mode",
-    "test_image_value",
-]
-
-# Parameters that are in the API but missing from keys
-MISSING_KEYS: dict[str, dict[str, list[str]]] = {
-    "detector": {"status": ["error"], "config": ["wavelength"]},
-    "monitor": {"status": [], "config": []},
-    "stream": {"status": ["error"], "config": []},
-}
-
-FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
-
 
 class EigerSubsystemController(Controller):
     _subsystem: Literal["detector", "stream", "monitor"]
-    stale_parameters = AttributeR("stale_parameters", bool, InternalAttributeIORef())
 
-    def __init__(self, ip: str, port: int) -> None:
-        self._ip = ip
-        self._port = port
-        self.connection = HTTPConnection(self._ip, self._port)
-        # Parameter update logic
-        self._parameter_update_lock = asyncio.Lock()
-        self.queue = asyncio.Queue()
+    def __init__(
+        self,
+        connection: HTTPConnection,
+        queue_update_fn: Callable[
+            [list[Coroutine[None, None, None]]], Coroutine[None, None, None]
+        ],
+    ) -> None:
+        self.connection = connection
+        self.queue_update_fn = queue_update_fn
 
-        super().__init__(
-            [
-                InternalAttributeIO(),
-                EigerAttributeIO(self.connection, self._handle_parameter_update),
-                EigerConfigAttributeIO(self.connection, self._handle_parameter_update),
-            ]
-        )
+        attribute_ios = [
+            # TODO: We don't need different IOs just mode in ref
+            # then could extend to read once statuses
+            InternalAttributeIO(),
+            EigerAttributeIO(connection, self._handle_parameter_update),
+            EigerConfigAttributeIO(connection, self._handle_parameter_update),
+        ]
+
+        super().__init__(attribute_ios)
+
+    async def initialise(self) -> None:
+        parameters = await self._introspect_detector_subsystem()
+        attributes = self._create_attributes(parameters)
+
+        for name, attribute in attributes.items():
+            self.add_attribute(attribute)
+
+            if class_attr := getattr(self, name, None):
+                assert isinstance(class_attr, type(attribute)), (
+                    f"Class attribute {class_attr} is not an instance of "
+                    f"its introspected attribute's type {type(attribute)} "
+                    f"on subsystem '{self._subsystem}'."
+                )
+                assert class_attr.datatype == attribute.datatype, (
+                    f"Datatype of Introspected attribute "
+                    f"'{name}': {type(attribute).__name__}({attribute.datatype}) "
+                    f"does not match datatype of its class defined attribute "
+                    f"{type(class_attr).__name__}({class_attr.datatype}) "
+                    f"on subsystem '{self._subsystem}'."
+                )
+                setattr(self, name, attribute)
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
         parameters = []
@@ -102,38 +95,6 @@ class EigerSubsystemController(Controller):
             )
 
         return parameters
-
-    async def initialise(self) -> None:
-        self.connection.open()
-
-        parameters = await self._introspect_detector_subsystem()
-        attributes = self._create_attributes(parameters)
-
-        for name, attribute in attributes.items():
-            self.add_attribute(attribute)
-
-            if class_attr := getattr(self, name, None):
-                assert isinstance(class_attr, type(attribute)), (
-                    f"Class attribute {class_attr} is not an instance of "
-                    f"its introspected attribute's type {type(attribute)} "
-                    f"on subsystem '{self._subsystem}'."
-                )
-                assert class_attr.datatype == attribute.datatype, (
-                    f"Datatype of Introspected attribute "
-                    f"'{name}': {type(attribute).__name__}({attribute.datatype}) "
-                    f"does not match datatype of its class defined attribute "
-                    f"{type(class_attr).__name__}({class_attr.datatype}) "
-                    f"on subsystem '{self._subsystem}'."
-                )
-                setattr(self, name, attribute)
-
-    @classmethod
-    def _group(cls, parameter: EigerParameter):
-        if "/" in parameter.key:
-            group_parts = parameter.key.split("/")[:-1]
-            # e.g. "threshold/difference/mode" -> ThresholdDifference
-            return "".join(list(map(str.capitalize, group_parts)))
-        return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
 
     @classmethod
     def _create_attributes(cls, parameters: list[EigerParameter]):
@@ -167,6 +128,14 @@ class EigerSubsystemController(Controller):
                     )
         return attributes
 
+    @classmethod
+    def _group(cls, parameter: EigerParameter):
+        if "/" in parameter.key:
+            group_parts = parameter.key.split("/")[:-1]
+            # e.g. "threshold/difference/mode" -> ThresholdDifference
+            return "".join(list(map(str.capitalize, group_parts)))
+        return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
+
     async def _handle_parameter_update(
         self, put_parameter: str, fetch_parameters: list[str]
     ):
@@ -197,10 +166,7 @@ class EigerSubsystemController(Controller):
             return
 
         if coros := self._get_update_coros_for_parameters(parameters):
-            self.stale_parameters._set(True)
-            async with self._parameter_update_lock:
-                for coro in coros:
-                    await self.queue.put(coro)
+            await self.queue_update_fn(coros)
 
     async def update_now(self, parameters: Iterable[str]):
         """Update the given parameters immediately without queueing or setting the
@@ -216,8 +182,8 @@ class EigerSubsystemController(Controller):
 
     def _get_update_coros_for_parameters(
         self, parameters: Iterable[str]
-    ) -> list[Coroutine]:
-        coros: list[Coroutine] = []
+    ) -> list[Coroutine[None, None, None]]:
+        coros: list[Coroutine[None, None, None]] = []
         for parameter in parameters:
             attr_name = key_to_attribute_name(parameter)
             match self._attributes.get(attr_name, None):
@@ -232,15 +198,3 @@ class EigerSubsystemController(Controller):
                             f"with attribute {attr}"
                         )
         return coros
-
-    # @scan(0.1)
-    async def update(self):
-        """Periodically check for parameters that need updating from the detector."""
-        if not self.queue.empty():
-            coros: list[Coroutine] = []
-            async with self._parameter_update_lock:
-                while not self.queue.empty():
-                    coros.append(await self.queue.get())
-            await asyncio.gather(*coros)
-
-        self.stale_parameters._set(not self.queue.empty())
