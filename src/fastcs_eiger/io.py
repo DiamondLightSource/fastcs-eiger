@@ -48,7 +48,7 @@ class EigerHandler(AttributeIO[T, EigerParameter]):
         )
         await self.queue_update(update_later)
 
-    async def _update(self, attr: AttrR[T, EigerParameter]) -> None:
+    async def do_update(self, attr: AttrR[T, EigerParameter]) -> None:
         try:
             response = await self.connection.get(attr.io_ref.uri)
             value = response["value"]
@@ -63,5 +63,5 @@ class EigerHandler(AttributeIO[T, EigerParameter]):
     async def update(self, attr: AttrR[T, EigerParameter]) -> None:
         if attr.io_ref.mode == "config" and self.first_poll_complete:
             return
-        await self._update(attr)
+        await self.do_update(attr)
         self.first_poll_complete = True
