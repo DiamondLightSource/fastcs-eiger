@@ -16,7 +16,7 @@ from fastcs_eiger.io import EigerAttributeIO
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
     EIGER_PARAMETER_SUBSYSTEMS,
-    EigerParameter,
+    EigerParameterRef,
     EigerParameterResponse,
     key_to_attribute_name,
 )
@@ -171,7 +171,7 @@ class EigerSubsystemController(Controller):
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
         super().__init__(ios=[self._io])
 
-    async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
+    async def _introspect_detector_subsystem(self) -> list[EigerParameterRef]:
         parameters = []
         for mode in EIGER_PARAMETER_MODES:
             subsystem_keys = [
@@ -189,7 +189,7 @@ class EigerSubsystemController(Controller):
 
             parameters.extend(
                 [
-                    EigerParameter(
+                    EigerParameterRef(
                         key=key,
                         subsystem=self._subsystem,
                         mode=mode,
@@ -223,7 +223,7 @@ class EigerSubsystemController(Controller):
                 setattr(self, name, attribute)
 
     @classmethod
-    def _group(cls, parameter: EigerParameter):
+    def _group(cls, parameter: EigerParameterRef):
         if "/" in parameter.key:
             group_parts = parameter.key.split("/")[:-1]
             # e.g. "threshold/difference/mode" -> ThresholdDifference
@@ -231,11 +231,11 @@ class EigerSubsystemController(Controller):
         return f"{parameter.subsystem.capitalize()}{parameter.mode.capitalize()}"
 
     @classmethod
-    def _create_attributes(cls, parameters: list[EigerParameter]):
-        """Create ``Attribute``s from ``EigerParameter``s.
+    def _create_attributes(cls, parameters: list[EigerParameterRef]):
+        """Create ``Attribute``s from ``EigerParameterRef``s.
 
         Args:
-            parameters: ``EigerParameter``s to create ``Attributes`` from
+            parameters: ``EigerParameterRef``s to create ``Attributes`` from
 
         """
         attributes: dict[str, Attribute] = {}
@@ -289,7 +289,7 @@ class EigerSubsystemController(Controller):
         for parameter in parameters:
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
-                case AttrR(io_ref=EigerParameter()) as attr:
+                case AttrR(io_ref=EigerParameterRef()) as attr:
                     coros.append(self._io.do_update(attr))
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:

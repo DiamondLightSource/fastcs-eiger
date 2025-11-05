@@ -1,7 +1,7 @@
 from fastcs.attribute_io import AttributeIO
 from fastcs.attributes import AttrR, AttrRW, AttrW
 from fastcs.datatypes import T
-from fastcs_eiger.eiger_parameter import EigerParameter
+from fastcs_eiger.eiger_parameter import EigerParameterRef
 from dataclasses import dataclass
 from fastcs_eiger.http_connection import HTTPConnection
 from typing import Callable, Awaitable
@@ -10,7 +10,7 @@ from collections.abc import Sequence
 FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 @dataclass
-class EigerAttributeIO(AttributeIO[T, EigerParameter]):
+class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
     """
     Handler for FastCS Attribute Creation
 
@@ -39,7 +39,7 @@ class EigerAttributeIO(AttributeIO[T, EigerParameter]):
                     update_later.append(parameter)
         return update_now, update_later
 
-    async def send(self, attr: AttrW[T, EigerParameter], value: T) -> None:
+    async def send(self, attr: AttrW[T, EigerParameterRef], value: T) -> None:
         parameters_to_update = await self.connection.put(attr.io_ref.uri, value)
         update_now, update_later = self._handle_params_to_update(parameters_to_update, attr.io_ref.uri)
         await self.update_now(update_now)
@@ -48,7 +48,7 @@ class EigerAttributeIO(AttributeIO[T, EigerParameter]):
         )
         await self.queue_update(update_later)
 
-    async def do_update(self, attr: AttrR[T, EigerParameter]) -> None:
+    async def do_update(self, attr: AttrR[T, EigerParameterRef]) -> None:
         try:
             response = await self.connection.get(attr.io_ref.uri)
             value = response["value"]
@@ -60,7 +60,7 @@ class EigerAttributeIO(AttributeIO[T, EigerParameter]):
         except Exception as e:
             print(f"Failed to get {attr.io_ref.uri}:\n{e.__class__.__name__} {e}")
 
-    async def update(self, attr: AttrR[T, EigerParameter]) -> None:
+    async def update(self, attr: AttrR[T, EigerParameterRef]) -> None:
         if attr.io_ref.mode == "config" and self.first_poll_complete:
             return
         await self.do_update(attr)

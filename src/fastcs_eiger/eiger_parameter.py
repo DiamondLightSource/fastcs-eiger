@@ -16,7 +16,7 @@ class EigerParameterResponse(BaseModel):
     ]
 
 @dataclass(kw_only=True)
-class EigerParameter(AttributeIORef):
+class EigerParameterRef(AttributeIORef):
     update_period: float | None = 0.2
     """Poll period for parameter"""
     key: str
@@ -50,8 +50,8 @@ class EigerParameter(AttributeIORef):
                 return String()
 
 
-EIGER_PARAMETER_SUBSYSTEMS = EigerParameter.__annotations__["subsystem"].__args__
-EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
+EIGER_PARAMETER_SUBSYSTEMS = EigerParameterRef.__annotations__["subsystem"].__args__
+EIGER_PARAMETER_MODES = EigerParameterRef.__annotations__["mode"].__args__
 
 
 def key_to_attribute_name(key: str):
