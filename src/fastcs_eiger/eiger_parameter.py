@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from fastcs.attribute_io_ref import AttributeIORef
 from fastcs.datatypes import Bool, DataType, Float, Int, String
 from pydantic import BaseModel
-from fastcs.attribute_io_ref import AttributeIORef
 
 
 class EigerParameterResponse(BaseModel):
@@ -15,6 +15,7 @@ class EigerParameterResponse(BaseModel):
         "float", "int", "bool", "uint", "string", "datetime", "State", "string[]"
     ]
 
+
 @dataclass(kw_only=True)
 class EigerParameterRef(AttributeIORef):
     update_period: float | None = 0.2
@@ -23,7 +24,7 @@ class EigerParameterRef(AttributeIORef):
     """Last section of URI within a subsystem/mode."""
     subsystem: Literal["detector", "stream", "monitor"]
     """Subsystem within detector API."""
-    mode: Literal["status", "config"]   # TODO, we need to make a different ref class for each mode...
+    mode: Literal["status", "config"]
     """Mode of parameter within subsystem."""
     response: EigerParameterResponse
     """JSON response from GET of parameter."""

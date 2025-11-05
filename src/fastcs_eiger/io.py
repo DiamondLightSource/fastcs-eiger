@@ -1,13 +1,15 @@
-from fastcs.attribute_io import AttributeIO
-from fastcs.attributes import AttrR, AttrRW, AttrW
-from fastcs.datatypes import T
-from fastcs_eiger.eiger_parameter import EigerParameterRef
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
+
+from fastcs.attribute_io import AttributeIO
+from fastcs.attributes import AttrR, AttrW
+from fastcs.datatypes import T
+
+from fastcs_eiger.eiger_parameter import EigerParameterRef
 from fastcs_eiger.http_connection import HTTPConnection
-from typing import Callable, Awaitable
-from collections.abc import Sequence
 
 FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
+
 
 @dataclass
 class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
@@ -41,10 +43,13 @@ class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
 
     async def send(self, attr: AttrW[T, EigerParameterRef], value: T) -> None:
         parameters_to_update = await self.connection.put(attr.io_ref.uri, value)
-        update_now, update_later = self._handle_params_to_update(parameters_to_update, attr.io_ref.uri)
+        update_now, update_later = self._handle_params_to_update(
+            parameters_to_update, attr.io_ref.uri
+        )
         await self.update_now(update_now)
         print(
-            f"Queueing updates for parameters after setting {attr.io_ref.uri}: {update_later}"
+            f"Queueing updates for parameters after setting {attr.io_ref.uri}: "
+            f"{update_later}"
         )
         await self.queue_update(update_later)
 

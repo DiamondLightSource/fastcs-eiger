@@ -1,17 +1,14 @@
 import asyncio
 from collections.abc import Callable, Coroutine, Iterable
-from dataclasses import dataclass
 from io import BytesIO
 from typing import Any, Literal
 
 import numpy as np
-from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW
-from fastcs.controller import BaseController, Controller
+from fastcs.attributes import Attribute, AttrR, AttrRW
+from fastcs.controller import Controller
 from fastcs.datatypes import Bool, Float, String
 from fastcs.wrappers import command, scan
-from fastcs.attribute_io import AttributeIO
 from PIL import Image
-from fastcs_eiger.io import EigerAttributeIO
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -21,7 +18,7 @@ from fastcs_eiger.eiger_parameter import (
     key_to_attribute_name,
 )
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
-
+from fastcs_eiger.io import EigerAttributeIO
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -246,13 +243,11 @@ class EigerSubsystemController(Controller):
                     attributes[parameter.attribute_name] = AttrR(
                         parameter.fastcs_datatype,
                         group=group,
-                        io_ref=parameter  # i thiiiink this is right...
+                        io_ref=parameter,  # i thiiiink this is right...
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        parameter.fastcs_datatype,
-                        group=group,
-                        io_ref=parameter
+                        parameter.fastcs_datatype, group=group, io_ref=parameter
                     )
         return attributes
 
