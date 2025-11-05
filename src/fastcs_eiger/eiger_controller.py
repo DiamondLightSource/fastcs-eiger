@@ -93,7 +93,6 @@ class EigerController(Controller):
                         controller = EigerDetectorController(
                             self.connection,
                             self.queue_subsystem_update,
-                            # self._ios
                         )
                         # detector subsystem initialises first
                         # Check current state of detector_state to see
@@ -109,13 +108,11 @@ class EigerController(Controller):
                         controller = EigerMonitorController(
                             self.connection,
                             self.queue_subsystem_update,
-                            # self._ios
                         )
                     case "stream":
                         controller = EigerStreamController(
                             self.connection,
                             self.queue_subsystem_update,
-                            # self._ios
                         )
                     case _:
                         raise NotImplementedError(
@@ -161,7 +158,6 @@ class EigerSubsystemController(Controller):
         self,
         connection: HTTPConnection,
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
-        # ios: list[AttributeIO]
     ):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
@@ -243,7 +239,7 @@ class EigerSubsystemController(Controller):
                     attributes[parameter.attribute_name] = AttrR(
                         parameter.fastcs_datatype,
                         group=group,
-                        io_ref=parameter,  # i thiiiink this is right...
+                        io_ref=parameter,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
@@ -299,7 +295,7 @@ class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
 
     # Detector parameters to use in internal logic
-    trigger_exposure = AttrRW(Float())  # don't think we need a logic handler for this??
+    trigger_exposure = AttrRW(Float())
     trigger_mode = AttrRW(String())
 
     @detector_command
