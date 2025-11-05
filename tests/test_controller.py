@@ -2,7 +2,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
-    EigerHandler,
+    EigerAttributeIO,
     EigerSubsystemController,
     LogicHandler,
 )
@@ -39,7 +39,7 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
 @pytest.mark.parametrize(
     "handler_cls, init_args",
     [
-        (EigerHandler, ("subsystem/api/1.8.0/dummy_mode/dummy_uri",)),
+        (EigerAttributeIO, ("subsystem/api/1.8.0/dummy_mode/dummy_uri",)),
         (LogicHandler, ()),
     ],
 )
@@ -65,7 +65,7 @@ async def test_handlers_initialisation_validation(
 @pytest.mark.asyncio
 async def test_eiger_handler_update_updates_value(mocker: MockerFixture):
     dummy_uri = "subsystem/api/1.8.0/dummy_mode/dummy_uri"
-    updater = EigerHandler(dummy_uri)
+    updater = EigerAttributeIO(dummy_uri)
     controller = mocker.AsyncMock()
     mock_connection = mocker.AsyncMock()
     mock_connection.get.return_value = {"value": 5}
@@ -84,7 +84,7 @@ async def test_eiger_handler_put(mocker: MockerFixture):
     controller = EigerSubsystemController(mock_connection, mocker.AsyncMock())
     controller.queue_update = mocker.AsyncMock()
 
-    handler = EigerHandler(dummy_uri)
+    handler = EigerAttributeIO(dummy_uri)
     await handler.initialise(controller)
     await handler.put(mocker.Mock(), 0.1)
 
@@ -97,7 +97,7 @@ async def test_eiger_handler_put(mocker: MockerFixture):
     # still queue_update for the handled uri
     mock_connection.put.return_value = []
     no_updated_params_uri = "susbsystem/api/1.8.0/dummy_mode/no_updated_params"
-    handler = EigerHandler(no_updated_params_uri)
+    handler = EigerAttributeIO(no_updated_params_uri)
     await handler.initialise(controller)
     await handler.put(mocker.Mock(), 0.1)
     mock_connection.put.assert_awaited_with(no_updated_params_uri, 0.1)

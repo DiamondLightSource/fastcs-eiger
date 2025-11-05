@@ -11,7 +11,7 @@ from fastcs.datatypes import Bool, Float, String
 from fastcs.wrappers import command, scan
 from fastcs.attribute_io import AttributeIO
 from PIL import Image
-from fastcs_eiger.io import EigerHandler
+from fastcs_eiger.io import EigerAttributeIO
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -78,9 +78,6 @@ class EigerController(Controller):
         self._ip = ip
         self._port = port
         self.connection = HTTPConnection(self._ip, self._port)
-        # self._ios = [EigerHandler(self.connection)]
-        # super().__init__(ios=self._ios)
-        # Parameter update logic
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
 
@@ -137,7 +134,7 @@ class EigerController(Controller):
     def get_subsystem_controllers(self) -> list["EigerSubsystemController"]:
         return [
             controller
-            for controller in self.get_sub_controllers().values()
+            for controller in self.sub_controllers.values()
             if isinstance(controller, EigerSubsystemController)
         ]
 
@@ -171,7 +168,7 @@ class EigerSubsystemController(Controller):
     ):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
-        self._io = EigerHandler(connection, self.update_now, self.queue_update)
+        self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
         super().__init__(ios=[self._io])
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
@@ -292,7 +289,7 @@ class EigerSubsystemController(Controller):
         for parameter in parameters:
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
-                case AttrR() as attr:
+                case AttrR(io_ref=EigerParameter()) as attr:
                     coros.append(self._io.do_update(attr))
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:

@@ -10,7 +10,7 @@ from collections.abc import Sequence
 FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 @dataclass
-class EigerHandler(AttributeIO[T, EigerParameter]):
+class EigerAttributeIO(AttributeIO[T, EigerParameter]):
     """
     Handler for FastCS Attribute Creation
 
