@@ -5,11 +5,13 @@ from io import BytesIO
 from typing import Any, Literal
 
 import numpy as np
-from fastcs.attributes import AttrHandlerRW, Attribute, AttrR, AttrRW, AttrW
-from fastcs.controller import BaseController, Controller, SubController
+from fastcs.attributes import Attribute, AttrR, AttrRW, AttrW
+from fastcs.controller import BaseController, Controller
 from fastcs.datatypes import Bool, Float, String
 from fastcs.wrappers import command, scan
+from fastcs.attribute_io import AttributeIO
 from PIL import Image
+from fastcs_eiger.io import EigerHandler
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -20,7 +22,6 @@ from fastcs_eiger.eiger_parameter import (
 )
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
-FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -61,120 +62,6 @@ def detector_command(fn) -> Any:
     return command(group="DetectorCommand")(fn)
 
 
-@dataclass
-class EigerHandler(AttrHandlerRW):
-    """
-    Handler for FastCS Attribute Creation
-
-    Dataclass that is called using the AttrR, AttrRW function.
-    Handler uses uri of detector to collect data for PVs
-    """
-
-    uri: str
-    update_period: float | None = 0.2
-    _controller: "EigerSubsystemController | None" = None
-
-    async def initialise(self, controller: BaseController):
-        assert isinstance(controller, EigerSubsystemController)
-        self._controller = controller
-
-    @property
-    def controller(self) -> "EigerSubsystemController":
-        if self._controller is None:
-            raise RuntimeError("Handler not initialised")
-
-        return self._controller
-
-    def _handle_params_to_update(self, parameters: list[str]):
-        update_now = []
-        update_later = []
-        if not parameters:  # no response, queue update for the parameter we just put to
-            update_later.append(self.uri.split("/", 4)[-1])
-        else:
-            for parameter in parameters:
-                if parameter == "difference_mode":
-                    # handling Eiger API inconsistency
-                    parameter = "threshold/difference/mode"
-                if parameter in FETCH_BEFORE_RETURNING:
-                    update_now.append(parameter)
-                else:
-                    update_later.append(parameter)
-        return update_now, update_later
-
-    async def put(self, attr: AttrW, value: Any) -> None:
-        parameters_to_update = await self.controller.connection.put(self.uri, value)
-        update_now, update_later = self._handle_params_to_update(parameters_to_update)
-        await self.controller.update_now(update_now)
-        print(
-            f"Queueing updates for parameters after setting {self.uri}: {update_later}"
-        )
-        await self.controller.queue_update(update_later)
-
-    async def update(self, attr: AttrR) -> None:
-        try:
-            response = await self.controller.connection.get(self.uri)
-            value = response["value"]
-            if isinstance(value, list) and all(
-                isinstance(s, str) for s in value
-            ):  # error is a list of strings
-                value = ", ".join(value)
-            await attr.set(value)
-        except Exception as e:
-            print(f"Failed to get {self.uri}:\n{e.__class__.__name__} {e}")
-
-
-class EigerConfigHandler(EigerHandler):
-    """Handler for config parameters that are polled once on startup."""
-
-    first_poll_complete: bool = False
-
-    async def update(self, attr: AttrR) -> None:
-        # Only poll once on startup
-        if not self.first_poll_complete:
-            await super().update(attr)
-            if isinstance(attr, AttrRW):
-                # Sync readback value to demand
-                await attr.update_display_without_process(attr.get())
-
-            self.first_poll_complete = True
-
-    async def config_update(self, attr: AttrR) -> None:
-        await super().update(attr)
-
-
-@dataclass
-class LogicHandler(AttrHandlerRW):
-    """
-    Handler for FastCS Attribute Creation
-
-    Dataclass that is called using the AttrR, AttrRW function.
-    Used for dynamically created attributes that are added for additional logic
-    """
-
-    _controller: BaseController | None = None
-
-    async def initialise(self, controller: BaseController):
-        assert isinstance(controller, BaseController)
-        self._controller = controller
-
-    @property
-    def controller(self) -> BaseController:
-        if self._controller is None:
-            raise RuntimeError("Handler not initialised")
-
-        return self._controller
-
-    async def put(self, attr: AttrW, value: Any) -> None:
-        assert isinstance(attr, AttrR)  # AttrW does not implement set
-        await attr.set(value)
-
-
-EIGER_HANDLERS: dict[str, type[EigerHandler]] = {
-    "status": EigerHandler,
-    "config": EigerConfigHandler,
-}
-
-
 class EigerController(Controller):
     """
     Controller Class for Eiger Detector
@@ -191,6 +78,8 @@ class EigerController(Controller):
         self._ip = ip
         self._port = port
         self.connection = HTTPConnection(self._ip, self._port)
+        # self._ios = [EigerHandler(self.connection)]
+        # super().__init__(ios=self._ios)
         # Parameter update logic
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
@@ -210,6 +99,7 @@ class EigerController(Controller):
                         controller = EigerDetectorController(
                             self.connection,
                             self.queue_subsystem_update,
+                            # self._ios
                         )
                         # detector subsystem initialises first
                         # Check current state of detector_state to see
@@ -225,17 +115,19 @@ class EigerController(Controller):
                         controller = EigerMonitorController(
                             self.connection,
                             self.queue_subsystem_update,
+                            # self._ios
                         )
                     case "stream":
                         controller = EigerStreamController(
                             self.connection,
                             self.queue_subsystem_update,
+                            # self._ios
                         )
                     case _:
                         raise NotImplementedError(
                             f"No subcontroller implemented for subsystem {subsystem}"
                         )
-                self.register_sub_controller(subsystem.capitalize(), controller)
+                self.add_sub_controller(subsystem.capitalize(), controller)
                 await controller.initialise()
 
         except HTTPRequestError:
@@ -258,27 +150,29 @@ class EigerController(Controller):
                 while not self.queue.empty():
                     coros.append(await self.queue.get())
             await asyncio.gather(*coros)
-        await self.stale_parameters.set(not self.queue.empty())
+        await self.stale_parameters.update(not self.queue.empty())
 
     async def queue_subsystem_update(self, coros: list[Coroutine]):
         if coros:
-            await self.stale_parameters.set(True)
+            await self.stale_parameters.update(True)
             async with self._parameter_update_lock:
                 for coro in coros:
                     await self.queue.put(coro)
 
 
-class EigerSubsystemController(SubController):
+class EigerSubsystemController(Controller):
     _subsystem: Literal["detector", "stream", "monitor"]
 
     def __init__(
         self,
         connection: HTTPConnection,
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
+        # ios: list[AttributeIO]
     ):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
-        super().__init__()
+        self._io = EigerHandler(connection, self.update_now, self.queue_update)
+        super().__init__(ios=[self._io])
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameter]:
         parameters = []
@@ -354,14 +248,14 @@ class EigerSubsystemController(SubController):
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
                         parameter.fastcs_datatype,
-                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
+                        io_ref=parameter  # i thiiiink this is right...
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
                         parameter.fastcs_datatype,
-                        handler=EIGER_HANDLERS[parameter.mode](parameter.uri),
                         group=group,
+                        io_ref=parameter
                     )
         return attributes
 
@@ -398,8 +292,8 @@ class EigerSubsystemController(SubController):
         for parameter in parameters:
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
-                case AttrR(updater=EigerConfigHandler() as updater) as attr:
-                    coros.append(updater.config_update(attr))
+                case AttrR() as attr:
+                    coros.append(self._io.update(attr))
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:
                         print(
@@ -413,7 +307,7 @@ class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
 
     # Detector parameters to use in internal logic
-    trigger_exposure = AttrRW(Float(), handler=LogicHandler())
+    trigger_exposure = AttrRW(Float())  # don't think we need a logic handler for this??
     trigger_mode = AttrRW(String())
 
     @detector_command
