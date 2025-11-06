@@ -220,8 +220,8 @@ async def test_stale_propagates_to_top_controller(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     await detector_controller.queue_update(["threshold_energy"])
     assert controller.stale_parameters.get() is True
