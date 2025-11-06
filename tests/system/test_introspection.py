@@ -130,31 +130,30 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
 @pytest.mark.parametrize(
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
-async def test_threshold_mode_api_consistency_handled(
+async def test_threshold_mode_api_inconsistency_handled(
     sim_eiger_controller: EigerController, mocker: MockerFixture
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
 
     attr: AttrRW = detector_controller.attributes["threshold_1_energy"]  # type: ignore
 
-    queue_update_spy = mocker.spy(detector_controller, "queue_update")
+    queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
 
     # make sure API inconsistency for threshold/difference/mode is addressed
     attr: AttrRW = detector_controller.attributes["threshold_difference_mode"]  # type: ignore
-    sender: EigerConfigHandler = attr.sender  # type: ignore
-    assert sender is not None
 
-    api_put_response = await controller.connection.put(sender.uri, "enabled")
+    api_put_response = await controller.connection.put(attr.io_ref.uri, "enabled")
     assert api_put_response == ["difference_mode"]
     # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
 
-    await sender.put(attr, "enabled")
+    await detector_controller._io.send(attr, "enabled")
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
     await controller.update()
+    assert attr.get() == "enabled"
     await detector_controller.connection.close()
 
 
