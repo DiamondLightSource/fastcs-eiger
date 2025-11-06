@@ -173,26 +173,23 @@ async def test_fetch_before_returning_parameters(
         assert isinstance(detector_controller, EigerDetectorController)
 
         count_time_attr = detector_controller.attributes.get("count_time")
+        count_time_attr.io_ref.update_period = None
         frame_time_attr = detector_controller.attributes.get("frame_time")
         bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
         assert isinstance(count_time_attr, AttrRW)
         assert isinstance(frame_time_attr, AttrRW)
         assert isinstance(bit_depth_image_attr, AttrR)
-        count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
-        bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
-        queue_update_spy = mocker.spy(detector_controller, "queue_update")
-        update_now_spy = mocker.spy(detector_controller, "update_now")
-        controller_update_spy = mocker.spy(controller, "update")
-        controller_update_spy = mocker.AsyncMock()
 
-        assert isinstance(count_time_attr.updater, EigerConfigHandler)
-        await count_time_attr.updater.put(count_time_attr, 2.0)
+        queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
+        update_now_spy = mocker.spy(detector_controller._io, "update_now")
+        io_do_update_spy = mocker.spy(detector_controller._io, "do_update")
+        await detector_controller._io.send(count_time_attr, 2.0)
 
+        # bit_depth_image and bit_depth_readout handled early
         update_now_spy.assert_awaited_once_with(
             ["bit_depth_image", "bit_depth_readout"]
         )
 
-        # bit_depth_image and bit_depth_readout handled early
         queue_update_spy.assert_awaited_once_with(
             [
                 "count_time",
@@ -201,12 +198,15 @@ async def test_fetch_before_returning_parameters(
                 "frame_time",
             ]
         )
-        count_time_spy.assert_not_awaited()
-        bit_depth_image_spy.assert_awaited()
-        controller_update_spy.assert_not_awaited()
 
+        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        assert "bit_depth_image" in updated
+        assert "count_time" not in updated
+
+        # queued updated not updated until controller.update()
         await controller.update()
-        count_time_spy.assert_called()
+        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        assert "count_time" in updated
 
         await controller.connection.close()
 
