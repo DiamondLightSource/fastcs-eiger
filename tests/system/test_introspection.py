@@ -104,7 +104,7 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
     await controller.initialise()
 
     for subsystem in MISSING_KEYS:
-        subcontroller = controller.get_sub_controllers()[subsystem.title()]
+        subcontroller = controller.sub_controllers[subsystem.title()]
         assert isinstance(subcontroller, EigerSubsystemController)
         parameters = await subcontroller._introspect_detector_subsystem()
         if subsystem == "detector":
