@@ -13,15 +13,15 @@ from pytest_mock import MockerFixture
 from fastcs_eiger.eiger_controller import (
     IGNORED_KEYS,
     MISSING_KEYS,
-    EigerConfigHandler,
+    # EigerConfigHandler,
     EigerController,
     EigerDetectorController,
     EigerMonitorController,
-    EigerParameter,
     EigerParameterResponse,
     EigerStreamController,
     EigerSubsystemController,
 )
+from fastcs_eiger.eiger_parameter import EigerParameterRef
 
 HERE = Path(__file__).parent
 
@@ -30,7 +30,7 @@ EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
 ].__args__
 
 
-def _serialise_parameter(parameter: EigerParameter) -> dict:
+def _serialise_parameter(parameter: EigerParameterRef) -> dict:
     return {
         "subsystem": parameter.subsystem,
         "mode": parameter.mode,
