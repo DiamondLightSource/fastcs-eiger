@@ -168,8 +168,8 @@ async def test_fetch_before_returning_parameters(
     with patch("fastcs_eiger.eiger_controller.scan"):
         controller = sim_eiger_controller
         await controller.initialise()
-        await controller.attribute_initialise()
-        detector_controller = controller.get_sub_controllers()["Detector"]
+
+        detector_controller = controller.sub_controllers["Detector"]
         assert isinstance(detector_controller, EigerDetectorController)
 
         count_time_attr = detector_controller.attributes.get("count_time")
@@ -281,18 +281,18 @@ async def test_eiger_controller_trigger_correctly_introspected(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     detector_controller.connection = mocker.AsyncMock()
 
-    await detector_controller.trigger_mode.set("inte")
+    await detector_controller.trigger_mode.update("inte")
 
     # Checking that 'trigger_mode' in attributes is also the internal attribute
     # https://github.com/DiamondLightSource/fastcs-eiger/issues/65
     assert detector_controller.attributes["trigger_mode"].get() == "inte"  # type: ignore
 
-    await detector_controller.trigger_exposure.set(0.1)
+    await detector_controller.trigger_exposure.update(0.1)
     await detector_controller.trigger()
 
     await detector_controller.queue_update(["nonexistent_parameter"])
@@ -382,7 +382,7 @@ async def test_if_min_value_provided_then_prec_set_correctly(
     ):
         await eiger_controller.initialise()
 
-    test_float_attr = eiger_controller.get_sub_controllers()["Detector"].attributes.get(
+    test_float_attr = eiger_controller.sub_controllers["Detector"].attributes.get(
         "test_float_attr"
     )
 
