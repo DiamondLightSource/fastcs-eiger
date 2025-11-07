@@ -1,9 +1,12 @@
 import pytest
+from fastcs.attributes import AttrRW
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
+    EigerDetectorController,
     EigerSubsystemController,
 )
+from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 from fastcs_eiger.io import EigerAttributeIO
 
 
@@ -35,18 +38,26 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
 
 
 @pytest.mark.asyncio
-async def test_eiger_handler_update_updates_value(mocker: MockerFixture):
-    dummy_uri = "subsystem/api/1.8.0/dummy_mode/dummy_uri"
-    updater = EigerAttributeIO(dummy_uri)
-    controller = mocker.AsyncMock()
-    mock_connection = mocker.AsyncMock()
-    mock_connection.get.return_value = {"value": 5}
-    controller = EigerSubsystemController(mock_connection, mocker.MagicMock())
-    attr = mocker.Mock()
+async def test_eiger_io_update_updates_value(mock_connection, mocker: MockerFixture):
+    # dummy_uri = "subsystem/api/1.8.0/dummy_mode/dummy_uri"
+    controller, connection = mock_connection
+    connection.get.return_value = {"value": 5}
+    # await controller.initialise()
+    subsystem_controller = EigerDetectorController(
+        connection, controller.queue_subsystem_update
+    )
+    io = subsystem_controller._io
+    ref = EigerParameterRef(
+        key="dummy_uri",
+        subsystem="detector",
+        mode="config",
+        response=EigerParameterResponse(access_mode="r", value=1, value_type="int"),
+    )
+    subsystem_controller.dummy_attr = AttrRW(ref.fastcs_datatype, io_ref=ref)
+    attr_update_spy = mocker.spy(subsystem_controller.dummy_attr, "update")
 
-    await updater.initialise(controller)
-    await updater.update(attr)
-    attr.set.assert_called_once_with(5)
+    await io.update(subsystem_controller.dummy_attr)
+    attr_update_spy.assert_called_once_with(5)
 
 
 @pytest.mark.asyncio
