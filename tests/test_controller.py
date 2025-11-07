@@ -2,10 +2,9 @@ import pytest
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import (
-    EigerAttributeIO,
     EigerSubsystemController,
-    LogicHandler,
 )
+from fastcs_eiger.io import EigerAttributeIO
 
 
 @pytest.mark.asyncio
@@ -21,7 +20,7 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
     }
 
     await eiger_controller.initialise()
-    assert list(eiger_controller.get_sub_controllers().keys()) == [
+    assert list(eiger_controller.sub_controllers.keys()) == [
         "Detector",
         "Stream",
         "Monitor",
@@ -33,33 +32,6 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
     connection.get.assert_any_call("monitor/api/1.8.0/config/keys")
     connection.get.assert_any_call("stream/api/1.8.0/status/keys")
     connection.get.assert_any_call("stream/api/1.8.0/config/keys")
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "handler_cls, init_args",
-    [
-        (EigerAttributeIO, ("subsystem/api/1.8.0/dummy_mode/dummy_uri",)),
-        (LogicHandler, ()),
-    ],
-)
-async def test_handlers_initialisation_validation(
-    handler_cls, init_args, mocker: MockerFixture
-):
-    updater = handler_cls(*init_args)
-
-    # Accessing the handler's controller should raise a runtime exception
-    with pytest.raises(RuntimeError, match="Handler not initialised"):
-        _ = updater.controller
-
-    wrong_controller = mocker.AsyncMock()
-    # Initiliasing with the wrong controller type should raise an assertion error
-    with pytest.raises(AssertionError):
-        await updater.initialise(wrong_controller)
-
-    valid_controller = EigerSubsystemController(mocker.AsyncMock(), mocker.MagicMock())
-    await updater.initialise(valid_controller)
-    assert updater.controller is valid_controller
 
 
 @pytest.mark.asyncio
