@@ -2,7 +2,7 @@ import pytest
 from fastcs.attributes import AttrRW
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import (
+from fastcs_eiger.eiger_detector_controller import (
     EigerDetectorController,
 )
 from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
@@ -71,13 +71,9 @@ async def test_eiger_io_send(
     subsystem_controller_and_connection, mocker: MockerFixture
 ):
     dummy_uri = "detector/api/1.8.0/config/dummy_uri"
-    # mock_connection = mocker.AsyncMock()
-    # controller = EigerSubsystemController(mock_connection, mocker.AsyncMock())
-    # controller.queue_update = mocker.AsyncMock()
     subsystem_controller, connection = subsystem_controller_and_connection
 
     io = subsystem_controller._io
-    # connection.put.return_value = ["dummy_uri"]
     io.queue_update = mocker.AsyncMock()
     await io.send(subsystem_controller.dummy_attr, 0.1)
 

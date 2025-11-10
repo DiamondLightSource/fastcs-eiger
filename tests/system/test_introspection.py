@@ -10,18 +10,16 @@ from fastcs.datatypes import Float, String
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import (
+from fastcs_eiger.eiger_controller import EigerController
+from fastcs_eiger.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.eiger_monitor_controller import EigerMonitorController
+from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
+from fastcs_eiger.eiger_stream_controller import EigerStreamController
+from fastcs_eiger.eiger_subsystem_controller import (
     IGNORED_KEYS,
     MISSING_KEYS,
-    # EigerConfigHandler,
-    EigerController,
-    EigerDetectorController,
-    EigerMonitorController,
-    EigerParameterResponse,
-    EigerStreamController,
     EigerSubsystemController,
 )
-from fastcs_eiger.eiger_parameter import EigerParameterRef
 
 HERE = Path(__file__).parent
 
@@ -378,7 +376,9 @@ async def test_if_min_value_provided_then_prec_set_correctly(
 
     with (
         patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS", ["detector"]),
-        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_MODES", ["status"]),
+        patch(
+            "fastcs_eiger.eiger_subsystem_controller.EIGER_PARAMETER_MODES", ["status"]
+        ),
     ):
         await eiger_controller.initialise()
 
