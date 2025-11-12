@@ -19,6 +19,7 @@ class EigerParameterResponse(BaseModel):
 @dataclass(kw_only=True)
 class EigerParameterRef(AttributeIORef):
     """IO ref for a parameter in the Eiger SIMPLON API"""
+
     update_period: float | None = 0.2
     """Poll period for parameter"""
     key: str
