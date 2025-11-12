@@ -14,12 +14,7 @@ FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 @dataclass
 class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
-    """
-    Handler for FastCS Attribute Creation
-
-    Dataclass that is called using the AttrR, AttrRW function.
-    Handler uses uri of detector to collect data for PVs
-    """
+    """AttributeIO for ``EigerParameterRef`` Attributes"""
 
     connection: HTTPConnection
     update_now: Callable[[Sequence[str]], Awaitable[None]]
