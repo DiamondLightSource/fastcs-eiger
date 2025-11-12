@@ -142,7 +142,9 @@ async def test_threshold_mode_api_inconsistency_handled(
     queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
 
     # make sure API inconsistency for threshold/difference/mode is addressed
-    attr: AttrRW = detector_controller.attributes["threshold_difference_mode"]  # type: ignore
+    attr: AttrRW[str, EigerParameterRef] = detector_controller.attributes[
+        "threshold_difference_mode"
+    ]  # type: ignore
 
     api_put_response = await controller.connection.put(attr.io_ref.uri, "enabled")
     assert api_put_response == ["difference_mode"]
@@ -170,7 +172,9 @@ async def test_fetch_before_returning_parameters(
         detector_controller = controller.sub_controllers["Detector"]
         assert isinstance(detector_controller, EigerDetectorController)
 
-        count_time_attr = detector_controller.attributes.get("count_time")
+        count_time_attr: AttrRW[float, EigerParameterRef] = (
+            detector_controller.attributes.get("count_time")
+        )  # type: ignore
         count_time_attr.io_ref.update_period = None
         frame_time_attr = detector_controller.attributes.get("frame_time")
         bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
