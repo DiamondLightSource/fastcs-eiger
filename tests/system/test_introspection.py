@@ -10,16 +10,14 @@ from fastcs.datatypes import Float, String
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import (
+from fastcs_eiger.eiger_controller import EigerController
+from fastcs_eiger.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.eiger_monitor_controller import EigerMonitorController
+from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
+from fastcs_eiger.eiger_stream_controller import EigerStreamController
+from fastcs_eiger.eiger_subsystem_controller import (
     IGNORED_KEYS,
     MISSING_KEYS,
-    EigerConfigHandler,
-    EigerController,
-    EigerDetectorController,
-    EigerMonitorController,
-    EigerParameter,
-    EigerParameterResponse,
-    EigerStreamController,
     EigerSubsystemController,
 )
 
@@ -30,7 +28,7 @@ EIGER_PARAMETER_VALID_VALUES = EigerParameterResponse.__annotations__[
 ].__args__
 
 
-def _serialise_parameter(parameter: EigerParameter) -> dict:
+def _serialise_parameter(parameter: EigerParameterRef) -> dict:
     return {
         "subsystem": parameter.subsystem,
         "mode": parameter.mode,
@@ -104,7 +102,7 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
     await controller.initialise()
 
     for subsystem in MISSING_KEYS:
-        subcontroller = controller.get_sub_controllers()[subsystem.title()]
+        subcontroller = controller.sub_controllers[subsystem.title()]
         assert isinstance(subcontroller, EigerSubsystemController)
         parameters = await subcontroller._introspect_detector_subsystem()
         if subsystem == "detector":
@@ -130,31 +128,32 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
 @pytest.mark.parametrize(
     "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
 )
-async def test_threshold_mode_api_consistency_handled(
+async def test_threshold_mode_api_inconsistency_handled(
     sim_eiger_controller: EigerController, mocker: MockerFixture
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
 
     attr: AttrRW = detector_controller.attributes["threshold_1_energy"]  # type: ignore
 
-    queue_update_spy = mocker.spy(detector_controller, "queue_update")
+    queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
 
     # make sure API inconsistency for threshold/difference/mode is addressed
-    attr: AttrRW = detector_controller.attributes["threshold_difference_mode"]  # type: ignore
-    sender: EigerConfigHandler = attr.sender  # type: ignore
-    assert sender is not None
+    attr: AttrRW[str, EigerParameterRef] = detector_controller.attributes[
+        "threshold_difference_mode"
+    ]  # type: ignore
 
-    api_put_response = await controller.connection.put(sender.uri, "enabled")
+    api_put_response = await controller.connection.put(attr.io_ref.uri, "enabled")
     assert api_put_response == ["difference_mode"]
     # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
 
-    await sender.put(attr, "enabled")
+    await detector_controller._io.send(attr, "enabled")
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
     await controller.update()
+    assert attr.get() == "enabled"
     await detector_controller.connection.close()
 
 
@@ -169,31 +168,30 @@ async def test_fetch_before_returning_parameters(
     with patch("fastcs_eiger.eiger_controller.scan"):
         controller = sim_eiger_controller
         await controller.initialise()
-        await controller.attribute_initialise()
-        detector_controller = controller.get_sub_controllers()["Detector"]
+
+        detector_controller = controller.sub_controllers["Detector"]
         assert isinstance(detector_controller, EigerDetectorController)
 
-        count_time_attr = detector_controller.attributes.get("count_time")
+        count_time_attr: AttrRW[float, EigerParameterRef] = (
+            detector_controller.attributes.get("count_time")
+        )  # type: ignore
+        count_time_attr.io_ref.update_period = None
         frame_time_attr = detector_controller.attributes.get("frame_time")
         bit_depth_image_attr = detector_controller.attributes.get("bit_depth_image")
         assert isinstance(count_time_attr, AttrRW)
         assert isinstance(frame_time_attr, AttrRW)
         assert isinstance(bit_depth_image_attr, AttrR)
-        count_time_spy = mocker.spy(count_time_attr.updater, "config_update")
-        bit_depth_image_spy = mocker.spy(bit_depth_image_attr.updater, "config_update")
-        queue_update_spy = mocker.spy(detector_controller, "queue_update")
-        update_now_spy = mocker.spy(detector_controller, "update_now")
-        controller_update_spy = mocker.spy(controller, "update")
-        controller_update_spy = mocker.AsyncMock()
 
-        assert isinstance(count_time_attr.updater, EigerConfigHandler)
-        await count_time_attr.updater.put(count_time_attr, 2.0)
+        queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
+        update_now_spy = mocker.spy(detector_controller._io, "update_now")
+        io_do_update_spy = mocker.spy(detector_controller._io, "do_update")
+        await detector_controller._io.send(count_time_attr, 2.0)
 
+        # bit_depth_image and bit_depth_readout handled early
         update_now_spy.assert_awaited_once_with(
             ["bit_depth_image", "bit_depth_readout"]
         )
 
-        # bit_depth_image and bit_depth_readout handled early
         queue_update_spy.assert_awaited_once_with(
             [
                 "count_time",
@@ -202,12 +200,15 @@ async def test_fetch_before_returning_parameters(
                 "frame_time",
             ]
         )
-        count_time_spy.assert_not_awaited()
-        bit_depth_image_spy.assert_awaited()
-        controller_update_spy.assert_not_awaited()
 
+        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        assert "bit_depth_image" in updated
+        assert "count_time" not in updated
+
+        # queued updated not updated until controller.update()
         await controller.update()
-        count_time_spy.assert_called()
+        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        assert "count_time" in updated
 
         await controller.connection.close()
 
@@ -221,8 +222,8 @@ async def test_stale_propagates_to_top_controller(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     await detector_controller.queue_update(["threshold_energy"])
     assert controller.stale_parameters.get() is True
@@ -282,18 +283,18 @@ async def test_eiger_controller_trigger_correctly_introspected(
 ):
     controller = sim_eiger_controller
     await controller.initialise()
-    await controller.attribute_initialise()
-    detector_controller = controller.get_sub_controllers()["Detector"]
+
+    detector_controller = controller.sub_controllers["Detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     detector_controller.connection = mocker.AsyncMock()
 
-    await detector_controller.trigger_mode.set("inte")
+    await detector_controller.trigger_mode.update("inte")
 
     # Checking that 'trigger_mode' in attributes is also the internal attribute
     # https://github.com/DiamondLightSource/fastcs-eiger/issues/65
     assert detector_controller.attributes["trigger_mode"].get() == "inte"  # type: ignore
 
-    await detector_controller.trigger_exposure.set(0.1)
+    await detector_controller.trigger_exposure.update(0.1)
     await detector_controller.trigger()
 
     await detector_controller.queue_update(["nonexistent_parameter"])
@@ -379,11 +380,13 @@ async def test_if_min_value_provided_then_prec_set_correctly(
 
     with (
         patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS", ["detector"]),
-        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_MODES", ["status"]),
+        patch(
+            "fastcs_eiger.eiger_subsystem_controller.EIGER_PARAMETER_MODES", ["status"]
+        ),
     ):
         await eiger_controller.initialise()
 
-    test_float_attr = eiger_controller.get_sub_controllers()["Detector"].attributes.get(
+    test_float_attr = eiger_controller.sub_controllers["Detector"].attributes.get(
         "test_float_attr"
     )
 

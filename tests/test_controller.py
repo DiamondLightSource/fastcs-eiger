@@ -1,11 +1,11 @@
 import pytest
+from fastcs.attributes import AttrRW
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import (
-    EigerHandler,
-    EigerSubsystemController,
-    LogicHandler,
+from fastcs_eiger.eiger_detector_controller import (
+    EigerDetectorController,
 )
+from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 
 
 @pytest.mark.asyncio
@@ -21,7 +21,7 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
     }
 
     await eiger_controller.initialise()
-    assert list(eiger_controller.get_sub_controllers().keys()) == [
+    assert list(eiger_controller.sub_controllers.keys()) == [
         "Detector",
         "Stream",
         "Monitor",
@@ -35,70 +35,65 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
     connection.get.assert_any_call("stream/api/1.8.0/config/keys")
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "handler_cls, init_args",
-    [
-        (EigerHandler, ("subsystem/api/1.8.0/dummy_mode/dummy_uri",)),
-        (LogicHandler, ()),
-    ],
-)
-async def test_handlers_initialisation_validation(
-    handler_cls, init_args, mocker: MockerFixture
-):
-    updater = handler_cls(*init_args)
-
-    # Accessing the handler's controller should raise a runtime exception
-    with pytest.raises(RuntimeError, match="Handler not initialised"):
-        _ = updater.controller
-
-    wrong_controller = mocker.AsyncMock()
-    # Initiliasing with the wrong controller type should raise an assertion error
-    with pytest.raises(AssertionError):
-        await updater.initialise(wrong_controller)
-
-    valid_controller = EigerSubsystemController(mocker.AsyncMock(), mocker.MagicMock())
-    await updater.initialise(valid_controller)
-    assert updater.controller is valid_controller
-
-
-@pytest.mark.asyncio
-async def test_eiger_handler_update_updates_value(mocker: MockerFixture):
-    dummy_uri = "subsystem/api/1.8.0/dummy_mode/dummy_uri"
-    updater = EigerHandler(dummy_uri)
-    controller = mocker.AsyncMock()
-    mock_connection = mocker.AsyncMock()
-    mock_connection.get.return_value = {"value": 5}
-    controller = EigerSubsystemController(mock_connection, mocker.MagicMock())
-    attr = mocker.Mock()
-
-    await updater.initialise(controller)
-    await updater.update(attr)
-    attr.set.assert_called_once_with(5)
-
-
-@pytest.mark.asyncio
-async def test_eiger_handler_put(mocker: MockerFixture):
-    dummy_uri = "subsystem/api/1.8.0/dummy_mode/dummy_uri"
-    mock_connection = mocker.AsyncMock()
-    controller = EigerSubsystemController(mock_connection, mocker.AsyncMock())
-    controller.queue_update = mocker.AsyncMock()
-
-    handler = EigerHandler(dummy_uri)
-    await handler.initialise(controller)
-    await handler.put(mocker.Mock(), 0.1)
-
-    mock_connection.put.assert_awaited_once_with(dummy_uri, 0.1)
-    controller.queue_update.assert_awaited_once_with(
-        list(mock_connection.put.return_value)
+@pytest.fixture
+def subsystem_controller_and_connection(mock_connection):
+    controller, connection = mock_connection
+    subsystem_controller = EigerDetectorController(
+        connection, controller.queue_subsystem_update
     )
+    ref = EigerParameterRef(
+        key="dummy_uri",
+        subsystem="detector",
+        mode="config",
+        response=EigerParameterResponse(
+            access_mode="rw", value=0.0, value_type="float"
+        ),
+    )
+    subsystem_controller.dummy_attr = AttrRW(ref.fastcs_datatype, io_ref=ref)
+    return subsystem_controller, connection
+
+
+@pytest.mark.asyncio
+async def test_eiger_io_update_updates_value(
+    subsystem_controller_and_connection, mocker: MockerFixture
+):
+    subsystem_controller, connection = subsystem_controller_and_connection
+    connection.get.return_value = {"value": 0.5}
+
+    attr_update_spy = mocker.spy(subsystem_controller.dummy_attr, "update")
+
+    await subsystem_controller._io.update(subsystem_controller.dummy_attr)
+    attr_update_spy.assert_called_once_with(0.5)
+
+
+@pytest.mark.asyncio
+async def test_eiger_io_send(
+    subsystem_controller_and_connection, mocker: MockerFixture
+):
+    dummy_uri = "detector/api/1.8.0/config/dummy_uri"
+    subsystem_controller, connection = subsystem_controller_and_connection
+
+    io = subsystem_controller._io
+    io.queue_update = mocker.AsyncMock()
+    await io.send(subsystem_controller.dummy_attr, 0.1)
+
+    connection.put.assert_awaited_once_with(dummy_uri, 0.1)
+    io.queue_update.assert_awaited_once_with(list(connection.put.return_value))
 
     # if controller.connection.put returns [],
     # still queue_update for the handled uri
-    mock_connection.put.return_value = []
-    no_updated_params_uri = "susbsystem/api/1.8.0/dummy_mode/no_updated_params"
-    handler = EigerHandler(no_updated_params_uri)
-    await handler.initialise(controller)
-    await handler.put(mocker.Mock(), 0.1)
-    mock_connection.put.assert_awaited_with(no_updated_params_uri, 0.1)
-    controller.queue_update.assert_awaited_with(["no_updated_params"])
+    ref = EigerParameterRef(
+        key="no_updated_params",
+        subsystem="detector",
+        mode="config",
+        response=EigerParameterResponse(
+            access_mode="rw", value=0.0, value_type="float"
+        ),
+    )
+    subsystem_controller.no_updated_params = AttrRW(ref.fastcs_datatype, io_ref=ref)
+
+    connection.put.return_value = []
+    no_updated_params_uri = "detector/api/1.8.0/config/no_updated_params"
+    await io.send(subsystem_controller.no_updated_params, 0.1)
+    connection.put.assert_awaited_with(no_updated_params_uri, 0.1)
+    io.queue_update.assert_awaited_with(["no_updated_params"])

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from fastcs.attribute_io_ref import AttributeIORef
 from fastcs.datatypes import Bool, DataType, Float, Int, String
 from pydantic import BaseModel
 
@@ -15,8 +16,12 @@ class EigerParameterResponse(BaseModel):
     ]
 
 
-@dataclass
-class EigerParameter:
+@dataclass(kw_only=True)
+class EigerParameterRef(AttributeIORef):
+    """IO ref for a parameter in the Eiger SIMPLON API"""
+
+    update_period: float | None = 0.2
+    """Poll period for parameter"""
     key: str
     """Last section of URI within a subsystem/mode."""
     subsystem: Literal["detector", "stream", "monitor"]
@@ -48,8 +53,8 @@ class EigerParameter:
                 return String()
 
 
-EIGER_PARAMETER_SUBSYSTEMS = EigerParameter.__annotations__["subsystem"].__args__
-EIGER_PARAMETER_MODES = EigerParameter.__annotations__["mode"].__args__
+EIGER_PARAMETER_SUBSYSTEMS = EigerParameterRef.__annotations__["subsystem"].__args__
+EIGER_PARAMETER_MODES = EigerParameterRef.__annotations__["mode"].__args__
 
 
 def key_to_attribute_name(key: str):
