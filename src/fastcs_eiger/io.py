@@ -1,5 +1,6 @@
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from fastcs.attribute_io import AttributeIO
 from fastcs.attributes import AttrR, AttrW
@@ -53,7 +54,7 @@ class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
         )
         await self.queue_update(update_later)
 
-    async def do_update(self, attr: AttrR[T, EigerParameterRef]) -> None:
+    async def do_update(self, attr: AttrR[Any, EigerParameterRef]) -> None:
         try:
             response = await self.connection.get(attr.io_ref.uri)
             value = response["value"]

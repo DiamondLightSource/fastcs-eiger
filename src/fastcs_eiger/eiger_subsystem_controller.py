@@ -175,7 +175,7 @@ class EigerSubsystemController(Controller):
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
                 case AttrR(io_ref=EigerParameterRef()) as attr:
-                    coros.append(self._io.do_update(attr))
+                    coros.append(self._io.do_update(attr))  # type: ignore
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:
                         print(
