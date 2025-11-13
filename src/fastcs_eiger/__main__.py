@@ -3,6 +3,7 @@ from typing import Optional
 
 import typer
 from fastcs.launch import FastCS
+from fastcs.logging import LogLevel, configure_logging
 from fastcs.transport.epics.ca.transport import EpicsCATransport
 from fastcs.transport.epics.options import EpicsGUIOptions, EpicsIOCOptions
 
@@ -47,8 +48,11 @@ def ioc(
     pv_prefix: str = typer.Argument(),
     ip: str = EigerIp,
     port: int = EigerPort,
+    log_level: LogLevel = LogLevel.TRACE,
 ):
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
+
+    configure_logging(log_level)
 
     controller = EigerController(ip, port)
 
