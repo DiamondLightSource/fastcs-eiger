@@ -93,7 +93,6 @@ class EigerSubsystemController(Controller):
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
-            self.attributes[name] = attribute
             if class_attr := getattr(self, name, None):
                 assert isinstance(class_attr, type(attribute)), (
                     f"Class attribute {class_attr} is not an instance of "
@@ -107,7 +106,8 @@ class EigerSubsystemController(Controller):
                     f"{type(class_attr).__name__}({class_attr.datatype}) "
                     f"on subsystem '{self._subsystem}'."
                 )
-                setattr(self, name, attribute)
+
+            self.add_attribute(name, attribute)
 
     @classmethod
     def _group(cls, parameter: EigerParameterRef):
