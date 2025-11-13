@@ -48,8 +48,11 @@ def ioc(
     pv_prefix: str = typer.Argument(),
     ip: str = EigerIp,
     port: int = EigerPort,
+    log_level: LogLevel = LogLevel.TRACE,
 ):
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
+
+    configure_logging(log_level)
 
     controller = EigerController(ip, port)
 

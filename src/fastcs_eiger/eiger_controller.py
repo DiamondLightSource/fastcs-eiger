@@ -4,6 +4,7 @@ from collections.abc import Coroutine
 from fastcs.attributes import AttrR
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool
+from fastcs.logging import bind_logger
 from fastcs.methods import scan
 
 from fastcs_eiger.eiger_detector_controller import EigerDetectorController
@@ -29,6 +30,9 @@ class EigerController(Controller):
         super().__init__()
         self._ip = ip
         self._port = port
+
+        self.logger = bind_logger(__class__.__name__)
+
         self.connection = HTTPConnection(self._ip, self._port)
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
@@ -90,13 +94,19 @@ class EigerController(Controller):
     @scan(0.1)
     async def update(self):
         """Periodically check for parameters that need updating from the detector."""
-        if not self.queue.empty():
-            coros: list[Coroutine] = []
-            async with self._parameter_update_lock:
-                while not self.queue.empty():
-                    coros.append(await self.queue.get())
-            await asyncio.gather(*coros)
-        await self.stale_parameters.update(not self.queue.empty())
+        if self.queue.empty():
+            return
+
+        coros: list[Coroutine] = []
+        async with self._parameter_update_lock:
+            while not self.queue.empty():
+                coros.append(await self.queue.get())
+
+        await asyncio.gather(*coros)
+
+        if self.queue.empty():
+            self.logger.info("All parameters updated")
+            await self.stale_parameters.update(not self.queue.empty())
 
     async def queue_subsystem_update(self, coros: list[Coroutine]):
         if coros:
