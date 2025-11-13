@@ -2,9 +2,8 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from fastcs.attribute_io import AttributeIO
-from fastcs.attributes import AttrR, AttrW
-from fastcs.datatypes import T
+from fastcs.attributes import AttributeIO, AttrR, AttrW
+from fastcs.datatypes import DType_T
 
 from fastcs_eiger.eiger_parameter import EigerParameterRef
 from fastcs_eiger.http_connection import HTTPConnection
@@ -13,7 +12,7 @@ FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 
 @dataclass
-class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
+class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
     """AttributeIO for ``EigerParameterRef`` Attributes"""
 
     connection: HTTPConnection
@@ -37,7 +36,9 @@ class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
                     update_later.append(parameter)
         return update_now, update_later
 
-    async def send(self, attr: AttrW[T, EigerParameterRef], value: T) -> None:
+    async def send(
+        self, attr: AttrW[DType_T, EigerParameterRef], value: DType_T
+    ) -> None:
         parameters_to_update = await self.connection.put(attr.io_ref.uri, value)
         update_now, update_later = self._handle_params_to_update(
             parameters_to_update, attr.io_ref.uri
@@ -61,7 +62,7 @@ class EigerAttributeIO(AttributeIO[T, EigerParameterRef]):
         except Exception as e:
             print(f"Failed to get {attr.io_ref.uri}:\n{e.__class__.__name__} {e}")
 
-    async def update(self, attr: AttrR[T, EigerParameterRef]) -> None:
+    async def update(self, attr: AttrR[DType_T, EigerParameterRef]) -> None:
         if attr.io_ref.mode == "config" and self.first_poll_complete:
             return
         await self.do_update(attr)
