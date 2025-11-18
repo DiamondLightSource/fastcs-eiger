@@ -52,6 +52,10 @@ class EigerParameterRef(AttributeIORef):
             case "string" | "datetime" | "State" | "string[]":
                 return String()
 
+    def __repr__(self):
+        name = self.__class__.__name__
+        return f"{name}(subsystem={self.subsystem}, mode={self.mode}, key={self.key})"
+
 
 EIGER_PARAMETER_SUBSYSTEMS = EigerParameterRef.__annotations__["subsystem"].__args__
 EIGER_PARAMETER_MODES = EigerParameterRef.__annotations__["mode"].__args__
