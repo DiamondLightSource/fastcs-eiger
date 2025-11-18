@@ -96,20 +96,6 @@ class EigerSubsystemController(Controller):
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
-            if class_attr := getattr(self, name, None):
-                assert isinstance(class_attr, type(attribute)), (
-                    f"Class attribute {class_attr} is not an instance of "
-                    f"its introspected attribute's type {type(attribute)} "
-                    f"on subsystem '{self._subsystem}'."
-                )
-                assert class_attr.datatype == attribute.datatype, (
-                    f"Datatype of Introspected attribute "
-                    f"'{name}': {type(attribute).__name__}({attribute.datatype}) "
-                    f"does not match datatype of its class defined attribute "
-                    f"{type(class_attr).__name__}({class_attr.datatype}) "
-                    f"on subsystem '{self._subsystem}'."
-                )
-
             self.add_attribute(name, attribute)
 
     @classmethod
