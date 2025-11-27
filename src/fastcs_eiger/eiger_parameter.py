@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from fastcs.attribute_io_ref import AttributeIORef
+from fastcs.attributes import AttributeIORef
 from fastcs.datatypes import Bool, DataType, Float, Int, String
 from pydantic import BaseModel
 
@@ -51,6 +51,10 @@ class EigerParameterRef(AttributeIORef):
                 return Bool()
             case "string" | "datetime" | "State" | "string[]":
                 return String()
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        return f"{name}(subsystem={self.subsystem}, mode={self.mode}, key={self.key})"
 
 
 EIGER_PARAMETER_SUBSYSTEMS = EigerParameterRef.__annotations__["subsystem"].__args__

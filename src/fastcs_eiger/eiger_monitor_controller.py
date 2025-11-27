@@ -1,7 +1,7 @@
 from io import BytesIO
 
 import numpy as np
-from fastcs.wrappers import scan
+from fastcs.methods import scan
 from PIL import Image
 
 from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController

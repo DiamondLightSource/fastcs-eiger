@@ -3,11 +3,9 @@ from typing import Optional
 
 import typer
 from fastcs.launch import FastCS
-from fastcs.transport.epics.ca.options import (
-    EpicsGUIOptions,
-    EpicsIOCOptions,
-)
-from fastcs.transport.epics.ca.transport import EpicsCATransport
+from fastcs.logging import LogLevel, configure_logging
+from fastcs.transports.epics import EpicsGUIOptions, EpicsIOCOptions
+from fastcs.transports.epics.ca.transport import EpicsCATransport
 
 from fastcs_eiger import __version__
 from fastcs_eiger.eiger_controller import EigerController
@@ -50,18 +48,23 @@ def ioc(
     pv_prefix: str = typer.Argument(),
     ip: str = EigerIp,
     port: int = EigerPort,
+    log_level: LogLevel = LogLevel.TRACE,
 ):
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
 
+    configure_logging(log_level)
+
     controller = EigerController(ip, port)
 
-    options = EpicsCATransport(
-        ca_ioc=EpicsIOCOptions(pv_prefix=pv_prefix),
-        gui=EpicsGUIOptions(
-            output_path=ui_path / "eiger.bob", title=f"Eiger - {pv_prefix}"
+    transports = [
+        EpicsCATransport(
+            epicsca=EpicsIOCOptions(pv_prefix=pv_prefix),
+            gui=EpicsGUIOptions(
+                output_path=ui_path / "eiger.bob", title=f"Eiger - {pv_prefix}"
+            ),
         ),
-    )
-    launcher = FastCS(controller, [options])
+    ]
+    launcher = FastCS(controller, transports)
     launcher.run()
 
 

@@ -1,8 +1,8 @@
 from typing import Any
 
-from fastcs.attributes import AttrRW
-from fastcs.datatypes import Float, String
-from fastcs.wrappers import command
+from fastcs.attributes import AttrR, AttrRW
+from fastcs.datatypes import Float
+from fastcs.methods import command
 
 from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
 
@@ -18,9 +18,10 @@ def detector_command(fn) -> Any:
 class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
 
-    # Detector parameters to use in internal logic
+    # Internal attribute to control triggers in `inte` mode
     trigger_exposure = AttrRW(Float())
-    trigger_mode = AttrRW(String())
+    # Introspected attribute needed for trigger logic
+    trigger_mode: AttrR[str]
 
     @detector_command
     async def initialize(self):

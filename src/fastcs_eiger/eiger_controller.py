@@ -2,26 +2,25 @@ import asyncio
 from collections.abc import Coroutine
 
 from fastcs.attributes import AttrR
-from fastcs.controller import Controller
+from fastcs.controllers import Controller
 from fastcs.datatypes import Bool
-from fastcs.wrappers import scan
+from fastcs.logging import bind_logger
+from fastcs.methods import scan
 
 from fastcs_eiger.eiger_detector_controller import EigerDetectorController
 from fastcs_eiger.eiger_monitor_controller import EigerMonitorController
-from fastcs_eiger.eiger_parameter import (
-    EIGER_PARAMETER_SUBSYSTEMS,
-)
+from fastcs_eiger.eiger_parameter import EIGER_PARAMETER_SUBSYSTEMS
 from fastcs_eiger.eiger_stream_controller import EigerStreamController
 from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 
 class EigerController(Controller):
-    """
-    Controller Class for Eiger Detector
+    """Root controller for Eiger detectors
 
-    Used for dynamic creation of variables useed in logic of the EigerFastCS backend.
-    Sets up all connections with the Simplon API to send and receive information
+    Args:
+        ip: IP address of Eiger detector
+        port: Port of Eiger detector
     """
 
     # Internal Attribute
@@ -31,6 +30,9 @@ class EigerController(Controller):
         super().__init__()
         self._ip = ip
         self._port = port
+
+        self.logger = bind_logger(__class__.__name__)
+
         self.connection = HTTPConnection(self._ip, self._port)
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
@@ -92,13 +94,19 @@ class EigerController(Controller):
     @scan(0.1)
     async def update(self):
         """Periodically check for parameters that need updating from the detector."""
-        if not self.queue.empty():
-            coros: list[Coroutine] = []
-            async with self._parameter_update_lock:
-                while not self.queue.empty():
-                    coros.append(await self.queue.get())
-            await asyncio.gather(*coros)
-        await self.stale_parameters.update(not self.queue.empty())
+        if self.queue.empty():
+            return
+
+        coros: list[Coroutine] = []
+        async with self._parameter_update_lock:
+            while not self.queue.empty():
+                coros.append(await self.queue.get())
+
+        await asyncio.gather(*coros)
+
+        if self.queue.empty():
+            self.logger.info("All parameters updated")
+            await self.stale_parameters.update(not self.queue.empty())
 
     async def queue_subsystem_update(self, coros: list[Coroutine]):
         if coros:
