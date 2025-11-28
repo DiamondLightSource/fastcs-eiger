@@ -69,3 +69,5 @@ lockfiles/
 
 # ruff cache
 .ruff_cache/
+
+/opi/
