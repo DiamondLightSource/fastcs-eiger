@@ -58,7 +58,10 @@ async def run_acquisition(
     print("Starting writing")
     await caput(f"{odin_prefix}:FP:StartWriting", True)
     await asyncio.sleep(1)
-    await pv_equals(f"{odin_prefix}:FP:Writing", 1, timeout=5)
+    await asyncio.gather(
+        pv_equals(f"{odin_prefix}:FP:Writing", 1, timeout=5),
+        pv_equals(f"{odin_prefix}:EF:Ready", 1, timeout=5),
+    )
 
     print("Triggering")
     await caput(f"{eiger_prefix}:Detector:Trigger", True, wait=False)
