@@ -8,28 +8,25 @@ CA_TIMEOUT = 3
 
 
 def main(
-    eiger_prefix: str = "EIGER",
-    odin_prefix: str = "ODIN:OD",
+    prefix: str = "EIGER",
     file_path: str = "/data",
     file_name: str = "test",
     frames: int = 10,
     exposure_time: float = 1,
 ):
-    asyncio.run(
-        run_acquisition(
-            eiger_prefix, odin_prefix, file_path, file_name, frames, exposure_time
-        )
-    )
+    asyncio.run(run_acquisition(prefix, file_path, file_name, frames, exposure_time))
 
 
 async def run_acquisition(
-    eiger_prefix: str,
-    odin_prefix: str,
+    prefix: str,
     file_path: str,
     file_name: str,
     frames: int,
     exposure_time: float,
 ):
+    eiger_prefix = prefix
+    odin_prefix = f"{prefix}:OD"
+
     await tidy(eiger_prefix, odin_prefix)
 
     print("Configuring")

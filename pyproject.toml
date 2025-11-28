@@ -13,6 +13,7 @@ description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
     "fastcs[epicsca]~=0.11.1",
+    "fastcs-odin @ git+https://github.com/DiamondLightSource/fastcs-odin.git",
     "numpy",
     "pillow",
     "typer",

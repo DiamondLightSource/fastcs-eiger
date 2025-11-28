@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import Coroutine
 
 from fastcs.attributes import AttrR
+from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool
 from fastcs.logging import bind_logger
@@ -26,14 +27,13 @@ class EigerController(Controller):
     # Internal Attribute
     stale_parameters = AttrR(Bool())
 
-    def __init__(self, ip: str, port: int) -> None:
+    def __init__(self, connection_settings: IPConnectionSettings) -> None:
         super().__init__()
-        self._ip = ip
-        self._port = port
+        self.connection_settings = connection_settings
 
         self.logger = bind_logger(__class__.__name__)
 
-        self.connection = HTTPConnection(self._ip, self._port)
+        self.connection = HTTPConnection(connection_settings)
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
 
