@@ -31,8 +31,8 @@ if os.getenv("PYTEST_RAISE", "0") == "1":
 
 # Stolen from tickit-devices
 # https://docs.pytest.org/en/latest/example/parametrize.html#indirect-parametrization
-@pytest.fixture
-def sim_eiger_controller(request):
+@pytest.fixture(scope="session")
+def sim_eiger(request):
     """Subprocess that runs ``tickit all <config_path>``."""
     config_path: str = request.param
     proc = subprocess.Popen(
@@ -50,7 +50,7 @@ def sim_eiger_controller(request):
 
     sleep(3)
 
-    yield EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    yield
 
     proc.send_signal(signal.SIGINT)
     print(proc.communicate()[0])

@@ -5,6 +5,7 @@ from typing import Literal
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.controllers import Controller
 from fastcs.logging import bind_logger
+from fastcs.util import ONCE
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -84,6 +85,7 @@ class EigerSubsystemController(Controller):
                         subsystem=self._subsystem,
                         mode=mode,
                         response=EigerParameterResponse.model_validate(response),
+                        update_period=ONCE if mode == "config" else 0.2,
                     )
                     for key, response in zip(subsystem_keys, responses, strict=False)
                 ]
@@ -162,7 +164,7 @@ class EigerSubsystemController(Controller):
             attr_name = key_to_attribute_name(parameter)
             match self.attributes.get(attr_name, None):
                 case AttrR(io_ref=EigerParameterRef()) as attr:
-                    coros.append(self._io.do_update(attr))  # type: ignore
+                    coros.append(self._io.update(attr))  # type: ignore
                 case _ as attr:
                     if parameter not in IGNORED_KEYS:
                         print(
