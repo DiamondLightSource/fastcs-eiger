@@ -11,7 +11,24 @@
             "module": "fastcs_eiger",
             "justMyCode": false,
             "console": "integratedTerminal",
-            "args": ["ioc", "EIGER"]
+            "args": [
+                "ioc",
+                "EIGER",
+            ]
+        },
+        {
+            "name": "Eiger Odin IOC",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastcs_eiger",
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "args": [
+                "ioc",
+                "EIGER",
+                "--odin-ip",
+                "127.0.0.1",
+            ]
         },
         {
             "name": "Eiger Asyncio",

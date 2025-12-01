@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from fastcs.connections import IPConnectionSettings
 from fastcs.launch import FastCS
 from fastcs.logging import LogLevel, configure_logging
 from fastcs.transports.epics import EpicsGUIOptions, EpicsIOCOptions
@@ -9,6 +10,7 @@ from fastcs.transports.epics.ca.transport import EpicsCATransport
 
 from fastcs_eiger import __version__
 from fastcs_eiger.eiger_controller import EigerController
+from fastcs_eiger.eiger_odin_controller import EigerOdinController
 
 __all__ = ["main"]
 
@@ -37,24 +39,31 @@ def main(
     pass
 
 
-EigerIp = typer.Option("127.0.0.1", help="IP address of Eiger detector")
-EigerPort = typer.Option(8081, help="Port of Eiger HTTP server")
-
 OPI_PATH = Path("/epics/opi")
 
 
 @app.command()
 def ioc(
     pv_prefix: str = typer.Argument(),
-    ip: str = EigerIp,
-    port: int = EigerPort,
+    ip: str = typer.Option("127.0.0.1", help="IP address of Eiger detector"),
+    port: int = typer.Option(8081, help="Port of Eiger HTTP server"),
+    odin_ip: str | None = typer.Option(None, help="IP address of odin control server"),
+    odin_port: int = typer.Option(8888, help="Port of odin control server"),
     log_level: LogLevel = LogLevel.TRACE,
 ):
-    ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd()
+    ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd() / "opi"
 
     configure_logging(log_level)
 
-    controller = EigerController(ip, port)
+    if odin_ip is None:
+        controller = EigerController(
+            connection_settings=IPConnectionSettings(ip=ip, port=port),
+        )
+    else:
+        controller = EigerOdinController(
+            detector_connection_settings=IPConnectionSettings(ip=ip, port=port),
+            odin_connection_settings=IPConnectionSettings(ip=odin_ip, port=odin_port),
+        )
 
     transports = [
         EpicsCATransport(

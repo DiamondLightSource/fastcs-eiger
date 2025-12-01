@@ -6,6 +6,7 @@ from typing import Any
 from unittest import mock
 
 import pytest
+from fastcs.connections import IPConnectionSettings
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.eiger_controller import EigerController
@@ -49,7 +50,7 @@ def sim_eiger_controller(request):
 
     sleep(3)
 
-    yield EigerController("127.0.0.1", 8081)
+    yield EigerController(IPConnectionSettings("127.0.0.1", 8081))
 
     proc.send_signal(signal.SIGINT)
     print(proc.communicate()[0])
@@ -57,7 +58,7 @@ def sim_eiger_controller(request):
 
 @pytest.fixture
 def mock_connection(mocker: MockerFixture):
-    eiger_controller = EigerController("127.0.0.1", 80)
+    eiger_controller = EigerController(IPConnectionSettings("127.0.0.1", 80))
     connection = mocker.patch.object(eiger_controller, "connection")
     connection.get = mock.AsyncMock()
     connection.put = mock.AsyncMock()

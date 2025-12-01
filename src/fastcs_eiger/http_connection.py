@@ -1,4 +1,5 @@
 from aiohttp import ClientResponse, ClientSession, ClientTimeout
+from fastcs.connections import IPConnectionSettings
 
 
 class HTTPRequestError(ConnectionError):
@@ -10,10 +11,10 @@ class HTTPRequestError(ConnectionError):
 
 
 class HTTPConnection:
-    def __init__(self, ip: str, port: int):
+    def __init__(self, connection_settings: IPConnectionSettings):
         self._session: ClientSession | None = None
-        self._ip = ip
-        self._port = port
+        self._ip = connection_settings.ip
+        self._port = connection_settings.port
 
     def full_url(self, uri) -> str:
         """Expand IP address, port and URI into full URL.
@@ -25,7 +26,7 @@ class HTTPConnection:
         return f"http://{self._ip}:{self._port}/{uri}"
 
     def open(self):
-        """Create the underlying aiohttp ClienSession.
+        """Create the underlying aiohttp ClientSession.
 
         When called the session will be created in the context of the current running
         asyncio loop.

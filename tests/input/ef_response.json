@@ -1,0 +1,65 @@
+{
+    "api": {
+        "value": 0.1,
+        "writeable": false,
+        "type": "float"
+    },
+    "module": {
+        "value": "EigerFanAdapter",
+        "writeable": false,
+        "type": "str"
+    },
+    "endpoints": [
+        {
+            "ip_address": {
+                "value": "127.0.0.1",
+                "writeable": false,
+                "type": "str"
+            },
+            "port": {
+                "value": 5559,
+                "writeable": false,
+                "type": "int"
+            }
+        }
+    ],
+    "count": {
+        "value": 1,
+        "writeable": false,
+        "type": "int"
+    },
+    "update_interval": {
+        "value": 0.5,
+        "writeable": false,
+        "type": "float"
+    },
+    "0": {
+        "status": {
+            "state": "WAITING_STREAM",
+            "num_conn": 4,
+            "series": 0,
+            "frame": 0,
+            "messages_received": 0,
+            "frames_sent": 0,
+            "fan_offset": 0,
+            "timestamp": "2025-11-11T10:29:20.376326",
+            "error": [],
+            "connected": true
+        },
+        "config": {
+            "num_threads": 2,
+            "num_zmq_context_threads": 4,
+            "num_consumers": 4,
+            "ctrl_channel_port": "5559",
+            "eiger_channel_address": "127.0.0.1",
+            "eiger_channel_port": "9999",
+            "fan_channel_port_start": 31600,
+            "acqid": "",
+            "block_size": 1000,
+            "offset": 0,
+            "forward_stream": false,
+            "dev_shm_cache": false
+        },
+        "command": {}
+    }
+}
