@@ -2,8 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
-from fastcs_odin.io.parameter_attribute_io import ParameterTreeAttributeIO
-from fastcs_odin.io.status_summary_attribute_io import StatusSummaryAttributeIO
+from fastcs_odin.io import ParameterTreeAttributeIO, StatusSummaryAttributeIO
 from fastcs_odin.util import (
     OdinParameter,
     OdinParameterMetadata,
@@ -11,7 +10,7 @@ from fastcs_odin.util import (
 )
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.odin.eiger_fan import EigerFanAdapterController
+from fastcs_eiger.controllers.odin.eiger_fan import EigerFanAdapterController
 
 HERE = Path(__file__).parent
 

@@ -1,7 +1,7 @@
 from fastcs.attributes import AttrR
 from fastcs.datatypes import Bool
-from fastcs_odin.io.status_summary_attribute_io import StatusSummaryAttributeIORef
-from fastcs_odin.odin_subcontroller import OdinSubController
+from fastcs_odin.controllers import OdinSubController
+from fastcs_odin.io import StatusSummaryAttributeIORef
 from fastcs_odin.util import create_attribute
 
 

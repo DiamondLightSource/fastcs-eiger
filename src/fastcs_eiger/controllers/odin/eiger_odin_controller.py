@@ -2,8 +2,8 @@ import asyncio
 
 from fastcs.connections import IPConnectionSettings
 
-from fastcs_eiger.eiger_controller import EigerController
-from fastcs_eiger.odin.odin_controller import OdinController
+from fastcs_eiger.controllers.eiger_controller import EigerController
+from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 
 class EigerOdinController(EigerController):

@@ -9,7 +9,7 @@ import pytest
 from fastcs.connections import IPConnectionSettings
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import EigerController
+from fastcs_eiger.controllers.eiger_controller import EigerController
 
 # Prevent pytest from catching exceptions when debugging in vscode so that break on
 # exception works correctly (see: https://github.com/pytest-dev/pytest/issues/7409)
