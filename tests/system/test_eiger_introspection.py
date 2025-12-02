@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from fastcs.attributes import Attribute, AttrR, AttrRW
+from fastcs.connections import IPConnectionSettings
 from fastcs.datatypes import Float
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
@@ -42,11 +43,9 @@ def _serialise_parameter(parameter: EigerParameterRef) -> dict:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
-async def test_attribute_creation(sim_eiger_controller: EigerController):
-    controller = sim_eiger_controller
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
+async def test_attribute_creation(sim_eiger):
+    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
     await controller.initialise()
     serialised_parameters: dict[str, dict[str, Any]] = {}
     subsystem_parameters = {}
@@ -94,11 +93,9 @@ async def test_attribute_creation(sim_eiger_controller: EigerController):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
-async def test_controller_groups_and_parameters(sim_eiger_controller: EigerController):
-    controller = sim_eiger_controller
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
+async def test_controller_groups_and_parameters(sim_eiger):
+    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
     await controller.initialise()
 
     for subsystem in MISSING_KEYS:
@@ -125,13 +122,11 @@ async def test_controller_groups_and_parameters(sim_eiger_controller: EigerContr
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_threshold_mode_api_inconsistency_handled(
-    sim_eiger_controller: EigerController, mocker: MockerFixture
+    sim_eiger, mocker: MockerFixture
 ):
-    controller = sim_eiger_controller
+    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]
@@ -158,15 +153,11 @@ async def test_threshold_mode_api_inconsistency_handled(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
-async def test_fetch_before_returning_parameters(
-    sim_eiger_controller: EigerController, mocker: MockerFixture
-):
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
+async def test_fetch_before_returning_parameters(sim_eiger, mocker: MockerFixture):
     # Need to mock @scan to spy controller.update()
     with patch("fastcs_eiger.eiger_controller.scan"):
-        controller = sim_eiger_controller
+        controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
         await controller.initialise()
 
         detector_controller = controller.sub_controllers["Detector"]
@@ -184,7 +175,7 @@ async def test_fetch_before_returning_parameters(
 
         queue_update_spy = mocker.spy(detector_controller._io, "queue_update")
         update_now_spy = mocker.spy(detector_controller._io, "update_now")
-        io_do_update_spy = mocker.spy(detector_controller._io, "do_update")
+        io_update_spy = mocker.spy(detector_controller._io, "update")
         await detector_controller._io.send(count_time_attr, 2.0)
 
         # bit_depth_image and bit_depth_readout handled early
@@ -201,26 +192,24 @@ async def test_fetch_before_returning_parameters(
             ]
         )
 
-        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        updated = [call.args[0].io_ref.key for call in io_update_spy.await_args_list]
         assert "bit_depth_image" in updated
         assert "count_time" not in updated
 
         # queued updated not updated until controller.update()
         await controller.update()
-        updated = [call.args[0].io_ref.key for call in io_do_update_spy.await_args_list]
+        updated = [call.args[0].io_ref.key for call in io_update_spy.await_args_list]
         assert "count_time" in updated
 
         await controller.connection.close()
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_stale_propagates_to_top_controller(
-    sim_eiger_controller: EigerController,
+    sim_eiger,
 ):
-    controller = sim_eiger_controller
+    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]
@@ -275,13 +264,11 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "sim_eiger_controller", [str(HERE / "eiger.yaml")], indirect=True
-)
+@pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_eiger_controller_trigger_correctly_introspected(
-    mocker: MockerFixture, sim_eiger_controller: EigerController
+    mocker: MockerFixture, sim_eiger
 ):
-    controller = sim_eiger_controller
+    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]

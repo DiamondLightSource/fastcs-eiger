@@ -1,3 +1,5 @@
+from typing import Any
+
 from aiohttp import ClientResponse, ClientSession, ClientTimeout
 from fastcs.connections import IPConnectionSettings
 
@@ -47,7 +49,7 @@ class HTTPConnection:
 
         raise ConnectionRefusedError("Session is not open")
 
-    async def get(self, uri) -> dict[str, str]:
+    async def get(self, uri) -> dict[str, Any]:
         """Perform HTTP GET request and return response content as JSON.
 
         Args:

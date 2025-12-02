@@ -1,6 +1,5 @@
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
 
 from fastcs.attributes import AttributeIO, AttrR, AttrW
 from fastcs.datatypes import DType_T
@@ -27,8 +26,6 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
         self.update_now = update_now
         self.queue_update = queue_update
         self.logger = bind_logger(__class__.__name__)
-
-        self.first_poll_complete = False
 
     def _handle_params_to_update(
         self, parameters: list[str], uri: str
@@ -67,28 +64,19 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
         await self.update_now(update_now)
         await self.queue_update(update_later)
 
-    async def do_update(self, attr: AttrR[Any, EigerParameterRef]) -> None:
-        try:
-            response = await self.connection.get(attr.io_ref.uri)
-            value = response["value"]
-            if isinstance(value, list) and all(
-                isinstance(s, str) for s in value
-            ):  # error is a list of strings
-                value = ", ".join(value)
-
-            self.log_event(
-                "Query for parameter",
-                uri=attr.io_ref.uri,
-                response=response,
-                topic=attr,
-            )
-
-            await attr.update(value)
-        except Exception as e:
-            print(f"Failed to get {attr.io_ref.uri}:\n{e.__class__.__name__} {e}")
-
     async def update(self, attr: AttrR[DType_T, EigerParameterRef]) -> None:
-        if attr.io_ref.mode == "config" and self.first_poll_complete:
-            return
-        await self.do_update(attr)
-        self.first_poll_complete = True
+        response = await self.connection.get(attr.io_ref.uri)
+        value = response["value"]
+        if isinstance(value, list) and all(
+            isinstance(s, str) for s in value
+        ):  # error is a list of strings
+            value = ", ".join(value)
+
+        self.log_event(
+            "Query for parameter",
+            uri=attr.io_ref.uri,
+            response=response,
+            topic=attr,
+        )
+
+        await attr.update(value)
