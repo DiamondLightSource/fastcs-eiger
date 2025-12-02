@@ -2,7 +2,7 @@ import pytest
 from fastcs.attributes import AttrRW
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
 from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 
 

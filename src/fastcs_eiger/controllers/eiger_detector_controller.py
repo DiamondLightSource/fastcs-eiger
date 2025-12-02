@@ -4,7 +4,7 @@ from fastcs.attributes import AttrR, AttrRW
 from fastcs.datatypes import Float
 from fastcs.methods import command
 
-from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
+from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 
 
 def command_uri(key: str) -> str:

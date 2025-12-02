@@ -11,16 +11,16 @@ from fastcs.datatypes import Float
 from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_controller import EigerController
-from fastcs_eiger.eiger_detector_controller import EigerDetectorController
-from fastcs_eiger.eiger_monitor_controller import EigerMonitorController
-from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
-from fastcs_eiger.eiger_stream_controller import EigerStreamController
-from fastcs_eiger.eiger_subsystem_controller import (
+from fastcs_eiger.controllers.eiger_controller import EigerController
+from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.controllers.eiger_monitor_controller import EigerMonitorController
+from fastcs_eiger.controllers.eiger_stream_controller import EigerStreamController
+from fastcs_eiger.controllers.eiger_subsystem_controller import (
     IGNORED_KEYS,
     MISSING_KEYS,
     EigerSubsystemController,
 )
+from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 
 HERE = Path(__file__).parent
 
@@ -156,7 +156,7 @@ async def test_threshold_mode_api_inconsistency_handled(
 @pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_fetch_before_returning_parameters(sim_eiger, mocker: MockerFixture):
     # Need to mock @scan to spy controller.update()
-    with patch("fastcs_eiger.eiger_controller.scan"):
+    with patch("fastcs_eiger.controllers.eiger_controller.scan"):
         controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
         await controller.initialise()
 
@@ -330,9 +330,13 @@ async def test_if_min_value_provided_then_prec_set_correctly(
     ]
 
     with (
-        patch("fastcs_eiger.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS", ["detector"]),
         patch(
-            "fastcs_eiger.eiger_subsystem_controller.EIGER_PARAMETER_MODES", ["status"]
+            "fastcs_eiger.controllers.eiger_controller.EIGER_PARAMETER_SUBSYSTEMS",
+            ["detector"],
+        ),
+        patch(
+            "fastcs_eiger.controllers.eiger_subsystem_controller.EIGER_PARAMETER_MODES",
+            ["status"],
         ),
     ):
         await eiger_controller.initialise()

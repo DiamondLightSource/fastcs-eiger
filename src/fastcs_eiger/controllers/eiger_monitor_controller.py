@@ -4,7 +4,7 @@ import numpy as np
 from fastcs.methods import scan
 from PIL import Image
 
-from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
+from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 
 
 class EigerMonitorController(EigerSubsystemController):

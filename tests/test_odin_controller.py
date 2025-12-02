@@ -1,11 +1,11 @@
 import pytest
 from fastcs.connections import IPConnectionSettings
-from fastcs_odin.meta_writer import MetaWriterAdapterController
+from fastcs_odin.controllers import MetaWriterAdapterController
 from fastcs_odin.util import OdinParameter, OdinParameterMetadata
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.odin.eiger_fan import EigerFanAdapterController
-from fastcs_eiger.odin.odin_controller import OdinController
+from fastcs_eiger.controllers.odin.eiger_fan import EigerFanAdapterController
+from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 
 @pytest.mark.asyncio

@@ -9,8 +9,8 @@ from fastcs.transports.epics import EpicsGUIOptions, EpicsIOCOptions
 from fastcs.transports.epics.ca.transport import EpicsCATransport
 
 from fastcs_eiger import __version__
-from fastcs_eiger.eiger_controller import EigerController
-from fastcs_eiger.eiger_odin_controller import EigerOdinController
+from fastcs_eiger.controllers.eiger_controller import EigerController
+from fastcs_eiger.controllers.odin.eiger_odin_controller import EigerOdinController
 
 __all__ = ["main"]
 

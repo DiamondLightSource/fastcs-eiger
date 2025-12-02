@@ -2,8 +2,8 @@ import pytest
 from fastcs.connections import IPConnectionSettings
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.eiger_odin_controller import EigerOdinController
-from fastcs_eiger.odin.odin_controller import OdinController
+from fastcs_eiger.controllers.odin.eiger_odin_controller import EigerOdinController
+from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 
 @pytest.mark.asyncio
@@ -17,7 +17,7 @@ async def test_eiger_odin_controller(mocker: MockerFixture):
     assert isinstance(controller.OD, OdinController)
 
     eiger_initialise_mock = mocker.patch(
-        "fastcs_eiger.eiger_controller.EigerController.initialise"
+        "fastcs_eiger.controllers.eiger_controller.EigerController.initialise"
     )
     odin_initialise_mock = mocker.patch.object(controller.OD, "initialise")
 

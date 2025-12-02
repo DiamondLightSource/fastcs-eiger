@@ -8,11 +8,11 @@ from fastcs.datatypes import Bool
 from fastcs.logging import bind_logger
 from fastcs.methods import scan
 
-from fastcs_eiger.eiger_detector_controller import EigerDetectorController
-from fastcs_eiger.eiger_monitor_controller import EigerMonitorController
+from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.controllers.eiger_monitor_controller import EigerMonitorController
+from fastcs_eiger.controllers.eiger_stream_controller import EigerStreamController
+from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.eiger_parameter import EIGER_PARAMETER_SUBSYSTEMS
-from fastcs_eiger.eiger_stream_controller import EigerStreamController
-from fastcs_eiger.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 

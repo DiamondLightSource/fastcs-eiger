@@ -1,12 +1,12 @@
 from fastcs.attributes import AttrR
 from fastcs.controllers import BaseController
 from fastcs.datatypes import Bool
+from fastcs_odin.controllers import OdinController as _OdinController
 from fastcs_odin.http_connection import HTTPConnection
-from fastcs_odin.io.status_summary_attribute_io import StatusSummaryAttributeIORef
-from fastcs_odin.odin_controller import OdinController as _OdinController
+from fastcs_odin.io import StatusSummaryAttributeIORef
 from fastcs_odin.util import OdinParameter
 
-from fastcs_eiger.odin.eiger_fan import EigerFanAdapterController
+from fastcs_eiger.controllers.odin.eiger_fan import EigerFanAdapterController
 
 
 class OdinController(_OdinController):
