@@ -5,6 +5,9 @@ from fastcs_odin.util import OdinParameter, OdinParameterMetadata
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.controllers.odin.eiger_fan import EigerFanAdapterController
+from fastcs_eiger.controllers.odin.eiger_fp_adapter_controller import (
+    EigerFrameProcessorAdapterController,
+)
 from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 
@@ -17,6 +20,11 @@ async def test_create_adapter_controller(mocker: MockerFixture):
             ["0"], metadata=OdinParameterMetadata(value=0, type="int", writeable=False)
         )
     ]
+
+    ctrl = controller._create_adapter_controller(
+        controller.connection, parameters, "fp", "FrameProcessorAdapter"
+    )
+    assert isinstance(ctrl, EigerFrameProcessorAdapterController)
 
     ctrl = controller._create_adapter_controller(
         controller.connection, parameters, "ef", "EigerFanAdapter"
