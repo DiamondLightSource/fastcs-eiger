@@ -20,9 +20,9 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
 
     await eiger_controller.initialise()
     assert list(eiger_controller.sub_controllers.keys()) == [
-        "Detector",
-        "Stream",
-        "Monitor",
+        "detector",
+        "stream",
+        "monitor",
     ]
     connection.get.assert_any_call("detector/api/1.8.0/status/state")
     connection.get.assert_any_call("detector/api/1.8.0/status/keys")
