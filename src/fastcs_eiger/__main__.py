@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Optional
 
+import softioc.pvlog  # noqa: F401
 import typer
 from fastcs.connections import IPConnectionSettings
 from fastcs.launch import FastCS
-from fastcs.logging import LogLevel, configure_logging
+from fastcs.logging import LogLevel, configure_logging, intercept_std_logger
 from fastcs.transports.epics import EpicsGUIOptions, EpicsIOCOptions
 from fastcs.transports.epics.ca.transport import EpicsCATransport
 
@@ -54,6 +55,7 @@ def ioc(
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd() / "opi"
 
     configure_logging(log_level)
+    intercept_std_logger("root")
 
     if odin_ip is None:
         controller = EigerController(

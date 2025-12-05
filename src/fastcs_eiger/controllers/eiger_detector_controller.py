@@ -20,7 +20,10 @@ class EigerDetectorController(EigerSubsystemController):
 
     # Internal attribute to control triggers in `inte` mode
     trigger_exposure = AttrRW(Float())
-    # Introspected attribute needed for trigger logic
+
+    # Introspected attributes needed for internal logic
+    bit_depth_image: AttrR[int]
+    compression: AttrRW[str]
     trigger_mode: AttrR[str]
 
     @detector_command
