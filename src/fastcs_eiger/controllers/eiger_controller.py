@@ -6,7 +6,7 @@ from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool
 from fastcs.logging import bind_logger
-from fastcs.methods import scan
+from fastcs.methods import command, scan
 
 from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
 from fastcs_eiger.controllers.eiger_monitor_controller import EigerMonitorController
@@ -23,6 +23,8 @@ class EigerController(Controller):
         ip: IP address of Eiger detector
         port: Port of Eiger detector
     """
+
+    detector: EigerDetectorController
 
     # Internal Attribute
     stale_parameters = AttrR(Bool())
@@ -77,7 +79,7 @@ class EigerController(Controller):
                         raise NotImplementedError(
                             f"No subcontroller implemented for subsystem {subsystem}"
                         )
-                self.add_sub_controller(subsystem.capitalize(), controller)
+                self.add_sub_controller(subsystem, controller)
                 await controller.initialise()
 
         except HTTPRequestError:
@@ -114,3 +116,16 @@ class EigerController(Controller):
             async with self._parameter_update_lock:
                 for coro in coros:
                     await self.queue.put(coro)
+
+    @command()
+    async def arm_when_ready(self):
+        """Arm detector and return when ready to send triggers
+
+        Wait for parmeters to be synchronised before arming detector
+
+        Raises:
+            TimeoutError: If parameters are not synchronised or arm PUT request fails
+
+        """
+        await self.stale_parameters.wait_for_value(False, timeout=1)
+        await self.detector.arm()

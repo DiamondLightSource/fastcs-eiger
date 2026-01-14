@@ -1,4 +1,4 @@
-from fastcs.attributes import AttrR
+from fastcs.attributes import AttrR, AttrRW
 from fastcs.datatypes import Bool
 from fastcs_odin.controllers import OdinSubController
 from fastcs_odin.io import StatusSummaryAttributeIORef
@@ -9,6 +9,9 @@ class EigerFanAdapterController(OdinSubController):
     """Controller for an EigerFan adapter in an odin control server"""
 
     state: AttrR[str]
+    acqid: AttrRW[str]
+    block_size: AttrRW[int]
+    ready: AttrR[bool]
 
     async def initialise(self):
         for parameter in self.parameters:
@@ -22,7 +25,7 @@ class EigerFanAdapterController(OdinSubController):
             )
 
         # Manually validate `state` to get a nicer error message if not introspected
-        self._validate_hinted_attributes()
+        self._validate_hinted_attribute("state")
 
         self.ready = AttrR(
             Bool(),

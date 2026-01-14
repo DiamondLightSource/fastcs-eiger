@@ -44,6 +44,7 @@ async def test_ef_ready(mocker: MockerFixture):
         "prefix",
         [StatusSummaryAttributeIO(), ParameterTreeAttributeIO(mock_connection)],
     )
+    mocker.patch.object(eiger_fan, "_validate_type_hints")
     await eiger_fan.initialise()
     eiger_fan.post_initialise()
 
