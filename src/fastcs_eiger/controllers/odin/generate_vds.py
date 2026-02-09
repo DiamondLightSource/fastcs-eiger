@@ -4,7 +4,7 @@ from pathlib import Path
 import h5py
 
 
-def get_split_frame_numbers(
+def get_frames_per_file(
     frame_count: int, frames_per_block: int, n_files: int
 ) -> list[int]:
     frame_numbers_per_file = []
@@ -35,9 +35,7 @@ def create_interleave_vds(
     n_files = math.ceil(frame_count / frames_per_file)
     file_name_prefix = Path(path).with_suffix("")
     filepaths = [f"{file_name_prefix}_{str(i + 1).zfill(6)}.h5" for i in range(n_files)]
-    split_frame_numbers = get_split_frame_numbers(
-        frame_count, frames_per_block, n_files
-    )
+    frame_count_per_file = get_frames_per_file(frame_count, frames_per_block, n_files)
 
     v_layout = h5py.VirtualLayout(
         shape=(frame_count, frame_shape[0], frame_shape[1]),
@@ -45,7 +43,7 @@ def create_interleave_vds(
     )
 
     for file_idx, (filepath, frames_in_file) in enumerate(
-        zip(filepaths, split_frame_numbers, strict=True)
+        zip(filepaths, frame_count_per_file, strict=True)
     ):
         # MultiBlockSlice cannot contain partial blocks
         block_remainder = frames_in_file % frames_per_block

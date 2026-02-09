@@ -6,7 +6,7 @@ import pytest
 
 from fastcs_eiger.controllers.odin.generate_vds import (
     create_interleave_vds,
-    get_split_frame_numbers,
+    get_frames_per_file,
 )
 
 
@@ -24,15 +24,13 @@ from fastcs_eiger.controllers.odin.generate_vds import (
         [1000000, 500, 4, [250000, 250000, 250000, 250000]],
     ],
 )
-def test_get_split_frame_numbers_splits_frames_correctly(
+def test_get_frames_per_file_splits_frames_correctly(
     frame_count: int,
     frames_per_block: int,
     n_files: int,
     expected_split_frames: list[int],
 ):
-    split_frames_numbers = get_split_frame_numbers(
-        frame_count, frames_per_block, n_files
-    )
+    split_frames_numbers = get_frames_per_file(frame_count, frames_per_block, n_files)
     assert split_frames_numbers == expected_split_frames
 
 
