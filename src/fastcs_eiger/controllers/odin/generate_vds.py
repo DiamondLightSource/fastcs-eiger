@@ -2,7 +2,21 @@ import math
 from pathlib import Path
 
 import h5py
-import numpy as np
+
+
+def get_split_frame_numbers(
+    frame_count: int, frames_per_block: int, n_files: int
+) -> list[int]:
+    frame_numbers_per_file = []
+    n_blocks = math.ceil(frame_count / frames_per_block)
+    min_blocks_per_file = n_blocks // n_files
+    remainder = n_blocks - min_blocks_per_file * n_files
+    for i in range(n_files):
+        blocks = min_blocks_per_file + (i < remainder)
+        frame_numbers_per_file.append(blocks * frames_per_block)
+    overflow = sum(frame_numbers_per_file) - frame_count
+    frame_numbers_per_file[remainder - 1] -= overflow
+    return frame_numbers_per_file
 
 
 def create_interleave_vds(
@@ -19,24 +33,22 @@ def create_interleave_vds(
         frame_count,
     )
     n_files = math.ceil(frame_count / frames_per_file)
-
     file_name_prefix = Path(path).with_suffix("")
     filepaths = [f"{file_name_prefix}_{str(i + 1).zfill(6)}.h5" for i in range(n_files)]
-
-    min_frames_per_file = frames_per_file - frames_per_block
-    remainder = frame_count - (min_frames_per_file * n_files)
+    split_frame_numbers = get_split_frame_numbers(
+        frame_count, frames_per_block, n_files
+    )
 
     v_layout = h5py.VirtualLayout(
         shape=(frame_count, frame_shape[0], frame_shape[1]),
         dtype=dtype,
     )
 
-    for file_idx, filepath in enumerate(filepaths):
-        remaining = max(remainder - (frames_per_block * file_idx), 0)
-        frames_in_file = min_frames_per_file + min(frames_per_block, remaining)
-        block_remainder = frames_in_file % frames_per_block
-
+    for file_idx, (filepath, frames_in_file) in enumerate(
+        zip(filepaths, split_frame_numbers, strict=True)
+    ):
         # MultiBlockSlice cannot contain partial blocks
+        block_remainder = frames_in_file % frames_per_block
         blocked_frames = frames_in_file - block_remainder
 
         v_source = h5py.VirtualSource(
@@ -66,42 +78,4 @@ def create_interleave_vds(
             v_layout[frame_count - block_remainder : frame_count, :, :] = source
 
     with h5py.File(path, "w", libver="latest") as f:
-        f.create_virtual_dataset(dataset_name, v_layout, fillvalue=0)
-
-
-def get_frame(n, shape=(10, 10)):
-    return np.full(shape, n)
-
-
-def get_round_robin_arrays(
-    frames: int, block_size: int, n_files: int
-) -> list[np.ndarray]:
-    arrays = [[] for _ in range(n_files)]
-    frame = 0
-    while frame < frames:
-        data_array = arrays[frame // block_size % n_files]
-        for _ in range(block_size):
-            data_array.append(get_frame(frame))
-            frame += 1
-            if frame == frames:
-                break
-    return [np.array(array) for array in arrays]
-
-
-def simulate_round_robin(path: str, frames: int, block_size: int, n_files: int):
-    file_name_prefix = Path(path).with_suffix("")
-    filepaths = [f"{file_name_prefix}_{str(i + 1).zfill(6)}.h5" for i in range(n_files)]
-    arrays = get_round_robin_arrays(frames, block_size, n_files)
-    for filepath, data_array in zip(filepaths, arrays, strict=True):
-        with h5py.File(filepath, "w") as f:
-            f.create_dataset("data", data=data_array)
-
-
-path = "test.h5"
-frames = 105
-block_size = 10
-n_files = 4
-blocks_per_file = 3
-
-simulate_round_robin(path, frames, block_size, n_files)
-create_interleave_vds(path, frames, block_size, blocks_per_file, (10, 10))
+        f.create_virtual_dataset(dataset_name, v_layout)
