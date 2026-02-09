@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, call, patch
 
 import h5py
+import numpy as np
 import pytest
 
 from fastcs_eiger.controllers.odin.generate_vds import (
@@ -92,3 +93,109 @@ def test_create_interleave_cds_makes_expected_source_layout_calls(
             shape=(expected_frames, 10, 10),
             dtype="float",
         )
+
+
+@pytest.fixture
+def mock_round_robin_data() -> tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+]:
+    file1_data = np.array(
+        [
+            [[0, 0], [0, 0]],
+            [[1, 1], [1, 1]],
+            [[8, 8], [8, 8]],
+            [[9, 9], [9, 9]],
+        ]
+    )
+    file2_data = np.array(
+        [
+            [[2, 2], [2, 2]],
+            [[3, 3], [3, 3]],
+            [[10, 10], [10, 10]],
+            [[11, 11], [11, 11]],
+        ]
+    )
+    file3_data = np.array(
+        [
+            [[4, 4], [4, 4]],
+            [[5, 5], [5, 5]],
+            [[12, 12], [12, 12]],
+        ]
+    )
+    file4_data = np.array(
+        [
+            [[6, 6], [6, 6]],
+            [[7, 7], [7, 7]],
+        ]
+    )
+
+    expected_vds_data = np.array(
+        [
+            [[0, 0], [0, 0]],
+            [[1, 1], [1, 1]],
+            [[2, 2], [2, 2]],
+            [[3, 3], [3, 3]],
+            [[4, 4], [4, 4]],
+            [[5, 5], [5, 5]],
+            [[6, 6], [6, 6]],
+            [[7, 7], [7, 7]],
+            [[8, 8], [8, 8]],
+            [[9, 9], [9, 9]],
+            [[10, 10], [10, 10]],
+            [[11, 11], [11, 11]],
+            [[12, 12], [12, 12]],
+        ]
+    )
+    return file1_data, file2_data, file3_data, file4_data, expected_vds_data
+
+
+def test_create_interleave_vds_before_files_written(
+    tmp_path,
+    mock_round_robin_data: tuple[
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+    ],
+):
+    file1_data, file2_data, file3_data, file4_data, expected_vds_data = (
+        mock_round_robin_data
+    )
+
+    path = tmp_path / "test.h5"
+
+    create_interleave_vds(path, 13, 2, 2, (2, 2))
+
+    for i, data in enumerate((file1_data, file2_data, file3_data, file4_data)):
+        with h5py.File(tmp_path / f"test_00000{i + 1}.h5", "w") as f:
+            f.create_dataset(name="data", data=data)
+
+    with h5py.File(path, "r") as f:
+        virtual_dataset = f.get("data")
+        assert isinstance(virtual_dataset, h5py.Dataset)
+        result = virtual_dataset[()]
+
+    assert np.array_equal(result, expected_vds_data)
+
+
+def test_create_interleave_vds_after_files_written(
+    tmp_path,
+    mock_round_robin_data: tuple[
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+    ],
+):
+    file1_data, file2_data, file3_data, file4_data, expected_vds_data = (
+        mock_round_robin_data
+    )
+
+    path = tmp_path / "test.h5"
+
+    for i, data in enumerate((file1_data, file2_data, file3_data, file4_data)):
+        with h5py.File(tmp_path / f"test_00000{i + 1}.h5", "w") as f:
+            f.create_dataset(name="data", data=data)
+
+    create_interleave_vds(path, 13, 2, 2, (2, 2))
+
+    with h5py.File(path, "r") as f:
+        virtual_dataset = f.get("data")
+        assert isinstance(virtual_dataset, h5py.Dataset)
+        result = virtual_dataset[()]
+
+    assert np.array_equal(result, expected_vds_data)
