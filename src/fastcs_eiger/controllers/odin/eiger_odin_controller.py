@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
@@ -66,7 +67,8 @@ class EigerOdinController(EigerController):
 
         if self.enable_vds_creation.get():
             create_interleave_vds(
-                path=self.OD.file_path.get(),
+                path=Path(self.OD.file_path.get()),
+                prefix=self.OD.file_prefix.get(),
                 frame_count=self.detector.nimages.get(),
                 frames_per_block=self.OD.block_size.get(),
                 blocks_per_file=self.OD.FP.process_blocks_per_file.get(),

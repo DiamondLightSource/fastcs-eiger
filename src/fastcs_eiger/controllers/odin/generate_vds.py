@@ -4,7 +4,7 @@ from pathlib import Path
 import h5py
 
 
-def get_frames_per_file(
+def get_frames_per_file_writer(
     frame_count: int, frames_per_block: int, n_files: int
 ) -> list[int]:
     frame_numbers_per_file = []
@@ -20,60 +20,73 @@ def get_frames_per_file(
 
 
 def create_interleave_vds(
-    path: str,
+    path: Path,
+    prefix: str,
     frame_count: int,
     frames_per_block: int,
     blocks_per_file: int,
     frame_shape: tuple[int, int],
     dtype: str = "float",
+    n_file_writers: int = 4,
 ) -> None:
     dataset_name = "data"
-    frames_per_file = min(
-        (frames_per_block * blocks_per_file if blocks_per_file else frame_count),
-        frame_count,
+    max_frames_per_file = (
+        frames_per_block * blocks_per_file if blocks_per_file else frame_count
     )
-    n_files = math.ceil(frame_count / frames_per_file)
-    file_name_prefix = Path(path).with_suffix("")
-    filepaths = [f"{file_name_prefix}_{str(i + 1).zfill(6)}.h5" for i in range(n_files)]
-    frame_count_per_file = get_frames_per_file(frame_count, frames_per_block, n_files)
+
+    frame_count_per_file_writer = get_frames_per_file_writer(
+        frame_count, frames_per_block, n_file_writers
+    )
 
     v_layout = h5py.VirtualLayout(
         shape=(frame_count, frame_shape[0], frame_shape[1]),
         dtype=dtype,
     )
 
-    for file_idx, (filepath, frames_in_file) in enumerate(
-        zip(filepaths, frame_count_per_file, strict=True)
-    ):
-        v_source = h5py.VirtualSource(
-            filepath,
-            name=dataset_name,
-            shape=(frames_in_file, frame_shape[0], frame_shape[1]),
-            dtype=dtype,
-        )
+    for file_writer_idx, n_frames in enumerate(frame_count_per_file_writer):
+        n_files = math.ceil(n_frames / max_frames_per_file)
 
-        # MultiBlockSlice cannot contain partial blocks
-        block_remainder = frames_in_file % frames_per_block
-        blocked_frames = frames_in_file - block_remainder
+        for file_idx in range(n_files):
+            frames_in_file = min(
+                max_frames_per_file, n_frames - (max_frames_per_file * file_idx)
+            )
+            file_number = 1 + file_writer_idx + file_idx * n_file_writers
 
-        start = file_idx * frames_per_block
-        stride = n_files * frames_per_block
-        n_blocks = blocked_frames // frames_per_block
+            v_source = h5py.VirtualSource(
+                f"{path / prefix}_{str(file_number).zfill(6)}.h5",
+                name=dataset_name,
+                shape=(frames_in_file, frame_shape[0], frame_shape[1]),
+                dtype=dtype,
+            )
 
-        if n_blocks:
-            source = v_source[:blocked_frames, :, :]
-            v_layout[
-                h5py.MultiBlockSlice(
-                    start=start, stride=stride, count=n_blocks, block=frames_per_block
-                ),
-                :,
-                :,
-            ] = source
+            # MultiBlockSlice cannot contain partial blocks
+            remainder_frames = frames_in_file % frames_per_block
+            full_block_frames = frames_in_file - remainder_frames
 
-        if block_remainder:
-            # Last few frames that don't fit into a block
-            source = v_source[blocked_frames:frames_in_file, :, :]
-            v_layout[frame_count - block_remainder : frame_count, :, :] = source
+            start = (
+                file_writer_idx * frames_per_block
+                + max_frames_per_file * n_file_writers * file_idx
+            )
+            n_blocks = full_block_frames // frames_per_block
 
-    with h5py.File(path, "w", libver="latest") as f:
+            if n_blocks:
+                stride = n_file_writers * frames_per_block
+                source = v_source[:full_block_frames, :, :]
+                v_layout[
+                    h5py.MultiBlockSlice(
+                        start=start,
+                        stride=stride,
+                        count=n_blocks,
+                        block=frames_per_block,
+                    ),
+                    :,
+                    :,
+                ] = source
+
+            if remainder_frames:
+                # Last few frames that don't fit into a block
+                source = v_source[full_block_frames:frames_in_file, :, :]
+                v_layout[frame_count - remainder_frames : frame_count, :, :] = source
+
+    with h5py.File(f"{path / prefix}_vds.h5", "w", libver="latest") as f:
         f.create_virtual_dataset(dataset_name, v_layout)
