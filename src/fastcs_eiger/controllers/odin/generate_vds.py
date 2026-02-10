@@ -25,8 +25,8 @@ def create_interleave_vds(
     frames_per_block: int,
     blocks_per_file: int,
     frame_shape: tuple[int, int],
+    dtype: str = "float",
 ) -> None:
-    dtype = "float"
     dataset_name = "data"
     frames_per_file = min(
         (frames_per_block * blocks_per_file if blocks_per_file else frame_count),
@@ -45,16 +45,16 @@ def create_interleave_vds(
     for file_idx, (filepath, frames_in_file) in enumerate(
         zip(filepaths, frame_count_per_file, strict=True)
     ):
-        # MultiBlockSlice cannot contain partial blocks
-        block_remainder = frames_in_file % frames_per_block
-        blocked_frames = frames_in_file - block_remainder
-
         v_source = h5py.VirtualSource(
             filepath,
             name=dataset_name,
             shape=(frames_in_file, frame_shape[0], frame_shape[1]),
             dtype=dtype,
         )
+
+        # MultiBlockSlice cannot contain partial blocks
+        block_remainder = frames_in_file % frames_per_block
+        blocked_frames = frames_in_file - block_remainder
 
         start = file_idx * frames_per_block
         stride = n_files * frames_per_block
