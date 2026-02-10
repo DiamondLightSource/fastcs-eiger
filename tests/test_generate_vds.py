@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import h5py
 import numpy as np
@@ -56,7 +56,7 @@ def test_get_frames_per_file_splits_frames_correctly(
             },
         ],
         [105, 10, 0, 1, {b"test_000001.h5"}],
-        [1000, 2, 0, 1, {b"test_000001.h5"}],
+        [1000, 2, 0, 2, {b"test_000001.h5", b"test_000002.h5"}],
         [
             100,
             10,
@@ -101,14 +101,31 @@ def test_create_interleave_vds_layout_contains_expected_files_and_has_expected_s
 @patch("fastcs_eiger.controllers.odin.generate_vds.h5py.VirtualSource")
 @patch("fastcs_eiger.controllers.odin.generate_vds.h5py.VirtualLayout")
 @patch("fastcs_eiger.controllers.odin.generate_vds.h5py.File")
+@pytest.mark.parametrize(
+    "frame_count, frames_per_block, blocks_per_file, expected_frames_per_file",
+    [
+        [155, 10, 3, [30, 30, 30, 30, 10, 10, 10, 5]],
+        [145, 10, 3, [30, 30, 30, 30, 10, 10, 5]],
+        [145, 10, 0, [40, 40, 35, 30]],
+        [145, 1, 0, [37, 36, 36, 36]],
+        [20, 30, 0, [20]],
+    ],
+)
 def test_create_interleave_cds_makes_expected_source_layout_calls(
-    mock_file: MagicMock, mock_virtual_layoud: MagicMock, mock_virtual_source: MagicMock
+    mock_file: MagicMock,
+    mock_virtual_layoud: MagicMock,
+    mock_virtual_source: MagicMock,
+    frame_count: int,
+    frames_per_block: int,
+    blocks_per_file: int,
+    expected_frames_per_file: list[int],
 ):
-    create_interleave_vds(Path(), "test", 105, 10, 3, (10, 10))
-    expected_split_frames = [30, 30, 25, 20]
-    assert len(mock_virtual_source.call_args_list) == 4
-    for i, expected_frames in enumerate(expected_split_frames):
-        assert mock_virtual_source.call_args_list[i] == call(
+    create_interleave_vds(
+        Path(), "test", frame_count, frames_per_block, blocks_per_file, (10, 10)
+    )
+    assert len(mock_virtual_source.call_args_list) == len(expected_frames_per_file)
+    for i, expected_frames in enumerate(expected_frames_per_file):
+        mock_virtual_source.assert_any_call(
             f"test_00000{i + 1}.h5",
             name="data",
             shape=(expected_frames, 10, 10),
@@ -118,7 +135,9 @@ def test_create_interleave_cds_makes_expected_source_layout_calls(
 
 @pytest.fixture
 def mock_round_robin_data() -> tuple[list[np.ndarray], np.ndarray]:
-    """Assuming 4 file writers, blocks of 2 frames, and 2 blocks per file."""
+    """Assuming 4 file writers, 19 frames in blocks of 2 frames, and  2 blocks per file.
+    Frames are 2 x 2. The values in each frame represent the order they would have been
+    written in, and therefore the order the VDS should splice them together in."""
     file1_data = np.array(
         [
             [[0, 0], [0, 0]],
