@@ -25,7 +25,7 @@ from fastcs_eiger.controllers.odin.generate_vds import (
         [1000000, 500, 4, [250000, 250000, 250000, 250000]],
     ],
 )
-def test_get_frames_per_file_splits_frames_correctly(
+def test_get_frames_per_file_writer_splits_frames_correctly(
     frame_count: int,
     frames_per_block: int,
     n_file_writers: int,
