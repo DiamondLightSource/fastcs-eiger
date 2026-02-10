@@ -5,13 +5,13 @@ import h5py
 
 
 def get_frames_per_file_writer(
-    frame_count: int, frames_per_block: int, n_files: int
+    frame_count: int, frames_per_block: int, n_file_writers: int
 ) -> list[int]:
     frame_numbers_per_file = []
     n_blocks = math.ceil(frame_count / frames_per_block)
-    min_blocks_per_file = n_blocks // n_files
-    remainder = n_blocks - min_blocks_per_file * n_files
-    for i in range(n_files):
+    min_blocks_per_file = n_blocks // n_file_writers
+    remainder = n_blocks - min_blocks_per_file * n_file_writers
+    for i in range(n_file_writers):
         blocks = min_blocks_per_file + (i < remainder)
         frame_numbers_per_file.append(blocks * frames_per_block)
     overflow = sum(frame_numbers_per_file) - frame_count
