@@ -25,9 +25,6 @@ class EigerDetectorController(EigerSubsystemController):
     bit_depth_image: AttrR[int]
     compression: AttrRW[str]
     trigger_mode: AttrR[str]
-    nimages: AttrR[int]
-    x_pixels_in_detector: AttrR[int]
-    y_pixels_in_detector: AttrR[int]
 
     @detector_command
     async def initialize(self):
