@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 
 from fastcs_eiger.controllers.odin.generate_vds import (
+    _calculate_frame_distribution,
+    _get_frames_per_file_writer,
     create_interleave_vds,
-    get_frames_per_file_writer,
 )
 
 
@@ -31,7 +32,7 @@ def test_get_frames_per_file_writer_splits_frames_correctly(
     n_file_writers: int,
     expected_split_frames: list[int],
 ):
-    split_frames_numbers = get_frames_per_file_writer(
+    split_frames_numbers = _get_frames_per_file_writer(
         frame_count, frames_per_block, n_file_writers
     )
     assert split_frames_numbers == expected_split_frames
@@ -87,6 +88,7 @@ def test_create_interleave_vds_layout_contains_expected_files_and_has_expected_s
         create_interleave_vds(
             Path(),
             "test",
+            ["data"],
             frame_count,
             frames_per_block,
             blocks_per_file,
@@ -121,7 +123,13 @@ def test_create_interleave_cds_makes_expected_source_layout_calls(
     expected_frames_per_file: list[int],
 ):
     create_interleave_vds(
-        Path(), "test", frame_count, frames_per_block, blocks_per_file, (10, 10)
+        Path(),
+        "test",
+        ["data"],
+        frame_count,
+        frames_per_block,
+        blocks_per_file,
+        (10, 10),
     )
     assert len(mock_virtual_source.call_args_list) == len(expected_frames_per_file)
     for i, expected_frames in enumerate(expected_frames_per_file):
@@ -131,6 +139,19 @@ def test_create_interleave_cds_makes_expected_source_layout_calls(
             shape=(expected_frames, 10, 10),
             dtype="float",
         )
+
+
+def test_calculate_frame_distribution():
+    expected = {
+        1: {"start": 0, "frames": 4, "blocks": 2, "remainder_frames": 0},
+        2: {"start": 2, "frames": 4, "blocks": 2, "remainder_frames": 0},
+        3: {"start": 4, "frames": 4, "blocks": 2, "remainder_frames": 0},
+        4: {"start": 6, "frames": 4, "blocks": 2, "remainder_frames": 0},
+        5: {"start": 16, "frames": 2, "blocks": 1, "remainder_frames": 0},
+        6: {"start": 18, "frames": 1, "blocks": 0, "remainder_frames": 1},
+    }
+    result = _calculate_frame_distribution(19, 2, 2, 4)
+    assert result == expected
 
 
 @pytest.fixture
@@ -222,7 +243,7 @@ def test_create_interleave_vds_before_files_written(
     acquired_data, expected_vds_data = mock_round_robin_data
     prefix = "test"
 
-    create_interleave_vds(tmp_path, prefix, 19, 2, 2, (2, 2))
+    create_interleave_vds(tmp_path, prefix, ["data"], 19, 2, 2, (2, 2))
 
     for i, data in enumerate(acquired_data):
         with h5py.File(tmp_path / f"test_00000{i + 1}.h5", "w") as f:
@@ -247,7 +268,7 @@ def test_create_interleave_vds_after_files_written(
         with h5py.File(tmp_path / f"test_00000{i + 1}.h5", "w") as f:
             f.create_dataset(name="data", data=data)
 
-    create_interleave_vds(tmp_path, prefix, 19, 2, 2, (2, 2))
+    create_interleave_vds(tmp_path, prefix, ["data"], 19, 2, 2, (2, 2))
 
     with h5py.File(f"{tmp_path / prefix}_vds.h5", "r") as f:
         virtual_dataset = f.get("data")
