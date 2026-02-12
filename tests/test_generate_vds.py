@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from fastcs_eiger.controllers.odin.generate_vds import (
+    FileFrames,
     _calculate_frame_distribution,
     _get_frames_per_file_writer,
     create_interleave_vds,
@@ -122,36 +123,94 @@ def test_create_interleave_cds_makes_expected_source_layout_calls(
     blocks_per_file: int,
     expected_frames_per_file: list[int],
 ):
+    datasets = ["data", "sets"]
     create_interleave_vds(
         Path(),
         "test",
-        ["data"],
+        datasets,
         frame_count,
         frames_per_block,
         blocks_per_file,
         (10, 10),
     )
-    assert len(mock_virtual_source.call_args_list) == len(expected_frames_per_file)
-    for i, expected_frames in enumerate(expected_frames_per_file):
-        mock_virtual_source.assert_any_call(
-            f"test_00000{i + 1}.h5",
-            name="data",
-            shape=(expected_frames, 10, 10),
-            dtype="float",
-        )
+    assert len(mock_virtual_source.call_args_list) == len(
+        expected_frames_per_file
+    ) * len(datasets)
+    for dataset_name in datasets:
+        for i, expected_frames in enumerate(expected_frames_per_file):
+            mock_virtual_source.assert_any_call(
+                f"test_00000{i + 1}.h5",
+                name=dataset_name,
+                shape=(expected_frames, 10, 10),
+                dtype="float",
+            )
 
 
-def test_calculate_frame_distribution():
-    expected = {
-        1: {"start": 0, "frames": 4, "blocks": 2, "remainder_frames": 0},
-        2: {"start": 2, "frames": 4, "blocks": 2, "remainder_frames": 0},
-        3: {"start": 4, "frames": 4, "blocks": 2, "remainder_frames": 0},
-        4: {"start": 6, "frames": 4, "blocks": 2, "remainder_frames": 0},
-        5: {"start": 16, "frames": 2, "blocks": 1, "remainder_frames": 0},
-        6: {"start": 18, "frames": 1, "blocks": 0, "remainder_frames": 1},
-    }
-    result = _calculate_frame_distribution(19, 2, 2, 4)
-    assert result == expected
+@pytest.mark.parametrize(
+    "frames, frames_per_block, expected_blocks, expected_remainder",
+    [[6, 3, 2, 0], [8, 3, 2, 2], [6, 7, 0, 6], [6, 6, 1, 0]],
+)
+def test_file_frames_dataclass_calculates_blocks_and_remainder_correctly(
+    frames: int, frames_per_block: int, expected_blocks, expected_remainder
+):
+    file_frames = FileFrames(frames=frames, frames_per_block=frames_per_block, start=0)
+    assert file_frames.blocks == expected_blocks
+    assert file_frames.remainder_frames == expected_remainder
+
+
+@pytest.mark.parametrize(
+    "frame_count, frames_per_block, blocks_per_file, n_writers, expected_distribution",
+    [
+        [
+            10,
+            3,
+            2,
+            1,
+            {
+                1: FileFrames(frames=6, frames_per_block=3, start=0),
+                2: FileFrames(frames=4, frames_per_block=3, start=6),
+            },
+        ],
+        [10, 10, 0, 4, {1: FileFrames(frames=10, frames_per_block=10, start=0)}],
+        [
+            985,
+            10,
+            0,
+            4,
+            {
+                1: FileFrames(frames=250, frames_per_block=10, start=0),
+                2: FileFrames(frames=250, frames_per_block=10, start=10),
+                3: FileFrames(frames=245, frames_per_block=10, start=20),
+                4: FileFrames(frames=240, frames_per_block=10, start=30),
+            },
+        ],
+        [
+            19,
+            2,
+            2,
+            4,
+            {
+                1: FileFrames(frames=4, frames_per_block=2, start=0),
+                2: FileFrames(frames=4, frames_per_block=2, start=2),
+                3: FileFrames(frames=4, frames_per_block=2, start=4),
+                4: FileFrames(frames=4, frames_per_block=2, start=6),
+                5: FileFrames(frames=2, frames_per_block=2, start=16),
+                6: FileFrames(frames=1, frames_per_block=2, start=18),
+            },
+        ],
+    ],
+)
+def test_calculate_frame_distribution(
+    frame_count: int,
+    frames_per_block: int,
+    blocks_per_file: int,
+    n_writers: int,
+    expected_distribution: dict[int, FileFrames],
+):
+    result = _calculate_frame_distribution(
+        frame_count, frames_per_block, blocks_per_file, n_writers
+    )
+    assert result == expected_distribution
 
 
 @pytest.fixture
@@ -276,3 +335,24 @@ def test_create_interleave_vds_after_files_written(
         result = virtual_dataset[()]
 
     assert np.array_equal(result, expected_vds_data)
+
+
+def test_create_interleave_vds_creates_virtual_dataset_for_all_datasets(
+    tmp_path,
+    mock_round_robin_data: tuple[list[np.ndarray], np.ndarray],
+):
+    acquired_data, expected_vds_data = mock_round_robin_data
+    prefix = "test"
+
+    for i, data in enumerate(acquired_data):
+        with h5py.File(tmp_path / f"test_00000{i + 1}.h5", "w") as f:
+            f.create_dataset(name="one", data=np.zeros(data.shape))
+            f.create_dataset(name="two", data=data * 10)
+            f.create_dataset(name="three", data=data * 100)
+
+    create_interleave_vds(tmp_path, prefix, ["one", "two", "three"], 19, 2, 2, (2, 2))
+
+    with h5py.File(f"{tmp_path / prefix}_vds.h5", "r") as f:
+        assert np.array_equal(f.get("one")[()], np.zeros(expected_vds_data.shape))  # type: ignore
+        assert np.array_equal(f.get("two")[()], expected_vds_data * 10)  # type: ignore
+        assert np.array_equal(f.get("three")[()], expected_vds_data * 100)  # type: ignore
