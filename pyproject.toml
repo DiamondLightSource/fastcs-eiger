@@ -25,7 +25,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
-    "tickit-devices @ git+https://github.com/dls-controls/tickit-devices.git@eiger-stream2",
+    "tickit-devices>=0.4.1",
     "black",
     "copier",
     "myst-parser",
@@ -60,7 +60,7 @@ version_file = "src/fastcs_eiger/_version.py"
 
 [tool.pyright]
 typeCheckingMode = "standard"
-reportMissingImports = false # Ignore missing stubs in imported modules
+reportMissingImports = false  # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error
