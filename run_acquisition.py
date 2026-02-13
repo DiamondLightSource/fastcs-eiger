@@ -9,7 +9,7 @@ CA_TIMEOUT = 3
 
 def main(
     prefix: str = "EIGER",
-    file_path: str = "/data",
+    file_path: str = "/tmp",
     file_name: str = "test",
     frames: int = 10,
     exposure_time: float = 1,

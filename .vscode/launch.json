@@ -26,6 +26,10 @@
             "args": [
                 "ioc",
                 "EIGER",
+                "--ip",
+                "i03-eiger01",
+                "--port",
+                "80",
                 "--odin-ip",
                 "127.0.0.1",
             ]
@@ -37,7 +41,9 @@
             "module": "fastcs_eiger",
             "justMyCode": false,
             "console": "integratedTerminal",
-            "args": ["asyncio"]
+            "args": [
+                "asyncio"
+            ]
         },
         {
             "name": "Debug Unit Test",

@@ -78,5 +78,7 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
             response=response,
             topic=attr,
         )
+        if value is None:
+            return
 
         await attr.update(value)
