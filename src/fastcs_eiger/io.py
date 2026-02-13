@@ -79,4 +79,8 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
             topic=attr,
         )
 
+        # Some values are initially `null` in api
+        if value is None:
+            value = attr.datatype.initial_value
+
         await attr.update(value)
