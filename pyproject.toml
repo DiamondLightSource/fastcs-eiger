@@ -26,6 +26,7 @@ requires-python = ">=3.11"
 [project.optional-dependencies]
 dev = [
     "tickit-devices>=0.4.1",
+    "aioca",
     "black",
     "copier",
     "myst-parser",
