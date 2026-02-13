@@ -69,7 +69,7 @@ class EigerOdinController(EigerController):
             create_interleave_vds(
                 path=Path(self.OD.file_path.get()),
                 prefix=self.OD.file_prefix.get(),
-                datasets=["data"],  # NEED TO GET THIS FROM SOMEWHERE
+                datasets=["data1", "data2", "data3"],
                 frame_count=self.OD.FP.frames.get(),
                 frames_per_block=self.OD.block_size.get(),
                 blocks_per_file=self.OD.FP.process_blocks_per_file.get(),
