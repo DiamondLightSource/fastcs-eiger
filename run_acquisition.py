@@ -13,8 +13,11 @@ def main(
     file_name: str = "test",
     frames: int = 10,
     exposure_time: float = 1,
+    stream2: bool = True,
 ):
-    asyncio.run(run_acquisition(prefix, file_path, file_name, frames, exposure_time))
+    asyncio.run(
+        run_acquisition(prefix, file_path, file_name, frames, exposure_time, stream2)
+    )
 
 
 async def run_acquisition(
@@ -23,17 +26,21 @@ async def run_acquisition(
     file_name: str,
     frames: int,
     exposure_time: float,
+    stream2: bool,
 ):
     eiger_prefix = prefix
     odin_prefix = f"{prefix}:OD"
 
     await tidy(eiger_prefix, odin_prefix)
 
+    await caput_str(f"{odin_prefix}:AcquisitionId", "")
     print("Configuring")
     await asyncio.gather(
+        caput_str(f"{eiger_prefix}:Stream:Format", "cbor" if stream2 else "legacy"),
+        caput_str(f"{eiger_prefix}:Stream:HeaderDetail", "all"),
         caput(f"{odin_prefix}:BlockSize", 1),
         caput_str(f"{odin_prefix}:FilePath", file_path),
-        caput_str(f"{odin_prefix}:AcquisitionId", file_name),
+        caput_str(f"{odin_prefix}:FilePrefix", file_name),
         caput(f"{odin_prefix}:FP:Frames", frames),
         caput(f"{eiger_prefix}:Detector:Nimages", frames),
         caput(f"{eiger_prefix}:Detector:Ntrigger", 1),
@@ -92,7 +99,7 @@ async def pv_equals(pv: str, value: Any, timeout: float = 10):
         await asyncio.sleep(1)
         timeout -= 1
 
-    print(f"Timed out waiting for {pv} to equal {value}")
+    raise RuntimeError(f"Timed out waiting for {pv} to equal {value}")
 
 
 if __name__ == "__main__":
