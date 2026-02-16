@@ -35,7 +35,7 @@ class EigerOdinController(EigerController):
         await super().arm_when_ready()
 
         try:
-            await self.OD.EF.ready.wait_for_value(True, timeout=1)
+            await self.OD.EF.ready.wait_for_value(True, timeout=3)
         except TimeoutError as e:
             raise TimeoutError("Eiger fan not ready") from e
 
@@ -55,6 +55,6 @@ class EigerOdinController(EigerController):
         await self.OD.FP.start_writing()
 
         try:
-            await self.OD.writing.wait_for_value(True, timeout=1)
+            await self.OD.writing.wait_for_value(True, timeout=3)
         except TimeoutError as e:
             raise TimeoutError("File writers failed to start") from e
