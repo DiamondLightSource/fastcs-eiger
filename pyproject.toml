@@ -25,7 +25,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
-    "tickit-devices @ git+https://github.com/dls-controls/tickit-devices.git@eiger-stream2",
+    "tickit-devices>=0.4.1",
     "black",
     "copier",
     "myst-parser",
