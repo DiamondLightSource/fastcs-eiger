@@ -13,10 +13,11 @@ description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
     "fastcs[epicsca]",
-    "fastcs-odin @ git+https://github.com/DiamondLightSource/fastcs-odin.git@0.8.0a1",
+    "fastcs-odin @ git+https://github.com/DiamondLightSource/fastcs-odin.git@eb1d85bfcd42deb6907a6e41e29f55aafc33f6b5",
     "numpy",
     "pillow",
     "typer",
+    "h5py",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
@@ -25,7 +26,7 @@ requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = [
-    "tickit-devices @ git+https://github.com/dls-controls/tickit-devices.git@eiger-stream2",
+    "tickit-devices @ git+https://github.com/dls-controls/tickit-devices.git@main",
     "black",
     "copier",
     "myst-parser",
