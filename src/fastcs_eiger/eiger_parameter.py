@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class EigerParameterResponse(BaseModel):
-    access_mode: Literal["r", "w", "rw"]
+    access_mode: Literal["r", "w", "rw"] | None = None
     allowed_values: Any | None = None
     min: float | int | None = None
     value: Any
@@ -53,6 +53,16 @@ class EigerParameterRef(AttributeIORef):
                 return Bool()
             case "string" | "datetime" | "State" | "string[]":
                 return String()
+
+    @property
+    def response_access_mode(self) -> Literal["r", "w", "rw"] | None:
+        if self.response.access_mode is None:
+            if self.mode == "status":
+                return "r"
+            elif self.mode == "config":
+                return "rw"
+        else:
+            return self.response.access_mode
 
     def __repr__(self):
         name = self.__class__.__name__
