@@ -47,6 +47,7 @@ def ioc(
     pv_prefix: str = typer.Argument(),
     ip: str = typer.Option("127.0.0.1", help="IP address of Eiger detector"),
     port: int = typer.Option(8081, help="Port of Eiger HTTP server"),
+    api_version: str = typer.Option("1.8.0", help="Version of Eiger API to use"),
     odin_ip: str | None = typer.Option(None, help="IP address of odin control server"),
     odin_port: int = typer.Option(8888, help="Port of odin control server"),
     log_level: LogLevel = LogLevel.TRACE,
@@ -58,11 +59,13 @@ def ioc(
     if odin_ip is None:
         controller = EigerController(
             connection_settings=IPConnectionSettings(ip=ip, port=port),
+            api_version=api_version,
         )
     else:
         controller = EigerOdinController(
             detector_connection_settings=IPConnectionSettings(ip=ip, port=port),
             odin_connection_settings=IPConnectionSettings(ip=odin_ip, port=odin_port),
+            api_version=api_version,
         )
 
     transports = [

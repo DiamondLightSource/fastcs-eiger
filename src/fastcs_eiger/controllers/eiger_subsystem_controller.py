@@ -49,6 +49,7 @@ MISSING_KEYS: dict[str, dict[str, list[str]]] = {
 
 class EigerSubsystemController(Controller):
     _subsystem: Literal["detector", "stream", "monitor"]
+    api_version: Literal["1.6.0", "1.8.0"] = "1.8.0"
 
     def __init__(
         self,
@@ -68,12 +69,14 @@ class EigerSubsystemController(Controller):
             subsystem_keys = [
                 parameter
                 for parameter in await self.connection.get(
-                    f"{self._subsystem}/api/1.8.0/{mode}/keys"
+                    f"{self._subsystem}/api/{self.api_version}/{mode}/keys"
                 )
                 if parameter not in IGNORED_KEYS
             ] + MISSING_KEYS[self._subsystem][mode]
             requests = [
-                self.connection.get(f"{self._subsystem}/api/1.8.0/{mode}/{key}")
+                self.connection.get(
+                    f"{self._subsystem}/api/{self.api_version}/{mode}/{key}"
+                )
                 for key in subsystem_keys
             ]
             responses = await asyncio.gather(*requests)
@@ -83,6 +86,7 @@ class EigerSubsystemController(Controller):
                     EigerParameterRef(
                         key=key,
                         subsystem=self._subsystem,
+                        api_version=self.api_version,
                         mode=mode,
                         response=EigerParameterResponse.model_validate(response),
                         update_period=ONCE if mode == "config" else 0.2,

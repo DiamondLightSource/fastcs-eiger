@@ -14,7 +14,7 @@ class EigerMonitorController(EigerSubsystemController):
     async def handle_monitor(self):
         """Poll monitor images to display."""
         response, image_bytes = await self.connection.get_bytes(
-            "monitor/api/1.8.0/images/next"
+            f"monitor/api/{self.api_version}/images/next"
         )
         if response.status != 200:
             return

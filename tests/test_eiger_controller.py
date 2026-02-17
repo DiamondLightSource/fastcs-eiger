@@ -42,6 +42,7 @@ def subsystem_controller_and_connection(mock_connection):
     ref = EigerParameterRef(
         key="dummy_uri",
         subsystem="detector",
+        api_version="1.8.0",
         mode="config",
         response=EigerParameterResponse(
             access_mode="rw", value=0.0, value_type="float"
@@ -83,6 +84,7 @@ async def test_eiger_io_send(
     ref = EigerParameterRef(
         key="no_updated_params",
         subsystem="detector",
+        api_version="1.8.0",
         mode="config",
         response=EigerParameterResponse(
             access_mode="rw", value=0.0, value_type="float"
@@ -95,3 +97,31 @@ async def test_eiger_io_send(
     await io.send(subsystem_controller.no_updated_params, 0.1)
     connection.put.assert_awaited_with(no_updated_params_uri, 0.1)
     io.queue_update.assert_awaited_with(["no_updated_params"])
+
+
+@pytest.mark.asyncio
+async def test_eiger_accepts_different_api_versions():
+
+    ref = EigerParameterRef(
+        key="dummy_uri",
+        subsystem="detector",
+        api_version="1.6.0",
+        mode="config",
+        response=EigerParameterResponse(
+            access_mode="rw", value=0.0, value_type="float"
+        ),
+    )
+
+    assert ref.uri == "detector/api/1.6.0/config/dummy_uri"
+
+    ref = EigerParameterRef(
+        key="dummy_uri",
+        subsystem="detector",
+        api_version="1.8.0",
+        mode="config",
+        response=EigerParameterResponse(
+            access_mode="rw", value=0.0, value_type="float"
+        ),
+    )
+
+    assert ref.uri == "detector/api/1.8.0/config/dummy_uri"
