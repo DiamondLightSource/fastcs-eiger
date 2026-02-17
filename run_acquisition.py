@@ -45,6 +45,7 @@ async def run_acquisition(
         caput(f"{eiger_prefix}:Detector:Nimages", frames),
         caput(f"{eiger_prefix}:Detector:Ntrigger", 1),
         caput(f"{eiger_prefix}:Detector:FrameTime", exposure_time),
+        caput(f"{eiger_prefix}:Detector:CountTime", exposure_time),
         # caput(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for real detector
         caput_str(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for tickit sim
     )
