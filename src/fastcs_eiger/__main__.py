@@ -11,6 +11,7 @@ from fastcs.transports.epics.ca.transport import EpicsCATransport
 from fastcs_eiger import __version__
 from fastcs_eiger.controllers.eiger_controller import EigerController
 from fastcs_eiger.controllers.odin.eiger_odin_controller import EigerOdinController
+from fastcs_eiger.eiger_parameter import EigerAPIVersion
 
 __all__ = ["main"]
 
@@ -47,7 +48,7 @@ def ioc(
     pv_prefix: str = typer.Argument(),
     ip: str = typer.Option("127.0.0.1", help="IP address of Eiger detector"),
     port: int = typer.Option(8081, help="Port of Eiger HTTP server"),
-    api_version: str = typer.Option("1.8.0", help="Version of Eiger API to use"),
+    api_version: EigerAPIVersion = typer.Option("1.8.0", help="Version of Eiger API"),  # noqa: B008
     odin_ip: str | None = typer.Option(None, help="IP address of odin control server"),
     odin_port: int = typer.Option(8888, help="Port of odin control server"),
     log_level: LogLevel = LogLevel.TRACE,

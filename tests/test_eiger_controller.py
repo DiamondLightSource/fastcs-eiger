@@ -37,7 +37,9 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
 def subsystem_controller_and_connection(mock_connection):
     controller, connection = mock_connection
     subsystem_controller = EigerDetectorController(
-        connection, controller.queue_subsystem_update
+        connection,
+        controller.queue_subsystem_update,
+        api_version="1.8.0",
     )
     ref = EigerParameterRef(
         key="dummy_uri",

@@ -9,6 +9,7 @@ from fastcs.util import ONCE
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
+    EigerAPIVersion,
     EigerParameterRef,
     EigerParameterResponse,
     key_to_attribute_name,
@@ -49,12 +50,12 @@ MISSING_KEYS: dict[str, dict[str, list[str]]] = {
 
 class EigerSubsystemController(Controller):
     _subsystem: Literal["detector", "stream", "monitor"]
-    api_version: Literal["1.6.0", "1.8.0"] = "1.8.0"
 
     def __init__(
         self,
         connection: HTTPConnection,
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
+        api_version: EigerAPIVersion,
     ):
         self.logger = bind_logger(__class__.__name__)
 
@@ -62,6 +63,7 @@ class EigerSubsystemController(Controller):
         self._queue_subsystem_update = queue_subsystem_update
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
         super().__init__(ios=[self._io])
+        self._api_version: EigerAPIVersion = api_version
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameterRef]:
         parameters = []
@@ -69,13 +71,13 @@ class EigerSubsystemController(Controller):
             subsystem_keys = [
                 parameter
                 for parameter in await self.connection.get(
-                    f"{self._subsystem}/api/{self.api_version}/{mode}/keys"
+                    f"{self._subsystem}/api/{self._api_version}/{mode}/keys"
                 )
                 if parameter not in IGNORED_KEYS
             ] + MISSING_KEYS[self._subsystem][mode]
             requests = [
                 self.connection.get(
-                    f"{self._subsystem}/api/{self.api_version}/{mode}/{key}"
+                    f"{self._subsystem}/api/{self._api_version}/{mode}/{key}"
                 )
                 for key in subsystem_keys
             ]
@@ -86,7 +88,7 @@ class EigerSubsystemController(Controller):
                     EigerParameterRef(
                         key=key,
                         subsystem=self._subsystem,
-                        api_version=self.api_version,
+                        api_version=self._api_version,
                         mode=mode,
                         response=EigerParameterResponse.model_validate(response),
                         update_period=ONCE if mode == "config" else 0.2,

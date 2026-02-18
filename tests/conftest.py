@@ -58,7 +58,9 @@ def sim_eiger(request):
 
 @pytest.fixture
 def mock_connection(mocker: MockerFixture):
-    eiger_controller = EigerController(IPConnectionSettings("127.0.0.1", 80))
+    eiger_controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 80), api_version="1.8.0"
+    )
     connection = mocker.patch.object(eiger_controller, "connection")
     connection.get = mock.AsyncMock()
     connection.put = mock.AsyncMock()

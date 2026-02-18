@@ -5,6 +5,8 @@ from fastcs.attributes import AttributeIORef
 from fastcs.datatypes import Bool, DataType, Float, Int, String
 from pydantic import BaseModel
 
+EigerAPIVersion = Literal["1.6.0", "1.8.0"]
+
 
 class EigerParameterResponse(BaseModel):
     access_mode: Literal["r", "w", "rw"] | None = None
@@ -26,7 +28,7 @@ class EigerParameterRef(AttributeIORef):
     """Last section of URI within a subsystem/mode."""
     subsystem: Literal["detector", "stream", "monitor"]
     """Subsystem within detector API."""
-    api_version: Literal["1.6.0", "1.8.0"] = "1.8.0"
+    api_version: EigerAPIVersion = "1.8.0"
     """Version of API to use."""
     mode: Literal["status", "config"]
     """Mode of parameter within subsystem."""
@@ -71,8 +73,6 @@ class EigerParameterRef(AttributeIORef):
 
 EIGER_PARAMETER_SUBSYSTEMS = EigerParameterRef.__annotations__["subsystem"].__args__
 EIGER_PARAMETER_MODES = EigerParameterRef.__annotations__["mode"].__args__
-EIGER_PARAMETER_API_VERSIONS = EigerParameterRef.__annotations__["api_version"].__args__
-EIGER_DEFAULT_API_VERSION = EIGER_PARAMETER_API_VERSIONS[-1]
 
 
 def key_to_attribute_name(key: str):
