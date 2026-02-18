@@ -45,7 +45,9 @@ def _serialise_parameter(parameter: EigerParameterRef) -> dict:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_attribute_creation(sim_eiger):
-    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+    )
     await controller.initialise()
     serialised_parameters: dict[str, dict[str, Any]] = {}
     subsystem_parameters = {}
@@ -95,7 +97,9 @@ async def test_attribute_creation(sim_eiger):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sim_eiger", [str(HERE / "eiger.yaml")], indirect=True)
 async def test_controller_groups_and_parameters(sim_eiger):
-    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+    )
     await controller.initialise()
 
     for subsystem in MISSING_KEYS:
@@ -126,7 +130,9 @@ async def test_controller_groups_and_parameters(sim_eiger):
 async def test_threshold_mode_api_inconsistency_handled(
     sim_eiger, mocker: MockerFixture
 ):
-    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+    )
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]
@@ -157,7 +163,9 @@ async def test_threshold_mode_api_inconsistency_handled(
 async def test_fetch_before_returning_parameters(sim_eiger, mocker: MockerFixture):
     # Need to mock @scan to spy controller.update()
     with patch("fastcs_eiger.controllers.eiger_controller.scan"):
-        controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+        controller = EigerController(
+            IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+        )
         await controller.initialise()
 
         detector_controller = controller.sub_controllers["Detector"]
@@ -209,7 +217,9 @@ async def test_fetch_before_returning_parameters(sim_eiger, mocker: MockerFixtur
 async def test_stale_propagates_to_top_controller(
     sim_eiger,
 ):
-    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+    )
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]
@@ -268,7 +278,9 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
 async def test_eiger_controller_trigger_correctly_introspected(
     mocker: MockerFixture, sim_eiger
 ):
-    controller = EigerController(IPConnectionSettings("127.0.0.1", 8081))
+    controller = EigerController(
+        IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+    )
     await controller.initialise()
 
     detector_controller = controller.sub_controllers["Detector"]
