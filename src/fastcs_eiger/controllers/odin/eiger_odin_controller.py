@@ -58,6 +58,10 @@ class EigerOdinController(EigerController):
             self.OD.FP.data_datatype.put(f"uint{self.detector.bit_depth_image.get()}"),
         )
 
+        path = Path(self.OD.file_path.get())
+        prefix = self.OD.file_prefix.get()
+        frame_count = self.OD.FP.frames.get()
+
         await self.OD.FP.start_writing()
 
         try:
@@ -67,10 +71,10 @@ class EigerOdinController(EigerController):
 
         if self.enable_vds_creation.get():
             create_interleave_vds(
-                path=Path(self.OD.file_path.get()),
-                prefix=self.OD.file_prefix.get(),
-                datasets=["data1", "data2", "data3"],
-                frame_count=self.OD.FP.frames.get(),
+                path=path,
+                prefix=prefix,
+                datasets=["data"],
+                frame_count=frame_count,
                 frames_per_block=self.OD.block_size.get(),
                 blocks_per_file=self.OD.FP.process_blocks_per_file.get(),
                 frame_shape=(
