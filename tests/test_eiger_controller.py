@@ -130,7 +130,7 @@ async def test_eiger_accepts_different_api_versions():
 
 
 @pytest.mark.asyncio
-async def test_eiger_response_access_mode_none():
+async def test_eiger_access_mode_none():
 
     ref = EigerParameterRef(
         key="dummy_uri",
@@ -141,7 +141,7 @@ async def test_eiger_response_access_mode_none():
             access_mode=None, value=0.0, value_type="float"
         ),
     )
-    assert ref.response_access_mode == "r"
+    assert ref.access_mode == "r"
 
     ref = EigerParameterRef(
         key="dummy_uri",
@@ -152,4 +152,4 @@ async def test_eiger_response_access_mode_none():
             access_mode=None, value=0.0, value_type="float"
         ),
     )
-    assert ref.response_access_mode == "rw"
+    assert ref.access_mode == "rw"

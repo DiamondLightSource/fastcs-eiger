@@ -57,7 +57,7 @@ class EigerParameterRef(AttributeIORef):
                 return String()
 
     @property
-    def response_access_mode(self) -> Literal["r", "w", "rw"] | None:
+    def access_mode(self) -> Literal["r", "w", "rw"] | None:
         if self.response.access_mode is None:
             if self.mode == "status":
                 return "r"

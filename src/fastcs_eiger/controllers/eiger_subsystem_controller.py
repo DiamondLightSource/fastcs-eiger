@@ -125,7 +125,7 @@ class EigerSubsystemController(Controller):
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
             group = cls._group(parameter)
-            match parameter.response.access_mode:
+            match parameter.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
                         parameter.fastcs_datatype,
