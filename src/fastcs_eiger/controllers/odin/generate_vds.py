@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import h5py
+from fastcs.logging import bind_logger
+
+logger = bind_logger(__name__)
 
 
 @dataclass
@@ -81,7 +84,8 @@ def create_interleave_vds(
         frame_count, frames_per_block, blocks_per_file, n_file_writers
     )
     stride = n_file_writers * frames_per_block
-
+    filepath = f"{path / prefix}_vds.h5"
+    logger.info(f"Writing virtual dataset at {filepath}")
     with h5py.File(f"{path / prefix}_vds.h5", "w", libver="latest") as f:
         for dataset_name in datasets:
             v_layout = h5py.VirtualLayout(
@@ -91,7 +95,7 @@ def create_interleave_vds(
             for file_number, file_frames in frame_distribution.items():
                 full_block_frames = file_frames.blocks * frames_per_block
                 v_source = h5py.VirtualSource(
-                    f"{path / prefix}_{str(file_number).zfill(6)}.h5",
+                    f"{prefix}_{str(file_number).zfill(6)}.h5",
                     name=dataset_name,
                     shape=(file_frames.frames, frame_shape[0], frame_shape[1]),
                     dtype=dtype,
