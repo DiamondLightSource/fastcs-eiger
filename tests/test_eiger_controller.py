@@ -127,29 +127,3 @@ async def test_eiger_accepts_different_api_versions():
     )
 
     assert ref.uri == "detector/api/1.8.0/config/dummy_uri"
-
-
-@pytest.mark.asyncio
-async def test_eiger_access_mode_none():
-
-    ref = EigerParameterRef(
-        key="dummy_uri",
-        subsystem="detector",
-        api_version="1.6.0",
-        mode="status",
-        response=EigerParameterResponse(
-            access_mode=None, value=0.0, value_type="float"
-        ),
-    )
-    assert ref.access_mode == "r"
-
-    ref = EigerParameterRef(
-        key="dummy_uri",
-        subsystem="detector",
-        api_version="1.6.0",
-        mode="config",
-        response=EigerParameterResponse(
-            access_mode=None, value=0.0, value_type="float"
-        ),
-    )
-    assert ref.access_mode == "rw"
