@@ -1,9 +1,6 @@
-import pytest
-
 from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 
 
-@pytest.mark.asyncio
 def test_eiger_access_mode():
 
     ref = EigerParameterRef(
