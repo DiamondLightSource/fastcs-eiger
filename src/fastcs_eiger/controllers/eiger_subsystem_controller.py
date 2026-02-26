@@ -9,6 +9,7 @@ from fastcs.util import ONCE
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
+    EigerAPIVersion,
     EigerParameterRef,
     EigerParameterResponse,
     key_to_attribute_name,
@@ -54,6 +55,7 @@ class EigerSubsystemController(Controller):
         self,
         connection: HTTPConnection,
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
+        api_version: EigerAPIVersion,
     ):
         self.logger = bind_logger(__class__.__name__)
 
@@ -61,6 +63,7 @@ class EigerSubsystemController(Controller):
         self._queue_subsystem_update = queue_subsystem_update
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
         super().__init__(ios=[self._io])
+        self._api_version: EigerAPIVersion = api_version
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameterRef]:
         parameters = []
@@ -68,12 +71,14 @@ class EigerSubsystemController(Controller):
             subsystem_keys = [
                 parameter
                 for parameter in await self.connection.get(
-                    f"{self._subsystem}/api/1.8.0/{mode}/keys"
+                    f"{self._subsystem}/api/{self._api_version}/{mode}/keys"
                 )
                 if parameter not in IGNORED_KEYS
             ] + MISSING_KEYS[self._subsystem][mode]
             requests = [
-                self.connection.get(f"{self._subsystem}/api/1.8.0/{mode}/{key}")
+                self.connection.get(
+                    f"{self._subsystem}/api/{self._api_version}/{mode}/{key}"
+                )
                 for key in subsystem_keys
             ]
             responses = await asyncio.gather(*requests)
@@ -83,6 +88,7 @@ class EigerSubsystemController(Controller):
                     EigerParameterRef(
                         key=key,
                         subsystem=self._subsystem,
+                        api_version=self._api_version,
                         mode=mode,
                         response=EigerParameterResponse.model_validate(response),
                         update_period=ONCE if mode == "config" else 0.2,
@@ -119,7 +125,7 @@ class EigerSubsystemController(Controller):
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
             group = cls._group(parameter)
-            match parameter.response.access_mode:
+            match parameter.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
                         parameter.fastcs_datatype,

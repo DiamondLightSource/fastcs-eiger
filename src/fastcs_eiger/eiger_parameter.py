@@ -5,9 +5,11 @@ from fastcs.attributes import AttributeIORef
 from fastcs.datatypes import Bool, DataType, Float, Int, String
 from pydantic import BaseModel
 
+EigerAPIVersion = Literal["1.6.0", "1.8.0"]
+
 
 class EigerParameterResponse(BaseModel):
-    access_mode: Literal["r", "w", "rw"]
+    access_mode: Literal["r", "w", "rw"] | None = None
     allowed_values: Any | None = None
     min: float | int | None = None
     value: Any
@@ -26,6 +28,8 @@ class EigerParameterRef(AttributeIORef):
     """Last section of URI within a subsystem/mode."""
     subsystem: Literal["detector", "stream", "monitor"]
     """Subsystem within detector API."""
+    api_version: EigerAPIVersion = "1.8.0"
+    """Version of API to use."""
     mode: Literal["status", "config"]
     """Mode of parameter within subsystem."""
     response: EigerParameterResponse
@@ -38,7 +42,7 @@ class EigerParameterRef(AttributeIORef):
     @property
     def uri(self) -> str:
         """Full URI for HTTP requests."""
-        return f"{self.subsystem}/api/1.8.0/{self.mode}/{self.key}"
+        return f"{self.subsystem}/api/{self.api_version}/{self.mode}/{self.key}"
 
     @property
     def fastcs_datatype(self) -> DataType:
@@ -51,6 +55,16 @@ class EigerParameterRef(AttributeIORef):
                 return Bool()
             case "string" | "datetime" | "State" | "string[]":
                 return String()
+
+    @property
+    def access_mode(self) -> Literal["r", "w", "rw"] | None:
+        if self.response.access_mode is None:
+            if self.mode == "status":
+                return "r"
+            elif self.mode == "config":
+                return "rw"
+        else:
+            return self.response.access_mode
 
     def __repr__(self):
         name = self.__class__.__name__

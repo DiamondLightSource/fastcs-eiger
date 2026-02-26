@@ -12,7 +12,7 @@ async def test_eiger_odin_controller(mocker: MockerFixture):
     odin_connection_settings = IPConnectionSettings("127.0.0.1", 8001)
 
     controller = EigerOdinController(
-        detector_connection_settings, odin_connection_settings
+        detector_connection_settings, odin_connection_settings, api_version="1.8.0"
     )
     assert isinstance(controller.OD, OdinController)
 
