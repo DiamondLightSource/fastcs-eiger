@@ -1,15 +1,24 @@
 import asyncio
 
+from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
+from fastcs.datatypes import Int
 from fastcs.methods import command
 
-from fastcs_eiger.controllers.eiger_controller import EigerController
+from fastcs_eiger.controllers.eiger_controller import COMMAND_GROUP, EigerController
 from fastcs_eiger.controllers.odin.odin_controller import OdinController
 from fastcs_eiger.eiger_parameter import EigerAPIVersion
 
 
 class EigerOdinController(EigerController):
     """Eiger controller with Odin sub controller"""
+
+    start_writing_timeout = AttrRW(
+        Int(min=1),
+        initial_value=5,
+        description="Timeout for start writing command",
+        group=COMMAND_GROUP,
+    )
 
     def __init__(
         self,
@@ -26,7 +35,7 @@ class EigerOdinController(EigerController):
 
         await asyncio.gather(super().initialise(), self.OD.initialise())
 
-    @command()
+    @command(group=COMMAND_GROUP)
     async def arm_when_ready(self):
         """Check eiger fan is ready before reporting arm as successful
 
@@ -37,11 +46,11 @@ class EigerOdinController(EigerController):
         await super().arm_when_ready()
 
         try:
-            await self.OD.EF.ready.wait_for_value(True, timeout=1)
+            await self.OD.EF.ready.wait_for_value(True, timeout=self.arm_timeout.get())
         except TimeoutError as e:
             raise TimeoutError("Eiger fan not ready") from e
 
-    @command()
+    @command(group=COMMAND_GROUP)
     async def start_writing(self):
         """Sync eiger parameters to file writers, start writing and return when ready
 
@@ -57,6 +66,8 @@ class EigerOdinController(EigerController):
         await self.OD.FP.start_writing()
 
         try:
-            await self.OD.writing.wait_for_value(True, timeout=1)
+            await self.OD.writing.wait_for_value(
+                True, timeout=self.start_writing_timeout.get()
+            )
         except TimeoutError as e:
             raise TimeoutError("File writers failed to start") from e
