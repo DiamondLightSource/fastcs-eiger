@@ -102,6 +102,26 @@ async def test_eiger_io_send(
 
 
 @pytest.mark.asyncio
+async def test_arm_when_ready(mock_connection, mocker: MockerFixture):
+    eiger_controller, _ = mock_connection
+    wait_mock = mocker.patch.object(eiger_controller.stale_parameters, "wait_for_value")
+    detector_mock = mocker.AsyncMock()
+    eiger_controller.detector = detector_mock
+
+    wait_mock.side_effect = TimeoutError("Stale")
+
+    with pytest.raises(TimeoutError, match="Stale"):
+        await eiger_controller.arm_when_ready()
+
+    wait_mock.assert_called_once()
+    detector_mock.arm.assert_not_called()
+
+    wait_mock.side_effect = None
+    await eiger_controller.arm_when_ready()
+    detector_mock.arm.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_eiger_accepts_different_api_versions():
 
     ref = EigerParameterRef(
