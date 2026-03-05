@@ -31,44 +31,29 @@ async def run_acquisition(
 
     print("Configuring")
     await asyncio.gather(
-        caput(f"{odin_prefix}:EF:BlockSize", 1),
-        caput_str(f"{odin_prefix}:EF:Acqid", file_name),
-        caput_str(f"{odin_prefix}:FP:FilePath", file_path),
-        caput_str(f"{odin_prefix}:FP:FilePrefix", file_name),
-        caput_str(f"{odin_prefix}:FP:AcquisitionId", file_name),
-        caput_str(f"{odin_prefix}:MW:Directory", file_path),
-        caput_str(f"{odin_prefix}:MW:FilePrefix", file_name),
-        caput_str(f"{odin_prefix}:MW:AcquisitionId", file_name),
+        caput(f"{odin_prefix}:BlockSize", 1),
+        caput_str(f"{odin_prefix}:FilePath", file_path),
+        caput_str(f"{odin_prefix}:AcquisitionId", file_name),
         caput(f"{odin_prefix}:FP:Frames", frames),
-        caput_str(f"{odin_prefix}:FP:DataCompression", "BSLZ4"),
         caput(f"{eiger_prefix}:Detector:Nimages", frames),
         caput(f"{eiger_prefix}:Detector:Ntrigger", 1),
         caput(f"{eiger_prefix}:Detector:FrameTime", exposure_time),
         # caput(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for real detector
         caput_str(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for tickit sim
     )
-    await pv_equals(f"{eiger_prefix}:StaleParameters", 0)
 
     print("Arming")
-    await caput(f"{eiger_prefix}:Detector:Arm", True)
-
-    datatype = f"uint{await aioca.caget(f'{eiger_prefix}:Detector:BitDepthImage')}"
-    await caput_str(f"{odin_prefix}:FP:DataDatatype", datatype)
+    await caput(f"{eiger_prefix}:ArmWhenReady", True)
 
     print("Starting writing")
-    await caput(f"{odin_prefix}:FP:StartWriting", True)
-    await asyncio.sleep(1)
-    await asyncio.gather(
-        pv_equals(f"{odin_prefix}:FP:Writing", 1, timeout=5),
-        pv_equals(f"{odin_prefix}:EF:Ready", 1, timeout=5),
-    )
+    await caput(f"{eiger_prefix}:StartWriting", True)
 
     print("Triggering")
     await caput(f"{eiger_prefix}:Detector:Trigger", True, wait=False)
 
     print("Waiting")
     await pv_equals(
-        f"{odin_prefix}:FP:Writing",
+        f"{odin_prefix}:Writing",
         0,
         timeout=exposure_time * frames * 5,  # tickit sim is much slower than requested
     )

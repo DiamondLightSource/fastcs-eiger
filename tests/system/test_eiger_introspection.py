@@ -103,7 +103,7 @@ async def test_controller_groups_and_parameters(sim_eiger):
     await controller.initialise()
 
     for subsystem in MISSING_KEYS:
-        subcontroller = controller.sub_controllers[subsystem.title()]
+        subcontroller = controller.sub_controllers[subsystem]
         assert isinstance(subcontroller, EigerSubsystemController)
         parameters = await subcontroller._introspect_detector_subsystem()
         if subsystem == "detector":
@@ -135,7 +135,7 @@ async def test_threshold_mode_api_inconsistency_handled(
     )
     await controller.initialise()
 
-    detector_controller = controller.sub_controllers["Detector"]
+    detector_controller = controller.sub_controllers["detector"]
     assert isinstance(detector_controller, EigerDetectorController)
 
     attr: AttrRW = detector_controller.attributes["threshold_1_energy"]  # type: ignore
@@ -168,7 +168,7 @@ async def test_fetch_before_returning_parameters(sim_eiger, mocker: MockerFixtur
         )
         await controller.initialise()
 
-        detector_controller = controller.sub_controllers["Detector"]
+        detector_controller = controller.sub_controllers["detector"]
         assert isinstance(detector_controller, EigerDetectorController)
 
         count_time_attr: AttrRW[float, EigerParameterRef] = (
@@ -222,7 +222,7 @@ async def test_stale_propagates_to_top_controller(
     )
     await controller.initialise()
 
-    detector_controller = controller.sub_controllers["Detector"]
+    detector_controller = controller.sub_controllers["detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     await detector_controller.queue_update(["threshold_energy"])
     assert controller.stale_parameters.get() is True
@@ -283,7 +283,7 @@ async def test_eiger_controller_trigger_correctly_introspected(
     )
     await controller.initialise()
 
-    detector_controller = controller.sub_controllers["Detector"]
+    detector_controller = controller.sub_controllers["detector"]
     assert isinstance(detector_controller, EigerDetectorController)
     detector_controller.connection = mocker.AsyncMock()
 
@@ -353,7 +353,7 @@ async def test_if_min_value_provided_then_prec_set_correctly(
     ):
         await eiger_controller.initialise()
 
-    test_float_attr = eiger_controller.sub_controllers["Detector"].attributes.get(
+    test_float_attr = eiger_controller.sub_controllers["detector"].attributes.get(
         "test_float_attr"
     )
 
