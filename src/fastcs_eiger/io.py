@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from fastcs.attributes import AttributeIO, AttrR, AttrW
 from fastcs.datatypes import DType_T
-from fastcs.logging import bind_logger
+from fastcs.logging import logger
 
 from fastcs_eiger.eiger_parameter import EigerParameterRef
 from fastcs_eiger.http_connection import HTTPConnection
@@ -25,7 +25,6 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
         self.connection = connection
         self.update_now = update_now
         self.queue_update = queue_update
-        self.logger = bind_logger(__class__.__name__)
 
     def _handle_params_to_update(
         self, parameters: list[str], uri: str
@@ -53,7 +52,7 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
             parameters_to_update, attr.io_ref.uri
         )
 
-        self.logger.info(
+        logger.info(
             "Parameter put",
             attribute=attr,
             value=value,
