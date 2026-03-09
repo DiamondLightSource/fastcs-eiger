@@ -1,12 +1,12 @@
 import asyncio
 from collections.abc import Coroutine
 
-from fastcs.attributes import AttrR
+from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
-from fastcs.datatypes import Bool
+from fastcs.datatypes import Bool, Int
 from fastcs.logging import bind_logger
-from fastcs.methods import scan
+from fastcs.methods import command, scan
 
 from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
 from fastcs_eiger.controllers.eiger_monitor_controller import EigerMonitorController
@@ -14,6 +14,8 @@ from fastcs_eiger.controllers.eiger_stream_controller import EigerStreamControll
 from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.eiger_parameter import EIGER_PARAMETER_SUBSYSTEMS, EigerAPIVersion
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
+
+COMMAND_GROUP = "Command"
 
 
 class EigerController(Controller):
@@ -24,8 +26,16 @@ class EigerController(Controller):
         port: Port of Eiger detector
     """
 
-    # Internal Attribute
+    detector: EigerDetectorController
+
+    # Internal Attributes
     stale_parameters = AttrR(Bool())
+    arm_timeout = AttrRW(
+        Int(min=1),
+        initial_value=3,
+        description="Timeout for arm command",
+        group=COMMAND_GROUP,
+    )
 
     def __init__(
         self, connection_settings: IPConnectionSettings, api_version: EigerAPIVersion
@@ -82,8 +92,7 @@ class EigerController(Controller):
                         raise NotImplementedError(
                             f"No subcontroller implemented for subsystem {subsystem}"
                         )
-
-                self.add_sub_controller(subsystem.capitalize(), controller)
+                self.add_sub_controller(subsystem, controller)
                 await controller.initialise()
 
         except HTTPRequestError:
@@ -120,3 +129,19 @@ class EigerController(Controller):
             async with self._parameter_update_lock:
                 for coro in coros:
                     await self.queue.put(coro)
+
+    @command(group=COMMAND_GROUP)
+    async def arm_when_ready(self):
+        """Arm detector and return when ready to send triggers
+
+        Wait for parmeters to be synchronised before arming detector
+
+        Raises:
+            TimeoutError: If parameters are not synchronised or arm PUT request fails
+
+        """
+        await self.stale_parameters.wait_for_value(
+            False, timeout=self.arm_timeout.get()
+        )
+
+        await self.detector.arm()

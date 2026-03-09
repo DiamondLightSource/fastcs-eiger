@@ -20,9 +20,9 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
 
     await eiger_controller.initialise()
     assert list(eiger_controller.sub_controllers.keys()) == [
-        "Detector",
-        "Stream",
-        "Monitor",
+        "detector",
+        "stream",
+        "monitor",
     ]
     connection.get.assert_any_call("detector/api/1.8.0/status/state")
     connection.get.assert_any_call("detector/api/1.8.0/status/keys")
@@ -99,6 +99,26 @@ async def test_eiger_io_send(
     await io.send(subsystem_controller.no_updated_params, 0.1)
     connection.put.assert_awaited_with(no_updated_params_uri, 0.1)
     io.queue_update.assert_awaited_with(["no_updated_params"])
+
+
+@pytest.mark.asyncio
+async def test_arm_when_ready(mock_connection, mocker: MockerFixture):
+    eiger_controller, _ = mock_connection
+    wait_mock = mocker.patch.object(eiger_controller.stale_parameters, "wait_for_value")
+    detector_mock = mocker.AsyncMock()
+    eiger_controller.detector = detector_mock
+
+    wait_mock.side_effect = TimeoutError("Stale")
+
+    with pytest.raises(TimeoutError, match="Stale"):
+        await eiger_controller.arm_when_ready()
+
+    wait_mock.assert_called_once()
+    detector_mock.arm.assert_not_called()
+
+    wait_mock.side_effect = None
+    await eiger_controller.arm_when_ready()
+    detector_mock.arm.assert_called_once()
 
 
 @pytest.mark.asyncio
