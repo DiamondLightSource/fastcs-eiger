@@ -4,7 +4,7 @@ from typing import Literal
 
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.controllers import Controller
-from fastcs.logging import bind_logger
+from fastcs.logging import logger
 from fastcs.util import ONCE
 
 from fastcs_eiger.eiger_parameter import (
@@ -57,8 +57,6 @@ class EigerSubsystemController(Controller):
         queue_subsystem_update: Callable[[list[Coroutine]], Coroutine],
         api_version: EigerAPIVersion,
     ):
-        self.logger = bind_logger(__class__.__name__)
-
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
@@ -160,7 +158,7 @@ class EigerSubsystemController(Controller):
         if parameters:
             coros = self._get_update_coros_for_parameters(parameters)
             await asyncio.gather(*coros)
-            self.logger.info("Parameters updated during put", parameters=parameters)
+            logger.info("Parameters updated during put", parameters=parameters)
 
     def _get_update_coros_for_parameters(
         self, parameters: Iterable[str]

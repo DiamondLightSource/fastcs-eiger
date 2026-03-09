@@ -5,7 +5,7 @@ from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
 from fastcs.datatypes import Bool, Int
-from fastcs.logging import bind_logger
+from fastcs.logging import logger
 from fastcs.methods import command, scan
 
 from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
@@ -42,7 +42,6 @@ class EigerController(Controller):
     ) -> None:
         super().__init__()
         self.connection_settings = connection_settings
-        self.logger = bind_logger(__class__.__name__)
 
         self.connection = HTTPConnection(connection_settings)
         self._parameter_update_lock = asyncio.Lock()
@@ -120,7 +119,7 @@ class EigerController(Controller):
         await asyncio.gather(*coros)
 
         if self.queue.empty():
-            self.logger.info("All parameters updated")
+            logger.info("All parameters updated")
             await self.stale_parameters.update(not self.queue.empty())
 
     async def queue_subsystem_update(self, coros: list[Coroutine]):
