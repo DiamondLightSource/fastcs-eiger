@@ -1,11 +1,13 @@
 import asyncio
+from pathlib import Path
 
 from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
-from fastcs.datatypes import Int
+from fastcs.datatypes import Bool, Int
 from fastcs.methods import command
 
 from fastcs_eiger.controllers.eiger_controller import COMMAND_GROUP, EigerController
+from fastcs_eiger.controllers.odin.generate_vds import create_interleave_vds
 from fastcs_eiger.controllers.odin.odin_controller import OdinController
 from fastcs_eiger.eiger_parameter import EigerAPIVersion
 
@@ -19,6 +21,7 @@ class EigerOdinController(EigerController):
         description="Timeout for start writing command",
         group=COMMAND_GROUP,
     )
+    enable_vds_creation = AttrRW(Bool())
 
     def __init__(
         self,
@@ -63,6 +66,10 @@ class EigerOdinController(EigerController):
             self.OD.FP.data_datatype.put(f"uint{self.detector.bit_depth_image.get()}"),
         )
 
+        path = Path(self.OD.file_path.get())
+        prefix = self.OD.file_prefix.get()
+        frame_count = self.OD.FP.frames.get()
+
         await self.OD.FP.start_writing()
 
         try:
@@ -71,3 +78,18 @@ class EigerOdinController(EigerController):
             )
         except TimeoutError as e:
             raise TimeoutError("File writers failed to start") from e
+
+        if self.enable_vds_creation.get():
+            create_interleave_vds(
+                path=path,
+                prefix=prefix,
+                datasets=["data", "data2", "data3"],
+                frame_count=frame_count,
+                frames_per_block=self.OD.block_size.get(),
+                blocks_per_file=self.OD.FP.process_blocks_per_file.get(),
+                frame_shape=(
+                    self.OD.FP.data_dims_1.get(),
+                    self.OD.FP.data_dims_0.get(),
+                ),
+                dtype=self.OD.FP.data_datatype.get(),
+            )
