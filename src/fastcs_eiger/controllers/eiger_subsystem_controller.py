@@ -34,6 +34,7 @@ IGNORED_KEYS = [
     "buffer_fill_level",
     # TODO: Handle array values
     "detector_orientation",
+    "detector_orientation_axis",
     "detector_translation",
     # TODO: Is it a bad idea to include these?
     "test_image_mode",
