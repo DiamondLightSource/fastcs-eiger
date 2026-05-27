@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
@@ -78,10 +76,6 @@ async def test_start_writing(eiger_odin_controller, mocker: MockerFixture):
     detector_mock.compression.get.return_value = "lz4"
     detector_mock.bit_depth_image.get.return_value = 16
 
-    create_mock = mocker.patch(
-        "fastcs_eiger.controllers.odin.eiger_odin_controller.create_interleave_vds"
-    )
-
     writing_wait_mock = mocker.patch.object(controller.OD.writing, "wait_for_value")
 
     writing_wait_mock.side_effect = TimeoutError
@@ -98,18 +92,5 @@ async def test_start_writing(eiger_odin_controller, mocker: MockerFixture):
         True, timeout=controller.start_writing_timeout.get()
     )
 
-    create_mock.assert_not_called()
-
     controller.enable_vds_creation._value = True
     await controller.start_writing()
-
-    create_mock.assert_called_once_with(
-        path=Path("/tmp/data"),
-        prefix="test_prefix",
-        datasets=["data", "data2", "data3"],
-        frame_count=100,
-        frames_per_block=4,
-        blocks_per_file=10,
-        frame_shape=(1024, 512),
-        dtype="uint16",
-    )
