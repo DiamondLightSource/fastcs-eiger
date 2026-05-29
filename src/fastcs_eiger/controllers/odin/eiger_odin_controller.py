@@ -1,13 +1,23 @@
 import asyncio
+from dataclasses import dataclass
 
 from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.datatypes import Bool, Int
 from fastcs.methods import command
+from fastcs_odin.controllers.odin_controller import OdinControllerSettings
 
-from fastcs_eiger.controllers.eiger_controller import COMMAND_GROUP, EigerController
+from fastcs_eiger.controllers.eiger_controller import (
+    COMMAND_GROUP,
+    EigerController,
+    EigerControllerSettings,
+)
 from fastcs_eiger.controllers.odin.odin_controller import OdinController
-from fastcs_eiger.eiger_parameter import EigerAPIVersion
+
+
+@dataclass
+class EigerOdinControllerSettings(EigerControllerSettings):
+    odin_connection_settings: IPConnectionSettings
 
 
 class EigerOdinController(EigerController):
@@ -21,15 +31,14 @@ class EigerOdinController(EigerController):
     )
     enable_vds_creation = AttrRW(Bool())
 
-    def __init__(
-        self,
-        detector_connection_settings: IPConnectionSettings,
-        odin_connection_settings: IPConnectionSettings,
-        api_version: EigerAPIVersion,
-    ) -> None:
-        super().__init__(detector_connection_settings, api_version)
+    def __init__(self, settings: EigerOdinControllerSettings) -> None:
+        super().__init__(
+            EigerControllerSettings(settings.connection_settings, settings.api_version)
+        )
 
-        self.OD = OdinController(odin_connection_settings)
+        self.OD = OdinController(
+            OdinControllerSettings(settings.odin_connection_settings)
+        )
 
     async def initialise(self) -> None:
         """Initialise eiger controller and odin controller"""

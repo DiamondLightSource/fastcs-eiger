@@ -1,0 +1,262 @@
+{
+    "$defs": {
+        "EigerControllerEntry": {
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "title": "Id",
+                    "type": "string"
+                },
+                "type": {
+                    "const": "fastcs_eiger.EigerController",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "connection_settings": {
+                    "$ref": "#/$defs/IPConnectionSettings"
+                },
+                "api_version": {
+                    "enum": [
+                        "1.6.0",
+                        "1.8.0"
+                    ],
+                    "title": "Api Version",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "type",
+                "connection_settings",
+                "api_version"
+            ],
+            "title": "EigerControllerEntry",
+            "type": "object"
+        },
+        "EigerOdinControllerEntry": {
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "title": "Id",
+                    "type": "string"
+                },
+                "type": {
+                    "const": "fastcs_eiger.EigerOdinController",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "connection_settings": {
+                    "$ref": "#/$defs/IPConnectionSettings"
+                },
+                "api_version": {
+                    "enum": [
+                        "1.6.0",
+                        "1.8.0"
+                    ],
+                    "title": "Api Version",
+                    "type": "string"
+                },
+                "odin_connection_settings": {
+                    "$ref": "#/$defs/IPConnectionSettings"
+                }
+            },
+            "required": [
+                "id",
+                "type",
+                "connection_settings",
+                "api_version",
+                "odin_connection_settings"
+            ],
+            "title": "EigerOdinControllerEntry",
+            "type": "object"
+        },
+        "EpicsCAOptions": {
+            "additionalProperties": false,
+            "properties": {},
+            "title": "EpicsCAOptions",
+            "type": "object"
+        },
+        "EpicsCATransport": {
+            "additionalProperties": false,
+            "properties": {
+                "epicsca": {
+                    "$ref": "#/$defs/EpicsCAOptions"
+                },
+                "docs": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/EpicsDocsOptions"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null
+                },
+                "gui": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/EpicsGUIOptions"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null
+                }
+            },
+            "title": "EpicsCATransport",
+            "type": "object"
+        },
+        "EpicsDocsOptions": {
+            "properties": {
+                "output_dir": {
+                    "default": ".",
+                    "format": "path",
+                    "title": "Output Dir",
+                    "type": "string"
+                },
+                "title": {
+                    "default": "FastCS Devices",
+                    "title": "Title",
+                    "type": "string"
+                },
+                "depth": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Depth"
+                }
+            },
+            "title": "EpicsDocsOptions",
+            "type": "object"
+        },
+        "EpicsGUIFormat": {
+            "description": "The format of an EPICS GUI.",
+            "enum": [
+                ".bob",
+                ".edl"
+            ],
+            "title": "EpicsGUIFormat",
+            "type": "string"
+        },
+        "EpicsGUIOptions": {
+            "properties": {
+                "output_dir": {
+                    "default": ".",
+                    "format": "path",
+                    "title": "Output Dir",
+                    "type": "string"
+                },
+                "file_format": {
+                    "$ref": "#/$defs/EpicsGUIFormat",
+                    "default": ".bob"
+                },
+                "title": {
+                    "default": "FastCS Devices",
+                    "title": "Title",
+                    "type": "string"
+                }
+            },
+            "title": "EpicsGUIOptions",
+            "type": "object"
+        },
+        "IPConnectionSettings": {
+            "properties": {
+                "ip": {
+                    "default": "127.0.0.1",
+                    "title": "Ip",
+                    "type": "string"
+                },
+                "port": {
+                    "default": 25565,
+                    "title": "Port",
+                    "type": "integer"
+                }
+            },
+            "title": "IPConnectionSettings",
+            "type": "object"
+        },
+        "RestServerOptions": {
+            "properties": {
+                "host": {
+                    "default": "localhost",
+                    "title": "Host",
+                    "type": "string"
+                },
+                "port": {
+                    "default": 8080,
+                    "title": "Port",
+                    "type": "integer"
+                },
+                "log_level": {
+                    "default": "info",
+                    "title": "Log Level",
+                    "type": "string"
+                }
+            },
+            "title": "RestServerOptions",
+            "type": "object"
+        },
+        "RestTransport": {
+            "additionalProperties": false,
+            "properties": {
+                "rest": {
+                    "$ref": "#/$defs/RestServerOptions"
+                }
+            },
+            "title": "RestTransport",
+            "type": "object"
+        }
+    },
+    "additionalProperties": false,
+    "properties": {
+        "controllers": {
+            "items": {
+                "discriminator": {
+                    "mapping": {
+                        "fastcs_eiger.EigerController": "#/$defs/EigerControllerEntry",
+                        "fastcs_eiger.EigerOdinController": "#/$defs/EigerOdinControllerEntry"
+                    },
+                    "propertyName": "type"
+                },
+                "oneOf": [
+                    {
+                        "$ref": "#/$defs/EigerControllerEntry"
+                    },
+                    {
+                        "$ref": "#/$defs/EigerOdinControllerEntry"
+                    }
+                ]
+            },
+            "title": "Controllers",
+            "type": "array"
+        },
+        "transport": {
+            "items": {
+                "anyOf": [
+                    {
+                        "$ref": "#/$defs/EpicsCATransport"
+                    },
+                    {
+                        "$ref": "#/$defs/RestTransport"
+                    }
+                ]
+            },
+            "title": "Transport",
+            "type": "array"
+        }
+    },
+    "required": [
+        "controllers",
+        "transport"
+    ],
+    "title": "FastCS",
+    "type": "object"
+}
