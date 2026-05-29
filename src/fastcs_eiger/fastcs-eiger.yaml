@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=schema.json
+controllers:
+  - id: EIGER
+    type: fastcs_eiger.EigerController
+    connection_settings:
+      ip: "localhost"
+      port: 8081
+    api_version: "1.8.0"
+transport:
+  - epicsca: {}
+    gui:
+      title: "Eiger - EIGER"
+      output_dir: ./opi/
