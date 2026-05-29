@@ -5,6 +5,7 @@ from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.datatypes import Bool, Int
 from fastcs.methods import command
+from fastcs_odin.controllers.odin_controller import OdinControllerSettings
 
 from fastcs_eiger.controllers.eiger_controller import (
     COMMAND_GROUP,
@@ -35,7 +36,9 @@ class EigerOdinController(EigerController):
             EigerControllerSettings(settings.connection_settings, settings.api_version)
         )
 
-        self.OD = OdinController(settings.odin_connection_settings)
+        self.OD = OdinController(
+            OdinControllerSettings(settings.odin_connection_settings)
+        )
 
     async def initialise(self) -> None:
         """Initialise eiger controller and odin controller"""
