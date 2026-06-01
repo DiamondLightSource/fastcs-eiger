@@ -8,27 +8,29 @@
             "name": "Eiger IOC",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastcs_eiger",
             "justMyCode": false,
-            "console": "integratedTerminal",
+            "module": "fastcs_eiger",
             "args": [
-                "ioc",
-                "EIGER",
-            ]
+                "run",
+                "${workspaceFolder:fastcs-eiger}/src/fastcs_eiger/fastcs-eiger.yaml",
+                "--log-level",
+                "TRACE",
+            ],
+            "console": "integratedTerminal",
         },
         {
             "name": "Eiger Odin IOC",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastcs_eiger",
             "justMyCode": false,
-            "console": "integratedTerminal",
+            "module": "fastcs_eiger",
             "args": [
-                "ioc",
-                "EIGER",
-                "--odin-ip",
-                "127.0.0.1",
-            ]
+                "run",
+                "${workspaceFolder:fastcs-eiger}/src/fastcs_eiger/fastcs-eiger-odin.yaml",
+                "--log-level",
+                "TRACE",
+            ],
+            "console": "integratedTerminal",
         },
         {
             "name": "Eiger Asyncio",
@@ -37,7 +39,9 @@
             "module": "fastcs_eiger",
             "justMyCode": false,
             "console": "integratedTerminal",
-            "args": ["asyncio"]
+            "args": [
+                "asyncio"
+            ]
         },
         {
             "name": "Debug Unit Test",

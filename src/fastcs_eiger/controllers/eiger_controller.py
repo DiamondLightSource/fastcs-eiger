@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Coroutine
+from dataclasses import dataclass
 
 from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
@@ -16,6 +17,12 @@ from fastcs_eiger.eiger_parameter import EIGER_PARAMETER_SUBSYSTEMS, EigerAPIVer
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 COMMAND_GROUP = "Command"
+
+
+@dataclass
+class EigerControllerSettings:
+    connection_settings: IPConnectionSettings
+    api_version: EigerAPIVersion
 
 
 class EigerController(Controller):
@@ -37,16 +44,14 @@ class EigerController(Controller):
         group=COMMAND_GROUP,
     )
 
-    def __init__(
-        self, connection_settings: IPConnectionSettings, api_version: EigerAPIVersion
-    ) -> None:
+    def __init__(self, settings: EigerControllerSettings) -> None:
         super().__init__()
-        self.connection_settings = connection_settings
+        self.connection_settings = settings.connection_settings
 
-        self.connection = HTTPConnection(connection_settings)
+        self.connection = HTTPConnection(settings.connection_settings)
         self._parameter_update_lock = asyncio.Lock()
         self.queue = asyncio.Queue()
-        self._api_version: EigerAPIVersion = api_version
+        self._api_version: EigerAPIVersion = settings.api_version
 
     async def initialise(self) -> None:
         """Create attributes by introspecting detector.

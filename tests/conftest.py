@@ -7,7 +7,10 @@ import pytest
 from fastcs.connections import IPConnectionSettings
 from pytest_mock import MockerFixture
 
-from fastcs_eiger.controllers.eiger_controller import EigerController
+from fastcs_eiger.controllers.eiger_controller import (
+    EigerController,
+    EigerControllerSettings,
+)
 
 
 # Stolen from tickit-devices
@@ -40,7 +43,9 @@ def sim_eiger(request):
 @pytest.fixture
 def mock_connection(mocker: MockerFixture):
     eiger_controller = EigerController(
-        IPConnectionSettings("127.0.0.1", 80), api_version="1.8.0"
+        EigerControllerSettings(
+            IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
+        )
     )
     connection = mocker.patch.object(eiger_controller, "connection")
     connection.get = mock.AsyncMock()
