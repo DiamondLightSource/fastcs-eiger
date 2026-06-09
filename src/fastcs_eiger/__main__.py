@@ -1,3 +1,4 @@
+import faulthandler
 from pathlib import Path
 from typing import Optional
 
@@ -53,7 +54,10 @@ def ioc(
     odin_ip: str | None = typer.Option(None, help="IP address of odin control server"),
     odin_port: int = typer.Option(8888, help="Port of odin control server"),
     log_level: LogLevel = LogLevel.TRACE,
+    interactive: bool = False,
 ):
+    faulthandler.enable()
+
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd() / "opi"
 
     configure_logging(log_level)
@@ -80,7 +84,7 @@ def ioc(
         ),
     ]
     launcher = FastCS(controller, transports)
-    launcher.run()
+    launcher.run(interactive=interactive)
 
 
 # test with: python -m fastcs_eiger
