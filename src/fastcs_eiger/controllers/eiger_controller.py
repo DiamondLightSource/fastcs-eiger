@@ -31,7 +31,7 @@ class EigerController(Controller):
     # Internal Attributes
     stale_parameters = AttrR(Bool())
     arm_timeout = AttrRW(
-        Int(min=1),
+        Int(),
         initial_value=3,
         description="Timeout for arm command",
         group=COMMAND_GROUP,

@@ -103,6 +103,8 @@ class EigerSubsystemController(Controller):
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
+            if name == "description":
+                continue
             self.add_attribute(name, attribute)
 
     @classmethod

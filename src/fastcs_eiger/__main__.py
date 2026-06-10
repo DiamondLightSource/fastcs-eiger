@@ -7,7 +7,7 @@ from fastcs.connections import IPConnectionSettings
 from fastcs.launch import FastCS
 from fastcs.logging import LogLevel, configure_logging, intercept_std_logger
 from fastcs.transports.epics import EpicsGUIOptions, EpicsIOCOptions
-from fastcs.transports.epics.ca.transport import EpicsCATransport
+from fastcs.transports.epics.pva.transport import EpicsPVATransport
 
 from fastcs_eiger import __version__
 from fastcs_eiger.controllers.eiger_controller import EigerController
@@ -72,8 +72,8 @@ def ioc(
         )
 
     transports = [
-        EpicsCATransport(
-            epicsca=EpicsIOCOptions(pv_prefix=pv_prefix),
+        EpicsPVATransport(
+            epicspva=EpicsIOCOptions(pv_prefix=pv_prefix),
             gui=EpicsGUIOptions(
                 output_path=ui_path / "eiger.bob", title=f"Eiger - {pv_prefix}"
             ),
