@@ -17,12 +17,12 @@ from fastcs_eiger.controllers.odin.eiger_fp_adapter_controller import (
 class OdinController(_OdinController):
     """Eiger-specific Odin controller"""
 
-    FP: EigerFrameProcessorAdapterController
-    EF: EigerFanAdapterController
-    MW: MetaWriterAdapterController
+    fp: EigerFrameProcessorAdapterController
+    ef: EigerFanAdapterController
+    mw: MetaWriterAdapterController
 
     writing = AttrR(
-        Bool(), io_ref=StatusSummaryAttributeIORef([("MW", "FP")], "writing", any)
+        Bool(), io_ref=StatusSummaryAttributeIORef([("mw", "fp")], "writing", any)
     )
 
     async def initialise(self):
@@ -30,27 +30,27 @@ class OdinController(_OdinController):
 
         self.file_path = AttrRW(
             String(),
-            io_ref=ConfigFanAttributeIORef([self.FP.file_path, self.MW.directory]),
+            io_ref=ConfigFanAttributeIORef([self.fp.file_path, self.mw.directory]),
         )
         self.file_prefix = AttrRW(
             String(),
-            io_ref=ConfigFanAttributeIORef([self.FP.file_prefix, self.MW.file_prefix]),
+            io_ref=ConfigFanAttributeIORef([self.fp.file_prefix, self.mw.file_prefix]),
         )
         self.acquisition_id = AttrRW(
             String(),
             io_ref=ConfigFanAttributeIORef(
                 [
                     self.file_prefix,
-                    self.FP.acquisition_id,
-                    self.MW.acquisition_id,
-                    self.EF.acqid,
+                    self.fp.acquisition_id,
+                    self.mw.acquisition_id,
+                    self.ef.acqid,
                 ]
             ),
         )
         self.block_size = AttrRW(
             Int(),
             io_ref=ConfigFanAttributeIORef(
-                [self.FP.process_frames_per_block, self.EF.block_size]
+                [self.fp.process_frames_per_block, self.ef.block_size]
             ),
         )
 

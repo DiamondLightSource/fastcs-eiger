@@ -17,11 +17,11 @@ def eiger_odin_controller(mocker: MockerFixture):
         detector_connection_settings, odin_connection_settings, api_version="1.8.0"
     )
 
-    controller.OD.file_path = AttrRW(String(), initial_value="/tmp/data")  # pyright: ignore[reportAttributeAccessIssue]
-    controller.OD.file_prefix = AttrRW(String(), initial_value="test_prefix")  # pyright: ignore[reportAttributeAccessIssue]
-    controller.OD.block_size = AttrRW(Int(), initial_value=4)  # pyright: ignore[reportAttributeAccessIssue]
+    controller.od.file_path = AttrRW(String(), initial_value="/tmp/data")  # pyright: ignore[reportAttributeAccessIssue]
+    controller.od.file_prefix = AttrRW(String(), initial_value="test_prefix")  # pyright: ignore[reportAttributeAccessIssue]
+    controller.od.block_size = AttrRW(Int(), initial_value=4)  # pyright: ignore[reportAttributeAccessIssue]
 
-    fp_mock = mocker.patch.object(controller.OD, "FP", create=True)
+    fp_mock = mocker.patch.object(controller.od, "fp", create=True)
     fp_mock.data_compression.put = mocker.AsyncMock()
     fp_mock.data_datatype.put = mocker.AsyncMock()
     fp_mock.data_datatype.get.return_value = "uint16"
@@ -37,12 +37,12 @@ def eiger_odin_controller(mocker: MockerFixture):
 @pytest.mark.asyncio
 async def test_eiger_odin_controller(eiger_odin_controller, mocker: MockerFixture):
     controller = eiger_odin_controller
-    assert isinstance(controller.OD, OdinController)
+    assert isinstance(controller.od, OdinController)
 
     eiger_initialise_mock = mocker.patch(
         "fastcs_eiger.controllers.eiger_controller.EigerController.initialise"
     )
-    odin_initialise_mock = mocker.patch.object(controller.OD, "initialise")
+    odin_initialise_mock = mocker.patch.object(controller.od, "initialise")
 
     await controller.initialise()
 
@@ -55,7 +55,7 @@ async def test_odin_arm_when_ready(eiger_odin_controller, mocker: MockerFixture)
     controller = eiger_odin_controller
 
     _super_arm_mock = mocker.patch.object(EigerController, "arm_when_ready")
-    ef_mock = mocker.patch.object(controller.OD, "EF", create=True)
+    ef_mock = mocker.patch.object(controller.od, "ef", create=True)
     ef_mock.ready.wait_for_value = mocker.AsyncMock()
 
     ef_mock.ready.wait_for_value.side_effect = TimeoutError
@@ -76,7 +76,7 @@ async def test_start_writing(eiger_odin_controller, mocker: MockerFixture):
     detector_mock.compression.get.return_value = "lz4"
     detector_mock.bit_depth_image.get.return_value = 16
 
-    writing_wait_mock = mocker.patch.object(controller.OD.writing, "wait_for_value")
+    writing_wait_mock = mocker.patch.object(controller.od.writing, "wait_for_value")
 
     writing_wait_mock.side_effect = TimeoutError
     with pytest.raises(TimeoutError, match="File writers failed to start"):
@@ -85,9 +85,9 @@ async def test_start_writing(eiger_odin_controller, mocker: MockerFixture):
     writing_wait_mock.side_effect = None
     await controller.start_writing()
 
-    controller.OD.FP.data_compression.put.assert_awaited_with("LZ4")
-    controller.OD.FP.data_datatype.put.assert_awaited_with("uint16")
-    controller.OD.FP.start_writing.assert_awaited_with()
+    controller.od.fp.data_compression.put.assert_awaited_with("LZ4")
+    controller.od.fp.data_datatype.put.assert_awaited_with("uint16")
+    controller.od.fp.start_writing.assert_awaited_with()
     writing_wait_mock.assert_awaited_with(
         True, timeout=controller.start_writing_timeout.get()
     )
