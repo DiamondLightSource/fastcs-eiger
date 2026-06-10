@@ -29,12 +29,12 @@ class EigerOdinController(EigerController):
     ) -> None:
         super().__init__(detector_connection_settings, api_version)
 
-        self.OD = OdinController(odin_connection_settings)
+        self.od = OdinController(odin_connection_settings)
 
     async def initialise(self) -> None:
         """Initialise eiger controller and odin controller"""
 
-        await asyncio.gather(super().initialise(), self.OD.initialise())
+        await asyncio.gather(super().initialise(), self.od.initialise())
 
     @command(group=COMMAND_GROUP)
     async def arm_when_ready(self):
@@ -47,7 +47,7 @@ class EigerOdinController(EigerController):
         await super().arm_when_ready()
 
         try:
-            await self.OD.EF.ready.wait_for_value(True, timeout=self.arm_timeout.get())
+            await self.od.ef.ready.wait_for_value(True, timeout=self.arm_timeout.get())
         except TimeoutError as e:
             raise TimeoutError("Eiger fan not ready") from e
 
@@ -60,14 +60,14 @@ class EigerOdinController(EigerController):
 
         """
         await asyncio.gather(
-            self.OD.FP.data_compression.put(self.detector.compression.get().upper()),
-            self.OD.FP.data_datatype.put(f"uint{self.detector.bit_depth_image.get()}"),
+            self.od.fp.data_compression.put(self.detector.compression.get().upper()),
+            self.od.fp.data_datatype.put(f"uint{self.detector.bit_depth_image.get()}"),
         )
 
-        await self.OD.FP.start_writing()
+        await self.od.fp.start_writing()
 
         try:
-            await self.OD.writing.wait_for_value(
+            await self.od.writing.wait_for_value(
                 True, timeout=self.start_writing_timeout.get()
             )
         except TimeoutError as e:

@@ -9,7 +9,7 @@ CA_TIMEOUT = 3
 
 def main(
     prefix: str = "EIGER",
-    file_path: str = "/data",
+    file_path: str = "/tmp",
     file_name: str = "test",
     frames: int = 10,
     exposure_time: float = 1,
@@ -29,7 +29,7 @@ async def run_acquisition(
     stream2: bool,
 ):
     eiger_prefix = prefix
-    odin_prefix = f"{prefix}:OD"
+    odin_prefix = f"{prefix}:Od"
 
     await tidy(eiger_prefix, odin_prefix)
 
@@ -41,7 +41,7 @@ async def run_acquisition(
         caput(f"{odin_prefix}:BlockSize", 1),
         caput_str(f"{odin_prefix}:FilePath", file_path),
         caput_str(f"{odin_prefix}:FilePrefix", file_name),
-        caput(f"{odin_prefix}:FP:Frames", frames),
+        caput(f"{odin_prefix}:Fp:Frames", frames),
         caput(f"{eiger_prefix}:Detector:Nimages", frames),
         caput(f"{eiger_prefix}:Detector:Ntrigger", 1),
         caput(f"{eiger_prefix}:Detector:FrameTime", exposure_time),
@@ -71,7 +71,7 @@ async def run_acquisition(
 
 
 async def tidy(eiger_prefix: str, odin_prefix: str):
-    await caput(f"{odin_prefix}:FP:StopWriting", True)
+    await caput(f"{odin_prefix}:Fp:StopWriting", True)
     await caput(f"{eiger_prefix}:Detector:Abort", True)
 
 
