@@ -54,6 +54,10 @@ class EigerController(Controller):
         The detector will be initialized if it is not already.
 
         """
+
+        while True:
+            await asyncio.sleep(1)
+
         self.connection.open()
 
         try:
