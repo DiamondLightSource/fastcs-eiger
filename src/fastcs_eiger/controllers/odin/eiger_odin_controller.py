@@ -34,6 +34,9 @@ class EigerOdinController(EigerController):
     async def initialise(self) -> None:
         """Initialise eiger controller and odin controller"""
 
+        while True:
+            await asyncio.sleep(1)
+
         await asyncio.gather(super().initialise(), self.OD.initialise())
 
     @command(group=COMMAND_GROUP)
