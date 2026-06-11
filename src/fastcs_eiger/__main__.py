@@ -53,6 +53,7 @@ def ioc(
     odin_ip: str | None = typer.Option(None, help="IP address of odin control server"),
     odin_port: int = typer.Option(8888, help="Port of odin control server"),
     log_level: LogLevel = LogLevel.TRACE,
+    interactive: bool = False,
 ):
     ui_path = OPI_PATH if OPI_PATH.is_dir() else Path.cwd() / "opi"
 
@@ -80,7 +81,7 @@ def ioc(
         ),
     ]
     launcher = FastCS(controller, transports)
-    launcher.run()
+    launcher.run(interactive=interactive)
 
 
 # test with: python -m fastcs_eiger
