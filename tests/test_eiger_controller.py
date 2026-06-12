@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from fastcs.attributes import AttrRW
 from pytest_mock import MockerFixture
@@ -7,7 +9,9 @@ from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterRespon
 
 
 @pytest.mark.asyncio
-async def test_eiger_controller_creates_subcontrollers(mock_connection):
+async def test_eiger_controller_creates_subcontrollers(
+    mocker: MockerFixture, mock_connection
+):
     eiger_controller, connection = mock_connection
 
     # Arbitrary HTTP response for pydantic model.
@@ -17,8 +21,10 @@ async def test_eiger_controller_creates_subcontrollers(mock_connection):
         "value": "test_value",
         "value_type": "string",
     }
-
-    await eiger_controller.initialise()
+    with patch.object(
+        EigerDetectorController, "state", mocker.MagicMock(), create=True
+    ):
+        await eiger_controller.initialise()
     assert list(eiger_controller.sub_controllers.keys()) == [
         "detector",
         "stream",

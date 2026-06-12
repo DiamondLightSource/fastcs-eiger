@@ -38,6 +38,9 @@ def eiger_odin_controller(mocker: MockerFixture):
     fp_mock.data_dims_1 = AttrR(Int(), initial_value=1024)
     fp_mock.start_writing = mocker.AsyncMock()
 
+    mw_mock = mocker.patch.object(controller.OD, "MW", create=True)
+    mw_mock.acquisition_id.put = mocker.AsyncMock()
+
     return controller
 
 

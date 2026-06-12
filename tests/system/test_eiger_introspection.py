@@ -274,7 +274,9 @@ async def test_attribute_validation_raises_for_invalid_type(mock_connection):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("valid_type", EIGER_PARAMETER_VALID_VALUES)
-async def test_attribute_validation_accepts_valid_types(mock_connection, valid_type):
+async def test_attribute_validation_accepts_valid_types(
+    mocker: MockerFixture, mock_connection, valid_type
+):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
         "access_mode": "r",
@@ -283,7 +285,10 @@ async def test_attribute_validation_accepts_valid_types(mock_connection, valid_t
         "value_type": valid_type,
     }
 
-    await eiger_controller.initialise()
+    with patch.object(
+        EigerDetectorController, "state", mocker.MagicMock(), create=True
+    ):
+        await eiger_controller.initialise()
 
 
 @pytest.mark.asyncio
@@ -334,7 +339,7 @@ async def test_eiger_controller_trigger_correctly_introspected(
     ],
 )
 async def test_if_min_value_provided_then_prec_set_correctly(
-    mock_min, expected_prec, mock_connection
+    mocker: MockerFixture, mock_min, expected_prec, mock_connection
 ):
     eiger_controller, connection = mock_connection
 
@@ -365,6 +370,7 @@ async def test_if_min_value_provided_then_prec_set_correctly(
             "fastcs_eiger.controllers.eiger_subsystem_controller.EIGER_PARAMETER_MODES",
             ["status"],
         ),
+        patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
     ):
         await eiger_controller.initialise()
 
