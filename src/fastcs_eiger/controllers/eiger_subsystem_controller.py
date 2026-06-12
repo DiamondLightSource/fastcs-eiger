@@ -6,6 +6,7 @@ from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.controllers import Controller
 from fastcs.logging import logger
 from fastcs.util import ONCE
+from fastcs_odin.io import StatusSummaryAttributeIO
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -61,7 +62,7 @@ class EigerSubsystemController(Controller):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
-        super().__init__(ios=[self._io])
+        super().__init__(ios=[self._io, StatusSummaryAttributeIO()])
         self._api_version: EigerAPIVersion = api_version
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameterRef]:

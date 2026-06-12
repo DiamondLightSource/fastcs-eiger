@@ -73,6 +73,8 @@ class EigerOdinController(EigerController):
             self.OD.FP.data_datatype.put(f"uint{self.detector.bit_depth_image.get()}"),
         )
 
+        await self.OD.MW.acquisition_id.put("")
+
         await self.OD.FP.start_writing()
 
         try:
