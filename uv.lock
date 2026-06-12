@@ -960,8 +960,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.12.0"
-source = { registry = "https://pypi.org/simple" }
+version = "0.12.1.dev1+g3cad7cf21"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?rev=0.12.0-stdio-fix#3cad7cf21659cd92ef81b83b7c1a898c10415c86" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
@@ -973,10 +973,6 @@ dependencies = [
     { name = "pygelf" },
     { name = "ruamel-yaml" },
     { name = "stdio-socket" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b9/00/00f9ccc779c5fa3e6cf8f3efd68d6f9b586cc0d3a0be6811ee9ea588467c/fastcs-0.12.0.tar.gz", hash = "sha256:79e643454e46b4e52d7c93b2edd4b82018ed15c3b674d0935597970fa495c27c", size = 335386, upload-time = "2026-03-09T13:04:08.991Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/42/3b1d2ef39e46b38c025991f4d1ebfd6b0f65e6add0898ceced08ce40a2c0/fastcs-0.12.0-py3-none-any.whl", hash = "sha256:898ed85bcaa5f1ee22580139457f6ba43b7d3f956001a82157469b223b1930db", size = 83130, upload-time = "2026-03-09T13:04:07.526Z" },
 ]
 
 [package.optional-dependencies]
@@ -1021,7 +1017,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp" },
-    { name = "fastcs-odin", specifier = "~=0.9.0" },
+    { name = "fastcs-odin", git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=fastcs-0.12.0-with-stdio-fix" },
     { name = "h5py" },
     { name = "numpy" },
     { name = "pillow" },
@@ -1051,15 +1047,12 @@ dev = [
 
 [[package]]
 name = "fastcs-odin"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
+version = "0.9.1.dev8+ga1f18d7a6"
+source = { git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=fastcs-0.12.0-with-stdio-fix#a1f18d7a66efb370c2f3bbd4b9539bed5f6b57cc" }
 dependencies = [
     { name = "aiohttp" },
     { name = "fastcs", extra = ["epicsca"] },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/41/7f/66997ceb65ef8ea4946f4c51e675ea0aca3f724def893769d0e4b9a9d7d5/fastcs_odin-0.9.0.tar.gz", hash = "sha256:819f45e2fa20ba1a80447374f47b54e01a377ba325c0a7db0a98d6e7c3decdc3", size = 261671, upload-time = "2026-03-09T18:00:54.629Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/75/f05356f837f02e76bb9bdab4b000d1335b9f9ad392d6ef9d336e57720a50/fastcs_odin-0.9.0-py3-none-any.whl", hash = "sha256:b25049f724cfdec11905caf9e7c0497535bb1df69b02b9b866ebdbbb8e8e85a6", size = 29703, upload-time = "2026-03-09T18:00:53.519Z" },
+    { name = "h5py" },
 ]
 
 [[package]]
@@ -3197,14 +3190,10 @@ wheels = [
 
 [[package]]
 name = "stdio-socket"
-version = "1.4.0"
-source = { registry = "https://pypi.org/simple" }
+version = "0.1.dev50+g5657e3374"
+source = { git = "https://github.com/hyperrealist/stdio-socket.git?rev=26-stdio-expose-hang-bugfix#5657e337496b10dd9fb2412923a9fbe7c4af4102" }
 dependencies = [
     { name = "typer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4a/7b/ea34ec394e3ca4b60de1538f2e80ec1e1f8c1acdc4cde61c30debf953298/stdio_socket-1.4.0.tar.gz", hash = "sha256:a7c0735624365031dbe1df9d23f38331261b1bda40c2f40916f42f70cb4e7a21", size = 74805, upload-time = "2026-01-14T08:45:44.484Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/16/dec7ff35833eef742791aa48fee09a6873689dd9a0e72a11195167ce06aa/stdio_socket-1.4.0-py3-none-any.whl", hash = "sha256:8443cac5f742dfe97580b46c3948535202acf1daa0165bea190370402733de30", size = 16307, upload-time = "2026-01-14T08:45:43.505Z" },
 ]
 
 [[package]]
