@@ -9,7 +9,7 @@ CA_TIMEOUT = 3
 
 def main(
     prefix: str = "EIGER",
-    file_path: str = "/data",
+    file_path: str = "/tmp",
     file_name: str = "test",
     frames: int = 10,
     exposure_time: float = 1,
@@ -31,22 +31,20 @@ async def run_acquisition(
     eiger_prefix = prefix
     odin_prefix = f"{prefix}:OD"
 
-    await tidy(eiger_prefix, odin_prefix)
+    await tidy(odin_prefix)
 
-    await caput_str(f"{odin_prefix}:AcquisitionId", "")
+    await caput_str(f"{odin_prefix}:AcquisitionId", file_name)
     print("Configuring")
     await asyncio.gather(
         caput_str(f"{eiger_prefix}:Stream:Format", "cbor" if stream2 else "legacy"),
         caput_str(f"{eiger_prefix}:Stream:HeaderDetail", "all"),
         caput(f"{odin_prefix}:BlockSize", 1),
         caput_str(f"{odin_prefix}:FilePath", file_path),
-        caput_str(f"{odin_prefix}:FilePrefix", file_name),
         caput(f"{odin_prefix}:FP:Frames", frames),
         caput(f"{eiger_prefix}:Detector:Nimages", frames),
         caput(f"{eiger_prefix}:Detector:Ntrigger", 1),
         caput(f"{eiger_prefix}:Detector:FrameTime", exposure_time),
         caput(f"{eiger_prefix}:Detector:CountTime", exposure_time),
-        # caput(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for real detector
         caput_str(f"{eiger_prefix}:Detector:TriggerMode", "ints"),  # for tickit sim
     )
 
@@ -56,23 +54,28 @@ async def run_acquisition(
     print("Starting writing")
     await caput(f"{eiger_prefix}:StartWriting", True)
 
+    await pv_equals(
+        f"{odin_prefix}:FP:Writing",
+        1,
+    )
+
     print("Triggering")
     await caput(f"{eiger_prefix}:Detector:Trigger", True, wait=False)
 
     print("Waiting")
     await pv_equals(
-        f"{odin_prefix}:Writing",
+        f"{odin_prefix}:FP:Writing",
         0,
         timeout=exposure_time * frames * 5,  # tickit sim is much slower than requested
     )
 
     print("Finished")
-    await tidy(eiger_prefix, odin_prefix)
+    await tidy(odin_prefix)
 
 
-async def tidy(eiger_prefix: str, odin_prefix: str):
+async def tidy(odin_prefix: str):
     await caput(f"{odin_prefix}:FP:StopWriting", True)
-    await caput(f"{eiger_prefix}:Detector:Abort", True)
+    await caput(f"{odin_prefix}:MW:Stop", True)
 
 
 async def caput_str(pv: str, value: Any, **kwargs):
