@@ -7,7 +7,7 @@ controllers:
       port: 8081
     api_version: "1.8.0"
 transport:
-  - epicsca: {}
+  - epicspva: {}
     gui:
       title: "Eiger - EIGER"
       output_dir: ./opi/

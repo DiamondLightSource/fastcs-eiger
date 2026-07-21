@@ -39,6 +39,7 @@ IGNORED_KEYS = [
     # TODO: Is it a bad idea to include these?
     "test_image_mode",
     "test_image_value",
+    "description",  # Shadows description field on controllers
 ]
 
 # Parameters that are in the API but missing from keys
