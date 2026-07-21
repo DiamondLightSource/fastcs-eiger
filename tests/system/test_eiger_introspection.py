@@ -77,7 +77,7 @@ async def test_attribute_creation(sim_eiger):
     detector_attributes = EigerDetectorController._create_attributes(
         subsystem_parameters["detector"]
     )
-    assert len(detector_attributes) == 76
+    assert len(detector_attributes) == 75
     monitor_attributes = EigerMonitorController._create_attributes(
         subsystem_parameters["monitor"]
     )

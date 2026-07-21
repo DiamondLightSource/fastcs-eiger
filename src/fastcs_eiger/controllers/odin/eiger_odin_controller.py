@@ -24,7 +24,7 @@ class EigerOdinController(EigerController):
     """Eiger controller with Odin sub controller"""
 
     start_writing_timeout = AttrRW(
-        Int(min=1),
+        Int(min=0),
         initial_value=5,
         description="Timeout for start writing command",
         group=COMMAND_GROUP,
