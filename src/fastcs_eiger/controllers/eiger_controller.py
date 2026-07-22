@@ -18,6 +18,8 @@ from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 COMMAND_GROUP = "Command"
 
+GDA_GROUP = "GDA"
+
 
 @dataclass
 class EigerControllerSettings:
@@ -36,10 +38,11 @@ class EigerController(Controller):
     detector: EigerDetectorController
 
     # Soft signals for GDA
-    image_mode = AttrRW(String(), initial_value="Multiple")
-    manual_trigger = AttrRW(String(), initial_value="No")
-    start_timeout = AttrRW(Bool())
-    datatype = AttrRW(Int())
+    image_mode = AttrRW(String(), initial_value="Multiple", group=GDA_GROUP)
+    manual_trigger = AttrRW(String(), initial_value="No", group=GDA_GROUP)
+    start_timeout = AttrRW(Bool(), group=GDA_GROUP)
+    datatype = AttrRW(Int(), group=GDA_GROUP)
+    clear_errors = AttrRW(Bool(), group=GDA_GROUP)
     # Internal Attributes
 
     stale_parameters = AttrR(Bool())
