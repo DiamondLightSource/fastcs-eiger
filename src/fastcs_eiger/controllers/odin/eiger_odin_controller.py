@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from fastcs.attributes import AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.datatypes import Bool, Int
-from fastcs.methods import command
+from fastcs.methods import command, scan
+from fastcs.util import ONCE
 from fastcs_odin.controllers.odin_controller import OdinControllerSettings
 
 from fastcs_eiger.controllers.eiger_controller import (
@@ -83,3 +84,10 @@ class EigerOdinController(EigerController):
             )
         except TimeoutError as e:
             raise TimeoutError("File writers failed to start") from e
+
+    @scan(ONCE)
+    async def set_odin_config(self):
+        await asyncio.gather(
+            self.OD.block_size.put(1000, sync_setpoint=True),
+            self.OD.FP.process_blocks_per_file.put(1, sync_setpoint=True),
+        )
