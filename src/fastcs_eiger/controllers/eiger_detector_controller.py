@@ -1,12 +1,20 @@
+from enum import IntEnum
 from typing import Any
 
 from fastcs.attributes import AttrR, AttrRW
-from fastcs.datatypes import Bool, Float
+from fastcs.datatypes import Bool, Enum, Float
 from fastcs.methods import command
 from fastcs_odin.io import StatusSummaryAttributeIORef
 
 from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.eiger_parameter import EigerAPIVersion
+
+
+class AcquireEnum(IntEnum):
+    """Enum for image mode attribute"""
+
+    Done = 0
+    Acquire = 1
 
 
 def command_uri(api_version: EigerAPIVersion, key: str) -> str:
@@ -39,12 +47,12 @@ class EigerDetectorController(EigerSubsystemController):
         )
 
         async def acquire(value):
-            if value == 1:
+            if value == AcquireEnum.Acquire:
                 await self.arm()
             else:
                 await self.disarm()
 
-        self.acquire = AttrRW(Bool())
+        self.acquire = AttrRW(Enum(enum_cls=AcquireEnum))
         self.acquire.add_on_update_callback(acquire)
 
     @detector_command

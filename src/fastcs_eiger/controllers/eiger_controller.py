@@ -1,11 +1,12 @@
 import asyncio
 from collections.abc import Coroutine
 from dataclasses import dataclass
+from enum import IntEnum
 
 from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
-from fastcs.datatypes import Bool, Int, String
+from fastcs.datatypes import Bool, Enum, Int, String
 from fastcs.logging import logger
 from fastcs.methods import command, scan
 
@@ -19,6 +20,39 @@ from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 COMMAND_GROUP = "Command"
 
 GDA_GROUP = "GDA"
+
+
+class CaptureEnum(IntEnum):
+    """Enum for datatype attribute"""
+
+    Idle = 0
+    Active = 1
+
+
+class DatatpyeEnum(IntEnum):
+    """Enum for datatype attribute"""
+
+    UInt8 = 0
+    UInt16 = 1
+    UInt32 = 2
+    UInt64 = 3
+
+
+class ImageModeEnum(IntEnum):
+    """Enum for image mode attribute"""
+
+    Single = 0
+    Multiple = 1
+    Continuous = 2
+
+
+class TriggerModeEnum(IntEnum):
+    """Enum for trigger mode attribute"""
+
+    Internal_Series = 0
+    Internal_Enable = 1
+    External_Series = 2
+    External_Enable = 3
 
 
 @dataclass
@@ -38,11 +72,13 @@ class EigerController(Controller):
     detector: EigerDetectorController
 
     # Soft signals for GDA
-    image_mode = AttrRW(String(), initial_value="Multiple", group=GDA_GROUP)
+    image_mode = AttrRW(Enum(enum_cls=ImageModeEnum), group=GDA_GROUP)
+    trigger_mode = AttrRW(Enum(enum_cls=TriggerModeEnum), group=GDA_GROUP)
     manual_trigger = AttrRW(String(), initial_value="No", group=GDA_GROUP)
     start_timeout = AttrRW(Bool(), group=GDA_GROUP)
-    datatype = AttrRW(Int(), group=GDA_GROUP)
+    datatype = AttrRW(Enum(enum_cls=DatatpyeEnum), group=GDA_GROUP)
     clear_errors = AttrRW(Bool(), group=GDA_GROUP)
+    close_file_timeout = AttrRW(Int(min=1), initial_value=3, group=GDA_GROUP)
     # Internal Attributes
 
     stale_parameters = AttrR(Bool())
