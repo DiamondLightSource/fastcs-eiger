@@ -994,6 +994,7 @@ dependencies = [
     { name = "h5py" },
     { name = "numpy" },
     { name = "pillow" },
+    { name = "pyzmq" },
     { name = "typer" },
 ]
 
@@ -1025,6 +1026,7 @@ requires-dist = [
     { name = "h5py" },
     { name = "numpy" },
     { name = "pillow" },
+    { name = "pyzmq", specifier = ">=27.1.0" },
     { name = "typer" },
 ]
 

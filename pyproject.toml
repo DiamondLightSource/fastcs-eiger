@@ -19,6 +19,7 @@ dependencies = [
     "pillow",
     "typer",
     "h5py",
+    "pyzmq>=27.1.0",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
