@@ -19,9 +19,9 @@ class EigerFanAdapterController(OdinSubController):
     block_size: AttrRW[int]
     ready: AttrR[bool]
 
-    # Control channel information
-    eiger_channel_address: AttrRW[str]
-    ctrl_channel_port: AttrRW[str]
+    # EF endpoint information
+    endpoints_0_ip_address: AttrR[str]
+    endpoints_0_port: AttrR[int]
 
     async def initialise(self):
         for parameter in self.parameters:
@@ -49,8 +49,9 @@ class EigerFanAdapterController(OdinSubController):
         logger.info("Restarting Eiger FAN...")
         ctx = zmq.Context()
         socket = ctx.socket(zmq.DEALER)
+        socket.setsockopt(zmq.LINGER, 1000)
         full_address = (
-            f"tcp://{self.eiger_channel_address.get()}:{self.ctrl_channel_port.get()}"
+            f"tcp://{self.endpoints_0_ip_address.get()}:{self.endpoints_0_port.get()}"
         )
         msg = {
             "msg_type": "cmd",
@@ -62,9 +63,16 @@ class EigerFanAdapterController(OdinSubController):
         try:
             socket.connect(full_address)
             socket.send_string(json.dumps(msg))
+            if socket.poll(2000):
+                reply = socket.recv_string()
+                logger.info("EigerFan restart response: %s", reply)
+            else:
+                logger.warning("No response from EigerFan restart command")
         except Exception:
             logger.opt(exception=True).warning(
                 "Failed to restart Eiger FAN",
             )
         finally:
             socket.disconnect(full_address)
+            socket.close()
+            ctx.term()
