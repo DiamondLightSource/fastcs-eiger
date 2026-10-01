@@ -78,3 +78,7 @@ class EigerDetectorController(EigerSubsystemController):
     @detector_command
     async def cancel(self):
         await self.connection.put(command_uri(self._api_version, key="cancel"))
+
+    @detector_command
+    async def hv_reset(self):
+        await self.connection.put(command_uri(self._api_version, key="hv_reset"))
