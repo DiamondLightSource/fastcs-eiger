@@ -81,11 +81,11 @@ class EigerDetectorController(EigerSubsystemController):
         await self.connection.put(command_uri(self._api_version, key="cancel"))
 
     @detector_command
-    async def hv_reset(self):
+    async def hv_reset(self, seconds: int = 60):
         match self.sensor_material.get():
             case "CdTe":
                 await self.connection.put(
-                    command_uri(self._api_version, key="hv_reset")
+                    command_uri(self._api_version, key="hv_reset"), seconds
                 )
             case _:
                 raise RuntimeError("Can only run HV Reset on CdTe sensor models")
