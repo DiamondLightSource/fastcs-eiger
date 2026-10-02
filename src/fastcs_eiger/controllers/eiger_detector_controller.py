@@ -28,6 +28,7 @@ class EigerDetectorController(EigerSubsystemController):
     bit_depth_image: AttrR[int]
     compression: AttrRW[str]
     trigger_mode: AttrR[str]
+    sensor_material: AttrR[str]
 
     async def initialise(self) -> None:
         await super().initialise()
@@ -81,4 +82,10 @@ class EigerDetectorController(EigerSubsystemController):
 
     @detector_command
     async def hv_reset(self):
-        await self.connection.put(command_uri(self._api_version, key="hv_reset"))
+        match self.sensor_material.get():
+            case "CdTe":
+                await self.connection.put(
+                    command_uri(self._api_version, key="hv_reset")
+                )
+            case _:
+                raise RuntimeError("Can only run HV Reset on CdTe sensor models")
