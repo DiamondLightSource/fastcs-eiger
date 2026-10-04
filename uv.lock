@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14'",
@@ -394,7 +394,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
+    { name = "pycparser" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -960,7 +960,7 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.12.0"
+version = "0.14.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aioserial" },
@@ -974,9 +974,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "stdio-socket" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b9/00/00f9ccc779c5fa3e6cf8f3efd68d6f9b586cc0d3a0be6811ee9ea588467c/fastcs-0.12.0.tar.gz", hash = "sha256:79e643454e46b4e52d7c93b2edd4b82018ed15c3b674d0935597970fa495c27c", size = 335386, upload-time = "2026-03-09T13:04:08.991Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9d/7d/21a3f92a043fd1499f290d27427cc1f0461f2a573a55071774031db1df26/fastcs-0.14.3.tar.gz", hash = "sha256:b289c1bb4bb6599f3b3ea946792abfd953888f3fe8800e3fdb95814a619679ae", size = 420194, upload-time = "2026-10-01T11:53:33.923Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/42/3b1d2ef39e46b38c025991f4d1ebfd6b0f65e6add0898ceced08ce40a2c0/fastcs-0.12.0-py3-none-any.whl", hash = "sha256:898ed85bcaa5f1ee22580139457f6ba43b7d3f956001a82157469b223b1930db", size = 83130, upload-time = "2026-03-09T13:04:07.526Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/1c/e75b41c22dd4fe85a1ab7bb389d6acc078bdae9c44d1f4f9ac7f1e05d226/fastcs-0.14.3-py3-none-any.whl", hash = "sha256:406f0e1b3aa6562f4ec85595518990aed9f5115ad9f9038f0560eecd5a90e936", size = 95807, upload-time = "2026-10-01T11:53:32.807Z" },
 ]
 
 [package.optional-dependencies]
@@ -1021,7 +1021,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp" },
-    { name = "fastcs-odin", specifier = "~=0.9.0" },
+    { name = "fastcs-odin", specifier = "~=0.10.0" },
     { name = "h5py" },
     { name = "numpy" },
     { name = "pillow" },
@@ -1051,15 +1051,16 @@ dev = [
 
 [[package]]
 name = "fastcs-odin"
-version = "0.9.0"
+version = "0.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "fastcs", extra = ["epicsca"] },
+    { name = "h5py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/41/7f/66997ceb65ef8ea4946f4c51e675ea0aca3f724def893769d0e4b9a9d7d5/fastcs_odin-0.9.0.tar.gz", hash = "sha256:819f45e2fa20ba1a80447374f47b54e01a377ba325c0a7db0a98d6e7c3decdc3", size = 261671, upload-time = "2026-03-09T18:00:54.629Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/62/b7780a3615ecb823900c8a31677c3aa5c8e1f7faf4f65894f582689e8fe8/fastcs_odin-0.10.0.tar.gz", hash = "sha256:33693ee9901635b017e031bab92df0ce9111ea339e26bce32a66b6dfd4c6dc05", size = 333764, upload-time = "2026-09-14T11:40:42.184Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/75/f05356f837f02e76bb9bdab4b000d1335b9f9ad392d6ef9d336e57720a50/fastcs_odin-0.9.0-py3-none-any.whl", hash = "sha256:b25049f724cfdec11905caf9e7c0497535bb1df69b02b9b866ebdbbb8e8e85a6", size = 29703, upload-time = "2026-03-09T18:00:53.519Z" },
+    { url = "https://files.pythonhosted.org/packages/41/05/9393436718a41627e2eac69edcb7c034e40e3eb79081af5356c4e9271e72/fastcs_odin-0.10.0-py3-none-any.whl", hash = "sha256:bdd0bf3a7de156549691dba9b8ec75eb63ae4a74437914408c07841cbe98812f", size = 32291, upload-time = "2026-09-14T11:40:41.008Z" },
 ]
 
 [[package]]
@@ -1385,17 +1386,17 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
-    { name = "decorator", marker = "python_full_version < '3.12'" },
-    { name = "ipython-pygments-lexers", marker = "python_full_version < '3.12'" },
-    { name = "jedi", marker = "python_full_version < '3.12'" },
-    { name = "matplotlib-inline", marker = "python_full_version < '3.12'" },
-    { name = "pexpect", marker = "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "prompt-toolkit", marker = "python_full_version < '3.12'" },
-    { name = "pygments", marker = "python_full_version < '3.12'" },
-    { name = "stack-data", marker = "python_full_version < '3.12'" },
-    { name = "traitlets", marker = "python_full_version < '3.12'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "decorator" },
+    { name = "ipython-pygments-lexers" },
+    { name = "jedi" },
+    { name = "matplotlib-inline" },
+    { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit" },
+    { name = "pygments" },
+    { name = "stack-data" },
+    { name = "traitlets" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a6/60/2111715ea11f39b1535bed6024b7dec7918b71e5e5d30855a5b503056b50/ipython-9.10.0.tar.gz", hash = "sha256:cd9e656be97618a0676d058134cd44e6dc7012c0e5cb36a9ce96a8c904adaf77", size = 4426526, upload-time = "2026-02-02T10:00:33.594Z" }
 wheels = [
@@ -1412,16 +1413,16 @@ resolution-markers = [
     "python_full_version == '3.12.*'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "decorator", marker = "python_full_version >= '3.12'" },
-    { name = "ipython-pygments-lexers", marker = "python_full_version >= '3.12'" },
-    { name = "jedi", marker = "python_full_version >= '3.12'" },
-    { name = "matplotlib-inline", marker = "python_full_version >= '3.12'" },
-    { name = "pexpect", marker = "python_full_version >= '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "prompt-toolkit", marker = "python_full_version >= '3.12'" },
-    { name = "pygments", marker = "python_full_version >= '3.12'" },
-    { name = "stack-data", marker = "python_full_version >= '3.12'" },
-    { name = "traitlets", marker = "python_full_version >= '3.12'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "decorator" },
+    { name = "ipython-pygments-lexers" },
+    { name = "jedi" },
+    { name = "matplotlib-inline" },
+    { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit" },
+    { name = "pygments" },
+    { name = "stack-data" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/86/28/a4698eda5a8928a45d6b693578b135b753e14fa1c2b36ee9441e69a45576/ipython-9.11.0.tar.gz", hash = "sha256:2a94bc4406b22ecc7e4cb95b98450f3ea493a76bec8896cda11b78d7752a6667", size = 4427354, upload-time = "2026-03-05T08:57:30.549Z" }
 wheels = [
@@ -2246,7 +2247,7 @@ wheels = [
 
 [[package]]
 name = "pvi"
-version = "0.12.0"
+version = "0.14.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -2256,9 +2257,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/91/3808872d96de8dac33069bf97f94f6ff430841ceaa8398db122ffe9d4244/pvi-0.12.0.tar.gz", hash = "sha256:1fb288dd863f31c276c0e119b57a36788f2b6c2e1324f88f1fac2c8ae1a8bb03", size = 189219, upload-time = "2025-12-22T14:11:02.545Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/af/a5b4fa5210fbd072e70eaf9d5b8ccaf6a7e61b293e444331cf85423d6bde/pvi-0.14.4.tar.gz", hash = "sha256:745e3a084afb6cb0c557518399063e9992bf7b3e925f1f9e6dd97bf34d46aaf4", size = 289308, upload-time = "2026-09-30T13:02:43.76Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/b9/ffdd156df74460300c7e0483662670ed2826b7c09c59ba6a3a1b8c83b05d/pvi-0.12.0-py3-none-any.whl", hash = "sha256:b578a513fbbfe2368623eb6a75d84daf8b3176d4e46d3bc506f0ee3a1dbbfd80", size = 57072, upload-time = "2025-12-22T14:11:01.254Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/03/3e38dd5a7a5618f8dfa8cdd08f414bc915d6bae79f495d19bd97d570d199/pvi-0.14.4-py3-none-any.whl", hash = "sha256:0ead53921df2216bc5bee6f31aba483f33a9bd64a49bf59dbb2e324a67e365a1", size = 59818, upload-time = "2026-09-30T13:02:42.626Z" },
 ]
 
 [[package]]
@@ -2975,7 +2976,7 @@ wheels = [
 
 [[package]]
 name = "softioc"
-version = "4.7.0"
+version = "4.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "epicscorelibs" },
@@ -2984,17 +2985,20 @@ dependencies = [
     { name = "pvxslibs" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/fd/7b42c8c57703abbae0e78c351291eee1414bdc8219754ac8fcb2160605c5/softioc-4.7.0.tar.gz", hash = "sha256:8514c6f6b9df1191462171df6a2b9d9b33e6492fe252d3c5839d2f132d307add", size = 92691, upload-time = "2026-01-14T14:07:48.473Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/98/15e812e8b6345a2fa305d5d08b7ec8f3545ef815b9e10d1d00e39175516f/softioc-4.7.2.tar.gz", hash = "sha256:993ef8f6b81f0908baa4403422068334757057f006a61f554c450755c9ebf0c6", size = 94258, upload-time = "2026-09-11T11:27:47.365Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/34/2e64ab5adc6708cd4344a757746d842d86b18b818d986e9b341917a7bfb3/softioc-4.7.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:d8a7c66f3ed372659ede74ff145b6c5ff041c33ff7921d744c01e6b4f1a1df5e", size = 118815, upload-time = "2026-01-14T14:07:31.079Z" },
-    { url = "https://files.pythonhosted.org/packages/36/5f/e16232e8bcf05ab633c39bb7ae2f1ed334b686383db41d20e2a59500ceeb/softioc-4.7.0-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:1bcf79de8cbe49599cecbafa01c145058e60a22c055408609da95afd3fcbdc4b", size = 124586, upload-time = "2026-01-14T14:07:32.462Z" },
-    { url = "https://files.pythonhosted.org/packages/d9/bc/622aa9138057c8c8249a1ad94bd2a12d69e814f327b988b8545891d93a15/softioc-4.7.0-cp311-cp311-win_amd64.whl", hash = "sha256:4413a2ed7ae4f0bddc9179a9ec1afa2b514343de1aa72bb5a327fdfe1a2f1729", size = 118430, upload-time = "2026-01-14T14:07:33.682Z" },
-    { url = "https://files.pythonhosted.org/packages/57/cc/5b4a59eebfb419ab2e9ffa58b4c09ce89af896b13c60516b5c5e42e86c89/softioc-4.7.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:a8e101f4f3ad35c32fecbca422dcf6496ec3c98545965fedc5a9dc48ba0dbe37", size = 118811, upload-time = "2026-01-14T14:07:34.519Z" },
-    { url = "https://files.pythonhosted.org/packages/23/62/d59270acbec972aea0c36d65cc13673e786c12664070cf437869678655e9/softioc-4.7.0-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:4fe5cb8fa3c156b81940b7e9a456fe90a55ec1194eb75d4c286af405ff27ab22", size = 124622, upload-time = "2026-01-14T14:07:35.429Z" },
-    { url = "https://files.pythonhosted.org/packages/03/81/f976b094616fb605dad6d21a0b4b78278e3585439ec5cb2ae4da1ff52441/softioc-4.7.0-cp312-cp312-win_amd64.whl", hash = "sha256:3b2ac39cb9223fd936a9ffe5676dce6d7c499a5d1f5919380085829c1c38bf07", size = 118457, upload-time = "2026-01-14T14:07:36.822Z" },
-    { url = "https://files.pythonhosted.org/packages/58/fe/8c9bf481416f8f9a6bd6e47b3ee7fb5282c320731e66ab47ccbbca9164b2/softioc-4.7.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:eda2a04105c0c2f397068ec074e43db2264dd330baa2d7ac2a94702f2fa4cab3", size = 118819, upload-time = "2026-01-14T14:07:37.727Z" },
-    { url = "https://files.pythonhosted.org/packages/47/90/d96f39b25f4cca886ac3f36a1bbfb1b04daef9512ec295d6319bcb7e2707/softioc-4.7.0-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:3a662a934af3c46eb7f5390539aa210a72fef5b48dd92167c4dd248bdc234597", size = 124619, upload-time = "2026-01-14T14:07:39.761Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/b2/bf80cc846aed9aa2d87c29e613e9d55932c9a180962da9c5de97d6da8b73/softioc-4.7.0-cp313-cp313-win_amd64.whl", hash = "sha256:f93647ab279856e9653c545a626ed40aea71d3432391c3df721655d4888c656b", size = 118454, upload-time = "2026-01-14T14:07:40.637Z" },
+    { url = "https://files.pythonhosted.org/packages/49/b0/cf1a69acff090f6034804ba945c1645cb3de27726e946a4326901e24ecd6/softioc-4.7.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:95f587d42b1e73fb823b9eadc1b2f0a91f314a2493b6eb45c549ce8613837b72", size = 119316, upload-time = "2026-09-11T11:27:28.343Z" },
+    { url = "https://files.pythonhosted.org/packages/34/1e/4670dbf11a23807877c76f966835860416a4461743a87e3097384065359b/softioc-4.7.2-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:64cde2e63a11dec42fef779a3184fa0aec89c6f4c3096b37245ee5c82dbd4813", size = 125013, upload-time = "2026-09-11T11:27:29.193Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/89/adcc47447aca20f85f3acca3604827d6dae83fef8a1990cf9f81c74bbff4/softioc-4.7.2-cp311-cp311-win_amd64.whl", hash = "sha256:b88058cb273d88aa5e6b767fa35e5e00a50a28feaec60bf8ae494322d572e13b", size = 118670, upload-time = "2026-09-11T11:27:30.177Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/79/ac63645d0777bbd61d77e7c38367cafacc5600cc5e7af9ddae82e5117e88/softioc-4.7.2-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:0ee2f22f915f68a61530376ead58d1621a290eae23a5316fc39b23ccfa24cbe5", size = 119378, upload-time = "2026-09-11T11:27:31.331Z" },
+    { url = "https://files.pythonhosted.org/packages/19/19/ccd147090d2ed8f45d00e6532c402123038d1129aee734319254724806dc/softioc-4.7.2-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:d156345d83aea327a41aad7a88a1e51cde02add8a2d88f802ca6dce31967c67a", size = 125038, upload-time = "2026-09-11T11:27:32.216Z" },
+    { url = "https://files.pythonhosted.org/packages/76/40/cc85c9daf13dfce03d9f19011e26ad37149f11c1cae0e5abffbc2b48c80b/softioc-4.7.2-cp312-cp312-win_amd64.whl", hash = "sha256:97c8d1b33b32a960b27c1730fc5a5d03c6cd4788f09563c293a455057def2a8f", size = 118671, upload-time = "2026-09-11T11:27:33.05Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/a7/2e760be9f0de3e67b227179a577aa08b3feed5d889667de18e209d8f1c44/softioc-4.7.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:e24d71331371b10f619c191c67d862751deba5274c436b00dd6e4c7be3f70aff", size = 119365, upload-time = "2026-09-11T11:27:34.124Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/15/726bc9785fb40b6ec90c326d67e4e3ee8219c4bbc3363c3301238f233a32/softioc-4.7.2-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:22614d21cd6b40eb36b16581a42ca248b546b00c8de14d0189858de9f0678b04", size = 125029, upload-time = "2026-09-11T11:27:34.964Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/58/18f6e3c0f86d83f8a61cb6a2334ce75b658e1ab0d0e983c6840c7ca1cbbb/softioc-4.7.2-cp313-cp313-win_amd64.whl", hash = "sha256:14006ac1240cf11eb8e18491bea3b7d1b5a5ef786cd24da6561c8ecadabb61c4", size = 118673, upload-time = "2026-09-11T11:27:35.853Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/e8/dacb401d4e1637a37c35ddfbd2aad29cefdf3d569f1ed8b5dfb9b0953417/softioc-4.7.2-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:4090a25a1f43e91ffbfac433fd770343e587f660a1970f9aee10340341a496c5", size = 119351, upload-time = "2026-09-11T11:27:36.75Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/cb/435623ee70aa9fee0353f0a4425eadb807bdefd4cef89d6cdc52675009a4/softioc-4.7.2-cp314-cp314-manylinux2014_x86_64.whl", hash = "sha256:9dbee9ead4f25b9abc55545d1ba75fd0231b379afe4f594376cb3a91bdf510ea", size = 124984, upload-time = "2026-09-11T11:27:37.755Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/33/f05bb6f363680b44374bdc10545130155a0603138a6c5d977c7717eaab74/softioc-4.7.2-cp314-cp314-win_amd64.whl", hash = "sha256:9c6c3bc10642e1750ded116bc4fb077375d76083eef58f1cbbeb2b9f4e084dee", size = 119252, upload-time = "2026-09-11T11:27:38.893Z" },
 ]
 
 [[package]]
@@ -3014,23 +3018,23 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.12'" },
-    { name = "babel", marker = "python_full_version < '3.12'" },
-    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version < '3.12'" },
-    { name = "imagesize", marker = "python_full_version < '3.12'" },
-    { name = "jinja2", marker = "python_full_version < '3.12'" },
-    { name = "packaging", marker = "python_full_version < '3.12'" },
-    { name = "pygments", marker = "python_full_version < '3.12'" },
-    { name = "requests", marker = "python_full_version < '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version < '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/50/a8c6ccc36d5eacdfd7913ddccd15a9cee03ecafc5ee2bc40e1f168d85022/sphinx-9.0.4.tar.gz", hash = "sha256:594ef59d042972abbc581d8baa577404abe4e6c3b04ef61bd7fc2acbd51f3fa3", size = 8710502, upload-time = "2025-12-04T07:45:27.343Z" }
 wheels = [
@@ -3047,23 +3051,23 @@ resolution-markers = [
     "python_full_version == '3.12.*'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.12'" },
-    { name = "babel", marker = "python_full_version >= '3.12'" },
-    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version >= '3.12'" },
-    { name = "imagesize", marker = "python_full_version >= '3.12'" },
-    { name = "jinja2", marker = "python_full_version >= '3.12'" },
-    { name = "packaging", marker = "python_full_version >= '3.12'" },
-    { name = "pygments", marker = "python_full_version >= '3.12'" },
-    { name = "requests", marker = "python_full_version >= '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz", hash = "sha256:7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb", size = 8718324, upload-time = "2025-12-31T15:09:27.646Z" }
 wheels = [
