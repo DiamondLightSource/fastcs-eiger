@@ -1,6 +1,7 @@
 import pytest
 from fastcs.connections import IPConnectionSettings
 from fastcs_odin.controllers import MetaWriterAdapterController
+from fastcs_odin.controllers.odin_controller import OdinControllerSettings
 from fastcs_odin.util import OdinParameter, OdinParameterMetadata
 from pytest_mock import MockerFixture
 
@@ -13,7 +14,7 @@ from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 @pytest.mark.asyncio
 async def test_create_adapter_controller(mocker: MockerFixture):
-    controller = OdinController(IPConnectionSettings("", 0))
+    controller = OdinController(OdinControllerSettings(IPConnectionSettings("", 0)))
     controller.connection = mocker.AsyncMock()
     parameters = [
         OdinParameter(

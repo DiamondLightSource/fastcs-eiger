@@ -5,7 +5,10 @@ from fastcs.datatypes import Int, String
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.controllers.eiger_controller import EigerController
-from fastcs_eiger.controllers.odin.eiger_odin_controller import EigerOdinController
+from fastcs_eiger.controllers.odin.eiger_odin_controller import (
+    EigerOdinController,
+    EigerOdinControllerSettings,
+)
 from fastcs_eiger.controllers.odin.odin_controller import OdinController
 
 
@@ -14,7 +17,11 @@ def eiger_odin_controller(mocker: MockerFixture):
     detector_connection_settings = IPConnectionSettings("127.0.0.1", 8000)
     odin_connection_settings = IPConnectionSettings("127.0.0.1", 8001)
     controller = EigerOdinController(
-        detector_connection_settings, odin_connection_settings, api_version="1.8.0"
+        EigerOdinControllerSettings(
+            connection_settings=detector_connection_settings,
+            odin_connection_settings=odin_connection_settings,
+            api_version="1.8.0",
+        )
     )
 
     controller.OD.file_path = AttrRW(String(), initial_value="/tmp/data")  # pyright: ignore[reportAttributeAccessIssue]
