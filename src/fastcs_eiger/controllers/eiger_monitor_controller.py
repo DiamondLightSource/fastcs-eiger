@@ -1,4 +1,5 @@
 import asyncio
+from enum import StrEnum
 from io import BytesIO
 
 import numpy as np
@@ -12,8 +13,15 @@ from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemCo
 BIT_DEPTH_TO_DTYPE = {8: np.uint8, 16: np.uint16, 32: np.uint32}
 
 
+class MonitorMode(StrEnum):
+    DISABLED = "disabled"
+    ENABLED = "enabled"
+
+
 class EigerMonitorController(EigerSubsystemController):
     _subsystem = "monitor"
+
+    mode: AttrRW[str]
 
     async def _detector_config(self, key: str):
         """Value of a detector config parameter.
@@ -33,6 +41,8 @@ class EigerMonitorController(EigerSubsystemController):
 
     async def initialise(self) -> None:
         await super().initialise()
+
+        await self.mode.put(MonitorMode.ENABLED)
 
         width, height, bit_depth = await asyncio.gather(
             self._detector_config("x_pixels_in_detector"),
