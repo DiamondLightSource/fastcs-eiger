@@ -1,7 +1,7 @@
 from typing import Any
 
 from fastcs.attributes import AttrR, AttrRW
-from fastcs.datatypes import Bool, Float
+from fastcs.datatypes import Bool, Float, Int
 from fastcs.methods import command
 from fastcs_odin.io import StatusSummaryAttributeIORef
 
@@ -19,6 +19,9 @@ def detector_command(fn) -> Any:
 
 class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
+
+    # Soft record for storing HV reset duration
+    hv_reset_duration = AttrRW(Int(), initial_value=60)
 
     # Internal attribute to control triggers in `inte` mode
     trigger_exposure = AttrRW(Float())
@@ -81,11 +84,12 @@ class EigerDetectorController(EigerSubsystemController):
         await self.connection.put(command_uri(self._api_version, key="cancel"))
 
     @detector_command
-    async def hv_reset(self, seconds: int = 60):
+    async def hv_reset(self):
         match self.sensor_material.get():
             case "CdTe":
                 await self.connection.put(
-                    command_uri(self._api_version, key="hv_reset"), seconds
+                    command_uri(self._api_version, key="hv_reset"),
+                    self.hv_reset_duration.get(),
                 )
             case _:
                 raise RuntimeError("Can only run HV Reset on CdTe sensor models")

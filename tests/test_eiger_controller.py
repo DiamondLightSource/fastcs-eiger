@@ -153,3 +153,35 @@ async def test_eiger_accepts_different_api_versions():
     )
 
     assert ref.uri == "detector/api/1.8.0/config/dummy_uri"
+
+
+@pytest.mark.asyncio
+async def test_eiger_detector_hv_reset_command_sets_hv_reset(
+    subsystem_controller_and_connection, mocker: MockerFixture
+):
+    controller, connection = subsystem_controller_and_connection
+
+    initial_hv_reset_duration = controller.hv_reset_duration.get()
+
+    mock_sensor_material = mocker.MagicMock()
+    mock_sensor_material.get = mocker.MagicMock(return_value="CdTe")
+
+    controller.sensor_material = mock_sensor_material
+
+    await controller.hv_reset()
+
+    connection.put.assert_awaited_once_with(
+        "detector/api/1.8.0/command/hv_reset", initial_hv_reset_duration
+    )
+
+
+@pytest.mark.asyncio
+async def test_eiger_detector_hv_reset_command_fails_if_not_cdte(
+    subsystem_controller_and_connection, mocker: MockerFixture
+):
+    controller, _ = subsystem_controller_and_connection
+
+    controller.sensor_material = mocker.MagicMock()
+
+    with pytest.raises(match="Can only run HV Reset on CdTe"):
+        await controller.hv_reset()
