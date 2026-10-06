@@ -14,7 +14,7 @@ classifiers = [
 description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
-    "fastcs-odin @ git+https://github.com/DiamondLightSource/fastcs-odin.git@enable_pva",
+    "fastcs-odin~=0.10.0",
     "numpy",
     "pillow",
     "typer",
