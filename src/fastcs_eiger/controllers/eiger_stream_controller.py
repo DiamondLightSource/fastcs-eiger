@@ -8,16 +8,16 @@ from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemCo
 
 
 class EigerStreamController(EigerSubsystemController):
-    mode: AttrRW
-    format: AttrRW
-    header_detail: AttrRW
+    mode: AttrRW[bool]
+    format: AttrRW[str]
+    header_detail: AttrRW[str]
 
     _subsystem = "stream"
 
     @scan(period=ONCE)
     async def set_stream_config(self):
         await asyncio.gather(
-            self.mode.put("enabled", sync_setpoint=True),
+            self.mode.put(True, sync_setpoint=True),
             self.format.put("cbor", sync_setpoint=True),
             self.header_detail.put("all", sync_setpoint=True),
         )
