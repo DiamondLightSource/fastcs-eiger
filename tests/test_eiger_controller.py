@@ -2,9 +2,11 @@ from unittest.mock import patch
 
 import pytest
 from fastcs.attributes import AttrRW
+from fastcs.datatypes import Bool
 from pytest_mock import MockerFixture
 
 from fastcs_eiger.controllers.eiger_detector_controller import EigerDetectorController
+from fastcs_eiger.controllers.eiger_monitor_controller import EigerMonitorController
 from fastcs_eiger.eiger_parameter import EigerParameterRef, EigerParameterResponse
 
 
@@ -21,8 +23,9 @@ async def test_eiger_controller_creates_subcontrollers(
         "value": 8,  # Set to 8 to mock monitor datatype
         "value_type": "uint",
     }
-    with patch.object(
-        EigerDetectorController, "state", mocker.MagicMock(), create=True
+    with (
+        patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
+        patch.object(EigerMonitorController, "mode", mocker.AsyncMock(), create=True),
     ):
         await eiger_controller.initialise()
     assert list(eiger_controller.sub_controllers.keys()) == [
@@ -185,3 +188,30 @@ async def test_eiger_detector_hv_reset_command_fails_if_not_cdte(
 
     with pytest.raises(match="Can only run HV Reset on CdTe"):
         await controller.hv_reset()
+
+
+@pytest.mark.asyncio
+async def test_eiger_mode_parameter_converted_to_bool_attribute(
+    subsystem_controller_and_connection,
+):
+    controller, _ = subsystem_controller_and_connection
+
+    parameter_name = "mode"
+
+    ref = EigerParameterRef(
+        key=parameter_name,
+        subsystem="monitor",
+        api_version="1.6.0",
+        mode="config",
+        response=EigerParameterResponse(
+            access_mode="rw",
+            value="enabled",
+            value_type="string",
+            allowed_values=["enabled", "disabled"],
+        ),
+    )
+
+    attributes = controller._create_attributes([ref])
+    mode_attribute = attributes[parameter_name]
+
+    assert mode_attribute.datatype == Bool()
