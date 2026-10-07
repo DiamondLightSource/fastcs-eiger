@@ -5,6 +5,7 @@ import numpy as np
 from fastcs.attributes import AttrR, AttrRW
 from fastcs.datatypes import Int, Waveform
 from fastcs.methods import scan
+from fastcs.util import ONCE
 from PIL import Image
 
 from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
@@ -36,8 +37,6 @@ class EigerMonitorController(EigerSubsystemController):
     async def initialise(self) -> None:
         await super().initialise()
 
-        await self.mode.put(True)
-
         width, height, bit_depth = await asyncio.gather(
             self._detector_config("x_pixels_in_detector"),
             self._detector_config("y_pixels_in_detector"),
@@ -60,3 +59,7 @@ class EigerMonitorController(EigerSubsystemController):
         frame = np.array(Image.open(BytesIO(image_bytes)))
         frame = np.clip(frame, self.image_min.get(), self.image_max.get())
         await self.image.update(frame)
+
+    @scan(period=ONCE)
+    async def set_monitor_config(self):
+        await self.mode.put(True, sync_setpoint=True)
