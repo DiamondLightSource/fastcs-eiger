@@ -160,10 +160,10 @@ async def test_threshold_mode_api_inconsistency_handled(
     assert api_put_response == ["difference_mode"]
     # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
 
-    await detector_controller._io.send(attr, "enabled")
+    await detector_controller._io.send(attr, True)
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
     await controller.update()
-    assert attr.get() == "enabled"
+    assert attr.get() is True
     await detector_controller.connection.close()
 
 
@@ -285,8 +285,9 @@ async def test_attribute_validation_accepts_valid_types(
         "value_type": valid_type,
     }
 
-    with patch.object(
-        EigerDetectorController, "state", mocker.MagicMock(), create=True
+    with (
+        patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
+        patch.object(EigerMonitorController, "mode", mocker.MagicMock(), create=True),
     ):
         await eiger_controller.initialise()
 
