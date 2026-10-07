@@ -287,7 +287,7 @@ async def test_attribute_validation_accepts_valid_types(
 
     with (
         patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
-        patch.object(EigerMonitorController, "mode", mocker.MagicMock(), create=True),
+        patch.object(EigerMonitorController, "mode", mocker.AsyncMock(), create=True),
     ):
         await eiger_controller.initialise()
 
