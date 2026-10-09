@@ -394,7 +394,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
+    { name = "pycparser" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -960,8 +960,8 @@ wheels = [
 
 [[package]]
 name = "fastcs"
-version = "0.14.3b1"
-source = { registry = "https://pypi.org/simple" }
+version = "0.14.5.dev11+g5bcb2b77f"
+source = { git = "https://github.com/DiamondLightSource/fastcs.git?rev=add_enum_mapping#5bcb2b77f1b3072c358c204ed4137002a961eac5" }
 dependencies = [
     { name = "aioserial" },
     { name = "fastapi", extra = ["standard"] },
@@ -974,19 +974,12 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "stdio-socket" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/27/c2c87c92c71ab18ead2cffd9f55621a68e4b3aa51070cb296863e8a64a1d/fastcs-0.14.3b1.tar.gz", hash = "sha256:e983192fbb0b4833300f8320b4e32c4b7575b0d829a77241252ccc9e1ce144e6", size = 419061, upload-time = "2026-09-14T12:47:49.318Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/40/f1/15eb3d6b63e8f3b0dbfa5f3625c5ad318f064f867aee1e56e0900437c035/fastcs-0.14.3b1-py3-none-any.whl", hash = "sha256:b642705ee11d28377273f8834915e176a3e5961cc1ec747368fcfb848d1e7d32", size = 95008, upload-time = "2026-09-14T12:47:48.125Z" },
-]
 
 [package.optional-dependencies]
-epicsca = [
-    { name = "pvi" },
-    { name = "softioc" },
-]
-epicspva = [
+epics = [
     { name = "p4p" },
     { name = "pvi" },
+    { name = "softioc" },
 ]
 
 [[package]]
@@ -1026,7 +1019,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp" },
-    { name = "fastcs-odin", git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=enable_pva" },
+    { name = "fastcs-odin", git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=point_at_fastcs_enum_mapping" },
     { name = "h5py" },
     { name = "numpy" },
     { name = "pillow" },
@@ -1057,11 +1050,11 @@ dev = [
 
 [[package]]
 name = "fastcs-odin"
-version = "0.10.1.dev2+g04711ab82"
-source = { git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=enable_pva#04711ab82d64d4584c2c30af304c77b25bd9551f" }
+version = "0.10.2.dev1+g83e674f58"
+source = { git = "https://github.com/DiamondLightSource/fastcs-odin.git?rev=point_at_fastcs_enum_mapping#83e674f58e62bc22ec2971736e7e9f741c582d75" }
 dependencies = [
     { name = "aiohttp" },
-    { name = "fastcs", extra = ["epicsca", "epicspva"] },
+    { name = "fastcs", extra = ["epics"] },
     { name = "h5py" },
 ]
 
@@ -1388,17 +1381,17 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
-    { name = "decorator", marker = "python_full_version < '3.12'" },
-    { name = "ipython-pygments-lexers", marker = "python_full_version < '3.12'" },
-    { name = "jedi", marker = "python_full_version < '3.12'" },
-    { name = "matplotlib-inline", marker = "python_full_version < '3.12'" },
-    { name = "pexpect", marker = "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "prompt-toolkit", marker = "python_full_version < '3.12'" },
-    { name = "pygments", marker = "python_full_version < '3.12'" },
-    { name = "stack-data", marker = "python_full_version < '3.12'" },
-    { name = "traitlets", marker = "python_full_version < '3.12'" },
-    { name = "typing-extensions", marker = "python_full_version < '3.12'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "decorator" },
+    { name = "ipython-pygments-lexers" },
+    { name = "jedi" },
+    { name = "matplotlib-inline" },
+    { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit" },
+    { name = "pygments" },
+    { name = "stack-data" },
+    { name = "traitlets" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a6/60/2111715ea11f39b1535bed6024b7dec7918b71e5e5d30855a5b503056b50/ipython-9.10.0.tar.gz", hash = "sha256:cd9e656be97618a0676d058134cd44e6dc7012c0e5cb36a9ce96a8c904adaf77", size = 4426526, upload-time = "2026-02-02T10:00:33.594Z" }
 wheels = [
@@ -1415,16 +1408,16 @@ resolution-markers = [
     "python_full_version == '3.12.*'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "decorator", marker = "python_full_version >= '3.12'" },
-    { name = "ipython-pygments-lexers", marker = "python_full_version >= '3.12'" },
-    { name = "jedi", marker = "python_full_version >= '3.12'" },
-    { name = "matplotlib-inline", marker = "python_full_version >= '3.12'" },
-    { name = "pexpect", marker = "python_full_version >= '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "prompt-toolkit", marker = "python_full_version >= '3.12'" },
-    { name = "pygments", marker = "python_full_version >= '3.12'" },
-    { name = "stack-data", marker = "python_full_version >= '3.12'" },
-    { name = "traitlets", marker = "python_full_version >= '3.12'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "decorator" },
+    { name = "ipython-pygments-lexers" },
+    { name = "jedi" },
+    { name = "matplotlib-inline" },
+    { name = "pexpect", marker = "sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "prompt-toolkit" },
+    { name = "pygments" },
+    { name = "stack-data" },
+    { name = "traitlets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/86/28/a4698eda5a8928a45d6b693578b135b753e14fa1c2b36ee9441e69a45576/ipython-9.11.0.tar.gz", hash = "sha256:2a94bc4406b22ecc7e4cb95b98450f3ea493a76bec8896cda11b78d7752a6667", size = 4427354, upload-time = "2026-03-05T08:57:30.549Z" }
 wheels = [
@@ -2296,7 +2289,7 @@ wheels = [
 
 [[package]]
 name = "pvi"
-version = "0.12.0"
+version = "0.14.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -2306,9 +2299,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/91/3808872d96de8dac33069bf97f94f6ff430841ceaa8398db122ffe9d4244/pvi-0.12.0.tar.gz", hash = "sha256:1fb288dd863f31c276c0e119b57a36788f2b6c2e1324f88f1fac2c8ae1a8bb03", size = 189219, upload-time = "2025-12-22T14:11:02.545Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/af/a5b4fa5210fbd072e70eaf9d5b8ccaf6a7e61b293e444331cf85423d6bde/pvi-0.14.4.tar.gz", hash = "sha256:745e3a084afb6cb0c557518399063e9992bf7b3e925f1f9e6dd97bf34d46aaf4", size = 289308, upload-time = "2026-09-30T13:02:43.76Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/b9/ffdd156df74460300c7e0483662670ed2826b7c09c59ba6a3a1b8c83b05d/pvi-0.12.0-py3-none-any.whl", hash = "sha256:b578a513fbbfe2368623eb6a75d84daf8b3176d4e46d3bc506f0ee3a1dbbfd80", size = 57072, upload-time = "2025-12-22T14:11:01.254Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/03/3e38dd5a7a5618f8dfa8cdd08f414bc915d6bae79f495d19bd97d570d199/pvi-0.14.4-py3-none-any.whl", hash = "sha256:0ead53921df2216bc5bee6f31aba483f33a9bd64a49bf59dbb2e324a67e365a1", size = 59818, upload-time = "2026-09-30T13:02:42.626Z" },
 ]
 
 [[package]]
@@ -3067,23 +3060,23 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.12'" },
-    { name = "babel", marker = "python_full_version < '3.12'" },
-    { name = "colorama", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version < '3.12'" },
-    { name = "imagesize", marker = "python_full_version < '3.12'" },
-    { name = "jinja2", marker = "python_full_version < '3.12'" },
-    { name = "packaging", marker = "python_full_version < '3.12'" },
-    { name = "pygments", marker = "python_full_version < '3.12'" },
-    { name = "requests", marker = "python_full_version < '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version < '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/50/a8c6ccc36d5eacdfd7913ddccd15a9cee03ecafc5ee2bc40e1f168d85022/sphinx-9.0.4.tar.gz", hash = "sha256:594ef59d042972abbc581d8baa577404abe4e6c3b04ef61bd7fc2acbd51f3fa3", size = 8710502, upload-time = "2025-12-04T07:45:27.343Z" }
 wheels = [
@@ -3100,23 +3093,23 @@ resolution-markers = [
     "python_full_version == '3.12.*'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.12'" },
-    { name = "babel", marker = "python_full_version >= '3.12'" },
-    { name = "colorama", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "python_full_version >= '3.12'" },
-    { name = "imagesize", marker = "python_full_version >= '3.12'" },
-    { name = "jinja2", marker = "python_full_version >= '3.12'" },
-    { name = "packaging", marker = "python_full_version >= '3.12'" },
-    { name = "pygments", marker = "python_full_version >= '3.12'" },
-    { name = "requests", marker = "python_full_version >= '3.12'" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.12'" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.12'" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.12'" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/bd/f08eb0f4eed5c83f1ba2a3bd18f7745a2b1525fad70660a1c00224ec468a/sphinx-9.1.0.tar.gz", hash = "sha256:7741722357dd75f8190766926071fed3bdc211c74dd2d7d4df5404da95930ddb", size = 8718324, upload-time = "2025-12-31T15:09:27.646Z" }
 wheels = [
