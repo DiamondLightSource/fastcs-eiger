@@ -4,8 +4,10 @@ from typing import Literal
 
 from fastcs.attributes import Attribute, AttrR, AttrRW
 from fastcs.controllers import Controller
+from fastcs.datatypes import Bool
 from fastcs.logging import logger
 from fastcs.util import ONCE
+from fastcs_odin.io import StatusSummaryAttributeIO
 
 from fastcs_eiger.eiger_parameter import (
     EIGER_PARAMETER_MODES,
@@ -15,7 +17,7 @@ from fastcs_eiger.eiger_parameter import (
     key_to_attribute_name,
 )
 from fastcs_eiger.http_connection import HTTPConnection
-from fastcs_eiger.io import EigerAttributeIO
+from fastcs_eiger.io import EigerAttributeIO, _is_enabled_disabled
 
 # Keys to be ignored when introspecting the detector to create parameters
 IGNORED_KEYS = [
@@ -39,6 +41,8 @@ IGNORED_KEYS = [
     # TODO: Is it a bad idea to include these?
     "test_image_mode",
     "test_image_value",
+    # Overrides controller's description variable
+    "description",
 ]
 
 # Parameters that are in the API but missing from keys
@@ -61,7 +65,7 @@ class EigerSubsystemController(Controller):
         self.connection = connection
         self._queue_subsystem_update = queue_subsystem_update
         self._io = EigerAttributeIO(connection, self.update_now, self.queue_update)
-        super().__init__(ios=[self._io])
+        super().__init__(ios=[self._io, StatusSummaryAttributeIO()])
         self._api_version: EigerAPIVersion = api_version
 
     async def _introspect_detector_subsystem(self) -> list[EigerParameterRef]:
@@ -123,17 +127,20 @@ class EigerSubsystemController(Controller):
         """
         attributes: dict[str, Attribute] = {}
         for parameter in parameters:
+            datatype = parameter.fastcs_datatype
+            if _is_enabled_disabled(parameter):
+                datatype = Bool()
             group = cls._group(parameter)
             match parameter.access_mode:
                 case "r":
                     attributes[parameter.attribute_name] = AttrR(
-                        parameter.fastcs_datatype,
+                        datatype,
                         group=group,
                         io_ref=parameter,
                     )
                 case "rw":
                     attributes[parameter.attribute_name] = AttrRW(
-                        parameter.fastcs_datatype, group=group, io_ref=parameter
+                        datatype, group=group, io_ref=parameter
                     )
         return attributes
 

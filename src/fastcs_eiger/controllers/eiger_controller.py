@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from fastcs.attributes import AttrR, AttrRW
 from fastcs.connections import IPConnectionSettings
 from fastcs.controllers import Controller
-from fastcs.datatypes import Bool, Int
+from fastcs.datatypes import Bool, Int, String
 from fastcs.logging import logger
 from fastcs.methods import command, scan
 
@@ -17,6 +17,8 @@ from fastcs_eiger.eiger_parameter import EIGER_PARAMETER_SUBSYSTEMS, EigerAPIVer
 from fastcs_eiger.http_connection import HTTPConnection, HTTPRequestError
 
 COMMAND_GROUP = "Command"
+
+GDA_GROUP = "GDA"
 
 
 @dataclass
@@ -35,7 +37,14 @@ class EigerController(Controller):
 
     detector: EigerDetectorController
 
+    # Soft signals for GDA
+    image_mode = AttrRW(String(), initial_value="Multiple", group=GDA_GROUP)
+    manual_trigger = AttrRW(String(), initial_value="No", group=GDA_GROUP)
+    start_timeout = AttrRW(Bool(), group=GDA_GROUP)
+    datatype = AttrRW(Int(), group=GDA_GROUP)
+    clear_errors = AttrRW(Bool(), group=GDA_GROUP)
     # Internal Attributes
+
     stale_parameters = AttrR(Bool())
     arm_timeout = AttrRW(
         Int(min=1),

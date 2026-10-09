@@ -77,7 +77,7 @@ async def test_attribute_creation(sim_eiger):
     detector_attributes = EigerDetectorController._create_attributes(
         subsystem_parameters["detector"]
     )
-    assert len(detector_attributes) == 76
+    assert len(detector_attributes) == 75
     monitor_attributes = EigerMonitorController._create_attributes(
         subsystem_parameters["monitor"]
     )
@@ -160,10 +160,10 @@ async def test_threshold_mode_api_inconsistency_handled(
     assert api_put_response == ["difference_mode"]
     # would expect threshold/difference/mode but Eiger API 1.8.0 has this inconsistency
 
-    await detector_controller._io.send(attr, "enabled")
+    await detector_controller._io.send(attr, True)
     queue_update_spy.assert_called_with(["threshold/difference/mode"])
     await controller.update()
-    assert attr.get() == "enabled"
+    assert attr.get() is True
     await detector_controller.connection.close()
 
 
@@ -274,16 +274,22 @@ async def test_attribute_validation_raises_for_invalid_type(mock_connection):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("valid_type", EIGER_PARAMETER_VALID_VALUES)
-async def test_attribute_validation_accepts_valid_types(mock_connection, valid_type):
+async def test_attribute_validation_accepts_valid_types(
+    mocker: MockerFixture, mock_connection, valid_type
+):
     eiger_controller, connection = mock_connection
     connection.get.return_value = {
         "access_mode": "r",
         "allowed_values": None,
-        "value": "test_value",
+        "value": 8,  # Set to 8 to mock monitor datatype
         "value_type": valid_type,
     }
 
-    await eiger_controller.initialise()
+    with (
+        patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
+        patch.object(EigerMonitorController, "mode", mocker.AsyncMock(), create=True),
+    ):
+        await eiger_controller.initialise()
 
 
 @pytest.mark.asyncio
@@ -334,7 +340,7 @@ async def test_eiger_controller_trigger_correctly_introspected(
     ],
 )
 async def test_if_min_value_provided_then_prec_set_correctly(
-    mock_min, expected_prec, mock_connection
+    mocker: MockerFixture, mock_min, expected_prec, mock_connection
 ):
     eiger_controller, connection = mock_connection
 
@@ -365,6 +371,7 @@ async def test_if_min_value_provided_then_prec_set_correctly(
             "fastcs_eiger.controllers.eiger_subsystem_controller.EIGER_PARAMETER_MODES",
             ["status"],
         ),
+        patch.object(EigerDetectorController, "state", mocker.MagicMock(), create=True),
     ):
         await eiger_controller.initialise()
 
