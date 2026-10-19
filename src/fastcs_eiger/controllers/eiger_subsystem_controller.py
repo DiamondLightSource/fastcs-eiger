@@ -103,6 +103,9 @@ class EigerSubsystemController(Controller):
         attributes = self._create_attributes(parameters)
 
         for name, attribute in attributes.items():
+            if hasattr(Controller, name):
+                # Would shadow a FastCS Controller attribute/method
+                name = f"{self._subsystem}_{name}"
             self.add_attribute(name, attribute)
 
     @classmethod
