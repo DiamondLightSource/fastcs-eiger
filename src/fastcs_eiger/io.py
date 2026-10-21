@@ -11,6 +11,14 @@ from fastcs_eiger.http_connection import HTTPConnection
 FETCH_BEFORE_RETURNING = {"bit_depth_image", "bit_depth_readout"}
 
 
+ENABLED_DISABLED = {"enabled", "disabled"}
+
+
+def _is_enabled_disabled(parameter: EigerParameterRef) -> bool:
+    allowed_values = parameter.response.allowed_values
+    return allowed_values is not None and set(allowed_values) == ENABLED_DISABLED
+
+
 @dataclass
 class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
     """AttributeIO for ``EigerParameterRef`` Attributes"""
@@ -47,7 +55,13 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
     async def send(
         self, attr: AttrW[DType_T, EigerParameterRef], value: DType_T
     ) -> None:
-        parameters_to_update = await self.connection.put(attr.io_ref.uri, value)
+        put_value = value
+        if _is_enabled_disabled(attr.io_ref):
+            put_value = (
+                "enabled" if value else "disabled"
+            )  # Convert bool to ENABLED_DISABLED
+
+        parameters_to_update = await self.connection.put(attr.io_ref.uri, put_value)
         update_now, update_later = self._handle_params_to_update(
             parameters_to_update, attr.io_ref.uri
         )
@@ -55,7 +69,7 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
         logger.info(
             "Parameter put",
             attribute=attr,
-            value=value,
+            value=put_value,
             update_now=update_now,
             update_later=update_later,
         )
@@ -66,7 +80,10 @@ class EigerAttributeIO(AttributeIO[DType_T, EigerParameterRef]):
     async def update(self, attr: AttrR[DType_T, EigerParameterRef]) -> None:
         response = await self.connection.get(attr.io_ref.uri)
         value = response["value"]
-        if isinstance(value, list) and all(
+
+        if _is_enabled_disabled(attr.io_ref) and isinstance(value, str):
+            value = value == "enabled"  # Convert ENABLED_DISABLED to bool
+        elif isinstance(value, list) and all(
             isinstance(s, str) for s in value
         ):  # error is a list of strings
             value = ", ".join(value)

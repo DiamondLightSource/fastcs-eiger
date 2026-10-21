@@ -47,6 +47,7 @@ def mock_connection(mocker: MockerFixture):
             IPConnectionSettings("127.0.0.1", 8081), api_version="1.8.0"
         )
     )
+    eiger_controller.state = mock.MagicMock()
     connection = mocker.patch.object(eiger_controller, "connection")
     connection.get = mock.AsyncMock()
     connection.put = mock.AsyncMock()

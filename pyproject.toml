@@ -14,11 +14,12 @@ classifiers = [
 description = "Eiger control system integration with FastCS"
 dependencies = [
     "aiohttp",
-    "fastcs-odin~=0.10.0",
+    "fastcs-odin @ git+https://github.com/DiamondLightSource/fastcs-odin.git@point_at_fastcs_enum_mapping",
     "numpy",
     "pillow",
     "typer",
     "h5py",
+    "pyzmq>=27.1.0",
 ] # Add project dependencies here, e.g. ["click", "numpy"]
 dynamic = ["version"]
 license.file = "LICENSE"
