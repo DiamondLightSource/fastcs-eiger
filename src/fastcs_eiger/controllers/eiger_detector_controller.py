@@ -1,8 +1,9 @@
 from typing import Any
 
 from fastcs.attributes import AttrR, AttrRW
-from fastcs.datatypes import Float
+from fastcs.datatypes import Bool, Float, Int
 from fastcs.methods import command
+from fastcs_odin.io import StatusSummaryAttributeIORef
 
 from fastcs_eiger.controllers.eiger_subsystem_controller import EigerSubsystemController
 from fastcs_eiger.eiger_parameter import EigerAPIVersion
@@ -19,13 +20,36 @@ def detector_command(fn) -> Any:
 class EigerDetectorController(EigerSubsystemController):
     _subsystem = "detector"
 
+    # Soft record for storing HV reset duration
+    hv_reset_duration = AttrRW(Int(), initial_value=60)
+
     # Internal attribute to control triggers in `inte` mode
     trigger_exposure = AttrRW(Float())
 
     # Introspected attributes needed for internal logic
+    state: AttrR[str]
     bit_depth_image: AttrR[int]
     compression: AttrRW[str]
     trigger_mode: AttrR[str]
+    sensor_material: AttrR[str]
+
+    async def initialise(self) -> None:
+        await super().initialise()
+        self.armed = AttrR(
+            Bool(),
+            io_ref=StatusSummaryAttributeIORef(
+                [], "", lambda states: states[0] in ["ready", "acquire"], [self.state]
+            ),
+        )
+
+        async def acquire(value):
+            if value == 1:
+                await self.arm()
+            else:
+                await self.disarm()
+
+        self.acquire = AttrRW(Bool())
+        self.acquire.add_on_update_callback(acquire)
 
     @detector_command
     async def initialize(self):
@@ -58,3 +82,14 @@ class EigerDetectorController(EigerSubsystemController):
     @detector_command
     async def cancel(self):
         await self.connection.put(command_uri(self._api_version, key="cancel"))
+
+    @detector_command
+    async def hv_reset(self):
+        match self.sensor_material.get():
+            case "CdTe":
+                await self.connection.put(
+                    command_uri(self._api_version, key="hv_reset"),
+                    self.hv_reset_duration.get(),
+                )
+            case _:
+                raise RuntimeError("Can only run HV Reset on CdTe sensor models")
