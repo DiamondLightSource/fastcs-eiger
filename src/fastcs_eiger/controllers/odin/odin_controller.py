@@ -40,7 +40,6 @@ class OdinController(_OdinController):
             String(),
             io_ref=ConfigFanAttributeIORef(
                 [
-                    self.file_prefix,
                     self.FP.acquisition_id,
                     self.MW.acquisition_id,
                     self.EF.acqid,
